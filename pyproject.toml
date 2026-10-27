@@ -1,0 +1,110 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "Wildfire-Spread-and-Suppression-Model"
+version = "0.1.0"
+description = "APC 524 Final Project"
+readme = "README.md"
+authors = [
+  {name = "Richey Li", email = "rl3936@princeton.edu"}
+]
+maintainers = [
+  {name = "Richey Li", email = "rl3936@princeton.edu"}
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Typing :: Typed",
+]
+license = {text = "MIT"}
+dependencies = [
+  "typer",
+  "rich",
+]
+requires-python = ">= 3.12"
+
+[dependency-groups]
+dev = [
+    { include-group = "lint" },
+    { include-group = "test" },
+    { include-group = "typecheck" },
+]
+lint = [
+    "ruff",
+]
+test = [
+    "coverage",
+    "pytest",
+]
+typecheck = [
+    "ty",
+]
+docs = [
+    "zensical",
+    "mkdocstrings-python",
+]
+
+[project.urls]
+bugs = "https://github.com/rl3936/Wildfire-Spread-and-Suppression-Model/issues"
+changelog = "https://github.com/rl3936/Wildfire-Spread-and-Suppression-Model/releases"
+documentation = "https://rl3936.github.io/Wildfire-Spread-and-Suppression-Model/"
+homepage = "https://github.com/rl3936/Wildfire-Spread-and-Suppression-Model"
+
+[project.scripts]
+wildfire_spread_and_suppression_model = "wildfire_spread_and_suppression_model.cli:app"
+
+[tool.ty]
+# All rules are enabled as "error" by default; no need to specify unless overriding.
+# Example override: relax a rule for the entire project (uncomment if needed).
+# rules.TY015 = "warn"  # For invalid-argument-type, warn instead of error.
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "typer.Argument",
+    "typer.Option",
+]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["src/", "tests/"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 50
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
+    "@overload",
+    "@typing.overload",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wildfire_spread_and_suppression_model"]
+
+[tool.uv]
+package = true
+default-groups = ["dev"]
