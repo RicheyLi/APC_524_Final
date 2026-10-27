@@ -8,12 +8,12 @@ version = "0.1.0"
 description = "APC 524 Final Project"
 readme = "README.md"
 authors = [
-  {name = "Richey Li", email = "rl3936@princeton.edu"}
+  {name = "Richey Li", email = "rl3936@princeton.edu"},
   {name = "Oscar Ansted", email = "oscar.ansted@princeton.edu"}
   {name = "Sunny Lin", email = "sl2308@princeton.edu}
 ]
 maintainers = [
-  {name = "Richey Li", email = "rl3936@princeton.edu"}
+  {name = "Richey Li", email = "rl3936@princeton.edu"},
   {name = "Oscar Ansted", email = "oscar.ansted@princeton.edu"}
   {name = "Sunny Lin", email = "sl2308@princeton.edu}
 ]
