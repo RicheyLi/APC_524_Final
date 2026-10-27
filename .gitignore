@@ -54,7 +54,7 @@ site/
 # .vscode/
 
 # Data cache (download with scripts/download_data.py; never commit)
-data/
+/data/
 !tests/fixtures/
 
 # Simulation outputs
