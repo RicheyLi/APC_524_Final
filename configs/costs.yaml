@@ -1,0 +1,30 @@
+# Unit costs for the suppression objective. Every value needs a citation (WP 4.6 replaces placeholders).
+# Schema: wildfire_sim.config.CostConfig
+crew_usd_per_h:
+  value: 1500.0
+  units: USD/h
+  source: "PLACEHOLDER - replace in WP 4.6 (20-person Type 2 hand crew incl. overhead)"
+dozer_usd_per_h:
+  value: 300.0
+  units: USD/h
+  source: "PLACEHOLDER - replace in WP 4.6"
+aircraft_usd_per_h:
+  value: 8000.0
+  units: USD/h
+  source: "PLACEHOLDER - replace in WP 4.6 (large air tanker flight hour)"
+water_usd_per_l:
+  value: 0.001
+  units: USD/L
+  source: "PLACEHOLDER - replace in WP 4.6"
+retardant_usd_per_l:
+  value: 0.8
+  units: USD/L
+  source: "PLACEHOLDER - replace in WP 4.6"
+usd_per_building:
+  value: 400000.0
+  units: USD/building
+  source: "PLACEHOLDER - team assumption; state in README (WP 2.5 / 4.6)"
+usd_per_ha_wildland:
+  value: 0.0
+  units: USD/ha
+  source: "PLACEHOLDER - team decision: whether burned wildland carries a value (open decision)"

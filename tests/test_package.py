@@ -1,8 +1,8 @@
-"""Tests for `wildfire_spread_and_suppression_model` package."""
+"""Package-level smoke tests."""
 
-import wildfire_spread_and_suppression_model
+import wildfire_sim
 
 
-def test_import():
-    """Verify the package can be imported."""
-    assert wildfire_spread_and_suppression_model.__name__ == "wildfire_spread_and_suppression_model"
+def test_import() -> None:
+    assert wildfire_sim.__name__ == "wildfire_sim"
+    assert isinstance(wildfire_sim.__version__, str)

@@ -1,13 +1,15 @@
 [project]
-site_name = "Wildfire Spread and Suppression Model"
-site_url = "https://rl3936.github.io/Wildfire-Spread-and-Suppression-Model/"
-repo_url = "https://github.com/rl3936/Wildfire-Spread-and-Suppression-Model"
-repo_name = "rl3936/Wildfire-Spread-and-Suppression-Model"
+site_name = "wildfire-sim"
+site_url = "https://richeyli.github.io/APC_524_Final/"
+repo_url = "https://github.com/RicheyLi/APC_524_Final"
+repo_name = "RicheyLi/APC_524_Final"
 
 nav = [
   { "Home" = "index.md" },
   { "Installation" = "installation.md" },
   { "Usage" = "usage.md" },
+  { "Project plan" = "plan.md" },
+  { "Revised model plan" = "revised_plan.md" },
   { "API Reference" = "api.md" },
 ]
 

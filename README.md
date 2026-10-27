@@ -1,42 +1,54 @@
-# Wildfire Spread and Suppression Model
+# wildfire-sim
 
-[![PyPI version](https://img.shields.io/pypi/v/Wildfire-Spread-and-Suppression-Model.svg)](https://pypi.org/project/Wildfire-Spread-and-Suppression-Model/)
-[![PyPI downloads](https://static.pepy.tech/badge/Wildfire-Spread-and-Suppression-Model/month)](https://pepy.tech/projects/Wildfire-Spread-and-Suppression-Model)
+APC 524 final project: a cellular-automaton (CA) wildfire spread model whose ignition
+probabilities come from a physical rate of spread, with firefighting modelled as costed
+resources acting on the grid, and a black-box optimizer that tunes reactive suppression
+policies on Monte Carlo ensembles.
 
-APC 524 Final Project
-
-* [GitHub](https://github.com/rl3936/Wildfire-Spread-and-Suppression-Model/) | [PyPI](https://pypi.org/project/Wildfire-Spread-and-Suppression-Model/) | [Documentation](https://rl3936.github.io/Wildfire-Spread-and-Suppression-Model/)
-* Created by [Richey Li](https://audrey.feldroy.com/) | GitHub [@rl3936](https://github.com/rl3936) | PyPI [@rl3936](https://pypi.org/user/rl3936/)
+* [GitHub](https://github.com/RicheyLi/APC_524_Final) | [Documentation](https://richeyli.github.io/APC_524_Final/)
+* Richey Li and Oscar Ansted, Princeton University
 * MIT License
 
-## Features
+## What it does
 
-* TODO
+* 30 m grid with static (fuel, terrain, land use, assets), weather, state and suppression layers.
+* Swappable spread rules behind one interface: constant probability, Alexandridis et al. (2008), Rothermel.
+* Per-neighbour ignition probability `p = 1 - exp(-R dt / d)` so results do not depend on the time step.
+* Suppression tactics (indirect/parallel lines, ground crews, aircraft) with dispatch delays, work rates, costs and line breaching.
+* Ensembles of seeded runs reported as burn-probability maps and cost distributions.
+* Optuna search over parameterized reactive policies; calibration against the 2016 Chimney Fire.
+
+See [docs/plan.md](docs/plan.md) for the dated work plan and
+[docs/revised_plan.md](docs/revised_plan.md) for the model design.
 
 ## Installation
 
-```bash
-uv add Wildfire-Spread-and-Suppression-Model
+```sh
+git clone https://github.com/RicheyLi/APC_524_Final.git
+cd APC_524_Final
+uv sync                 # core + dev tools
+uv sync --extra all     # + numba, geospatial stack, pyrothermel, optuna
 ```
 
 ## Usage
 
-```python
-import wildfire_spread_and_suppression_model
+```sh
+uv run wildfire-sim --help
+uv run wildfire-sim validate configs/scenarios/flat_no_wind.yaml
 ```
 
-## Documentation
+Running scenarios, ensembles and plots arrives with Phase 1 (see the plan).
 
-Full documentation is available on
-[GitHub Pages](https://rl3936.github.io/Wildfire-Spread-and-Suppression-Model/).
+## Development
 
-## Contributing
+```sh
+just check   # ruff format/lint, ty type-check, pytest
+just test
+```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and
-documentation instructions.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the branch/PR workflow and the rules every work
+package follows.
 
-## Author
+## Credits
 
-Wildfire Spread and Suppression Model was created in 2026 by Richey Li.
-
-Built with [Cookiecutter](https://github.com/cookiecutter/cookiecutter) and the [audreyfeldroy/cookiecutter-pypackage](https://github.com/audreyfeldroy/cookiecutter-pypackage) project template.
+Built from the [audreyfeldroy/cookiecutter-pypackage](https://github.com/audreyfeldroy/cookiecutter-pypackage) template.

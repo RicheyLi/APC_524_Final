@@ -52,3 +52,13 @@ site/
 # IDE files
 # .idea/
 # .vscode/
+
+# Data cache (download with scripts/download_data.py; never commit)
+data/
+!tests/fixtures/
+
+# Simulation outputs
+runs/
+
+# Notebook checkpoints
+.ipynb_checkpoints/

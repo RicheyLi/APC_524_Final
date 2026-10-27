@@ -16,7 +16,7 @@ body:
       label: Steps to reproduce
       description: Minimal steps to trigger the bug.
       placeholder: |
-        1. Install with `uv pip install Wildfire-Spread-and-Suppression-Model`
+        1. Install with `uv sync`
         2. Run `...`
         3. See error
     validations:

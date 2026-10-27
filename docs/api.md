@@ -1,5 +1,5 @@
 # API Reference
 
-::: wildfire_spread_and_suppression_model
+::: wildfire_sim
     options:
       show_submodules: true

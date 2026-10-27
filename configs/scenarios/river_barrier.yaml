@@ -1,0 +1,19 @@
+# Physics-test scenario: a 2-cell-wide river splits the grid; fire ignited west of it must not cross.
+name: river_barrier
+grid:
+  kind: synthetic
+  generator: with_river
+  shape: [101, 101]
+  dx: 30.0
+  fuel_model: 1
+  params:
+    col: 60
+    width: 2
+spread:
+  rule: constant
+  params:
+    ros: 0.2
+ignition:
+  cells: [[50, 30]]
+dt_s: 30.0
+duration_s: 7200.0

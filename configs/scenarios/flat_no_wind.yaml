@@ -1,0 +1,24 @@
+# Physics-test scenario: flat, uniform fuel, no wind. A no-wind fire should be near-circular.
+name: flat_no_wind
+description: 101 x 101 cells of fuel model 1 (short grass) at 30 m, ignited at the centre, no wind.
+grid:
+  kind: synthetic
+  generator: flat_uniform
+  shape: [101, 101]
+  dx: 30.0
+  fuel_model: 1
+weather:
+  series:
+    - time_s: 0
+      wind_speed: 0.0
+      wind_direction: 0.0
+spread:
+  rule: constant
+  params:
+    ros: 0.2        # m/s, placeholder until the Alexandridis/Rothermel rules exist
+ignition:
+  center: true
+dt_s: 30.0
+duration_s: 7200.0
+stencil: 8
+seed: 0

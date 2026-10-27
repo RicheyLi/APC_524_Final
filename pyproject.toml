@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "Wildfire-Spread-and-Suppression-Model"
+name = "wildfire-sim"
 version = "0.1.0"
-description = "APC 524 Final Project"
+description = "Cellular-automaton wildfire spread and suppression model with strategy optimization (APC 524 final project)"
 readme = "README.md"
 authors = [
   {name = "Richey Li", email = "rl3936@princeton.edu"},
@@ -20,14 +20,48 @@ maintainers = [
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Typing :: Typed",
 ]
 license = {text = "MIT"}
 dependencies = [
-  "typer",
-  "rich",
+  "numpy>=2.0",
+  "scipy>=1.13",
+  "pydantic>=2.7",
+  "pyyaml>=6.0",
+  "matplotlib>=3.9",
+  "imageio>=2.34",
+  "typer>=0.12",
+  "rich>=13",
 ]
 requires-python = ">= 3.12"
+
+[project.optional-dependencies]
+# Compiled front-only update kernel (WP 1.7). Optional so the pure NumPy path always works.
+fast = [
+  "numba>=0.60",
+]
+# Real-world data pipeline (Phase 2). Heavy geospatial wheels; not needed for tests.
+geo = [
+  "rasterio>=1.4",
+  "xarray>=2024.6",
+  "geopandas>=1.0",
+  "osmnx>=2.0",
+  "py3dep>=0.17",
+  "requests>=2.32",
+]
+# Rothermel rate-of-spread library (WP 2.1).
+rothermel = [
+  "pyrothermel",
+]
+# Strategy search (Phase 4).
+opt = [
+  "optuna>=3.6",
+]
+all = [
+  "wildfire-sim[fast,geo,rothermel,opt]",
+]
 
 [dependency-groups]
 dev = [
@@ -51,18 +85,16 @@ docs = [
 ]
 
 [project.urls]
-bugs = "https://github.com/rl3936/Wildfire-Spread-and-Suppression-Model/issues"
-changelog = "https://github.com/rl3936/Wildfire-Spread-and-Suppression-Model/releases"
-documentation = "https://rl3936.github.io/Wildfire-Spread-and-Suppression-Model/"
-homepage = "https://github.com/rl3936/Wildfire-Spread-and-Suppression-Model"
+homepage = "https://github.com/RicheyLi/APC_524_Final"
+repository = "https://github.com/RicheyLi/APC_524_Final"
+bugs = "https://github.com/RicheyLi/APC_524_Final/issues"
+documentation = "https://richeyli.github.io/APC_524_Final/"
 
 [project.scripts]
-wildfire_spread_and_suppression_model = "wildfire_spread_and_suppression_model.cli:app"
+wildfire-sim = "wildfire_sim.cli:app"
 
 [tool.ty]
 # All rules are enabled as "error" by default; no need to specify unless overriding.
-# Example override: relax a rule for the entire project (uncomment if needed).
-# rules.TY015 = "warn"  # For invalid-argument-type, warn instead of error.
 
 [tool.ruff]
 line-length = 120
@@ -105,9 +137,14 @@ exclude_also = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "network: tests that hit external data services (deselected by default; run with --run-network)",
+    "slow: tests that take more than a few seconds",
+]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/wildfire_spread_and_suppression_model"]
+packages = ["src/wildfire_sim"]
 
 [tool.uv]
 package = true

@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you find a security vulnerability in Wildfire Spread and Suppression Model, please report it through [GitHub's private vulnerability reporting](https://github.com/rl3936/Wildfire-Spread-and-Suppression-Model/security/advisories/new). This keeps the details private while we work on a fix.
+If you find a security vulnerability in Wildfire Spread and Suppression Model, please report it through [GitHub's private vulnerability reporting](https://github.com/RicheyLi/APC_524_Final/security/advisories/new). This keeps the details private while we work on a fix.
 
 Please include:
 
@@ -25,7 +25,6 @@ This project ships with security hardening out of the box:
 
 This is a volunteer-maintained open source project. Security reports are taken seriously, but there are no guaranteed response times.
 
-**Enterprise support** is available, with priority response SLAs. Contact rl3936@princeton.edu for details.
 
 ## Supported Versions
 

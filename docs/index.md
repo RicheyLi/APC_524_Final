@@ -1,9 +1,11 @@
-# Wildfire Spread and Suppression Model
+# wildfire-sim
 
-APC 524 Final Project
+A cellular-automaton wildfire spread model with physically scaled ignition
+probabilities, modelled suppression resources, and black-box optimization of
+reactive suppression policies over Monte Carlo ensembles. APC 524 final project.
 
-## Getting started
-
-- [Installation](installation.md) - how to install Wildfire Spread and Suppression Model
-- [Usage](usage.md) - how to use Wildfire Spread and Suppression Model
-- [API Reference](api.md) - auto-generated API documentation
+- [Installation](installation.md)
+- [Usage](usage.md)
+- [Project plan](plan.md) - dated milestones, gates and work packages
+- [Revised model plan](revised_plan.md) - physics, data sources and design rationale
+- [API Reference](api.md)

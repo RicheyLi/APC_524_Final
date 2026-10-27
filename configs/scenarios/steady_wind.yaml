@@ -1,0 +1,24 @@
+# Physics-test scenario: steady wind from the west; the burn should stretch eastward.
+name: steady_wind
+description: Same landscape as flat_no_wind with a 5 m/s wind from the west (blowing toward 90 deg).
+grid:
+  kind: synthetic
+  generator: flat_uniform
+  shape: [101, 101]
+  dx: 30.0
+  fuel_model: 1
+weather:
+  series:
+    - time_s: 0
+      wind_speed: 5.0
+      wind_direction: 270.0
+spread:
+  rule: constant
+  params:
+    ros: 0.2
+ignition:
+  center: true
+dt_s: 30.0
+duration_s: 7200.0
+stencil: 8
+seed: 0

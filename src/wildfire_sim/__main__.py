@@ -1,4 +1,4 @@
-from .cli import app
+from wildfire_sim.cli import app
 
 if __name__ == "__main__":
     app()
