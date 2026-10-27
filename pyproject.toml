@@ -10,10 +10,12 @@ readme = "README.md"
 authors = [
   {name = "Richey Li", email = "rl3936@princeton.edu"}
   {name = "Oscar Ansted", email = "oscar.ansted@princeton.edu"}
+  {name = "Sunny Lin", email = "sl2308@princeton.edu}
 ]
 maintainers = [
   {name = "Richey Li", email = "rl3936@princeton.edu"}
   {name = "Oscar Ansted", email = "oscar.ansted@princeton.edu"}
+  {name = "Sunny Lin", email = "sl2308@princeton.edu}
 ]
 classifiers = [
     "License :: OSI Approved :: MIT License",
