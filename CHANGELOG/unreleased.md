@@ -21,6 +21,9 @@ These are the changes that will go out in the next release.
   - `make_spread_rule` imports `wildfire_sim.spread.<name>` on first use.
   - `link_rate_of_spread`: harmonic mean of source and target cell rates per link, so fire does not enter slow fuel or retardant at the fast cell's speed.
   - `draw_crossing_thresholds`: one gamma threshold per link per run, the form the simulator will use (exact under changing rates, common random numbers across policies).
+- Phase 1 (simulator core, see `docs/plan.md` section 12):
+  - `wildfire_sim.config.configs_dir()` locates the cited parameter tables in `configs/`.
+  - WP 1.1: `wildfire_sim.spread.constant.ConstantRule`, registered as `constant`.
 
 ## Changed
 
