@@ -144,8 +144,10 @@ def test_shipped_residence_times_validate() -> None:
 def test_shipped_kernel_corrections_validate() -> None:
     table = load_kernel_corrections()
     assert isinstance(table, KernelCorrectionTable)
-    assert table.value_for(8, 20.0) == 1.0
-    assert table.value_for(16, 20.0) == 1.0
+    # measured in WP 1.4 (scripts/kernel_front_speed.py): kernel noise speeds a round front up
+    assert 1.0 < table.value_for(8, 20.0) < 1.3
+    assert table.value_for(8, 20.0) < table.value_for(16, 20.0) < 1.5
+    assert all(entry.source and "PLACEHOLDER" not in entry.source for entry in table.entries)
     assert table.value_for(8, 3.0) == 1.0  # no entry -> 1.0
 
 
@@ -365,8 +367,10 @@ def test_one_cell_barrier_blocks_stencil_16(monkeypatch: pytest.MonkeyPatch) -> 
     result = run(cfg, grid=grid)
     assert result.burned_mask[:, 9].any()
     assert not result.burned_mask[:, 11:].any()
+    # Knight links are stopped twice over: their link rate is zero because they cross an
+    # unburnable cell (link_rate_of_spread), and _blocked_links masks them. Either alone holds.
     monkeypatch.setattr(sim, "_blocked_links", lambda barrier, stencil: np.zeros((stencil.size, *barrier.shape), bool))
-    assert run(cfg, grid=grid).burned_mask[:, 11:].any()
+    assert not run(cfg, grid=grid).burned_mask[:, 11:].any()
 
 
 def test_blocked_links_mask() -> None:

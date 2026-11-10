@@ -29,9 +29,11 @@ These are the changes that will go out in the next release.
   - WP 1.3: `wildfire_sim.sim.run` and `RunResult`: per-link threshold kernel with interpolated arrival times and an exact in-step cascade, blocked links through barriers, two-clock burn-out, step hooks on a separate random stream, run provenance; `configs/residence_time.yaml` and `configs/kernel_correction.yaml` (placeholders).
   - WP 1.6: `wildfire_sim.ensemble.run_ensemble` (seeded, optionally parallel, bit-identical serial and parallel) with per-run input perturbations from the new optional `ensemble` scenario section; `running_mean`, `mean_ci`, `runs_for_precision`.
   - WP 1.8: `wildfire-sim run`, `ensemble` and `plot` commands; `wildfire_sim.io` writes and reads run and ensemble directories (arrays, events, strict-JSON summary and provenance, resolved scenario, figures). `sim.model_provenance` gives the code and kernel provenance shared by all runs of a scenario.
+  - WP 1.4: `tests/test_physics.py` (circularity, ellipse shape, dt independence, barriers, front speed, slow-fuel strip, wind shift); measured front-speed corrections in `configs/kernel_correction.yaml` from `scripts/kernel_front_speed.py`; `docs/lattice_study.md` with `scripts/lattice_study.py`. The study shows neither stencil reproduces an ellipse to 10 % beyond a length-to-breadth ratio of about 1.5; the unmet target is recorded as a strict expected failure.
 
 ## Changed
 
+- `configs/scenarios/flat_no_wind.yaml`: duration 7200 s to 5400 s so the fire stays inside the grid.
 - `docs/revised_plan.md` merged into `docs/plan.md`. The plan has no schedule: work is ordered by dependencies and judged by undated milestones. A second design review (section 14) strengthened the kernel, Rothermel, data, validation, suppression and testing sections.
 - `ScenarioConfig` rejects ignition cells outside a synthetic grid.
 - `Grid.validate` rejects non-finite static layers and negative asset values.
@@ -44,6 +46,7 @@ These are the changes that will go out in the next release.
 
 ## Fixed
 
+- `link_rate_of_spread`: a knight link (16-neighbour stencil) now uses the harmonic mean over the four cells its segment crosses. Using only the two end cells let fire tunnel through one cell of slow fuel at each edge of a strip (delay 12 % short).
 - `Grid.apply_unburnable` no longer overwrites BURNING or BURNED cells (a fireline placed under a burning cell erased it from the burned area).
 - The memoryless ignition kernel (`p = 1 - exp(-R dt / d)`) moved the fire front 3 to 4.5 times faster than `R` and depended on the time step. It remains available as `arrival_shape = 1` only.
 - `ScenarioConfig.n_steps` lost a step to floating-point rounding (3600 s at 0.1 s gave 35999).

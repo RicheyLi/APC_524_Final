@@ -316,3 +316,29 @@ def test_crossing_thresholds_match_the_hazard_kernel(shape: float) -> None:
     # survival after one step from age 0 with ros 0.2, dt 60, dx 30: progress x = 0.4
     p = ignition_probability(np.full((8, 1, 1), 0.2), 60.0, 30.0, STENCIL_8, age=np.zeros((1, 1)), shape=shape)
     assert np.mean(thresholds <= 0.4) == pytest.approx(p[0, 0, 0], abs=0.01)
+
+
+def test_knight_link_rate_includes_the_cells_it_crosses() -> None:
+    """A knight link's segment spends a quarter of its length in each of four cells.
+
+    From (r, c) to (r + 1, c + 2) it crosses (r, c + 1) and (r + 1, c + 1) as well as the two end
+    cells, so the travel time is d/4 * (1/R_a + 1/R_b + 1/R_c + 1/R_d). Using the end cells
+    alone let fire tunnel through a strip of slow fuel.
+    """
+    k = [tuple(o) for o in STENCIL_16.offsets.tolist()].index((1, 2))
+    ros = np.full((16, 5, 6), 0.4)
+    np.testing.assert_allclose(link_rate_of_spread(ros, STENCIL_16)[k, 1, 1], 0.4)  # uniform fuel: unchanged
+    ros[:, 1, 2] = 0.1  # first crossed cell (r, c + 1) is slow
+    link = link_rate_of_spread(ros, STENCIL_16)
+    assert link[k, 1, 1] == pytest.approx(4.0 / (1 / 0.4 + 1 / 0.1 + 1 / 0.4 + 1 / 0.4))
+    ros[:, 1, 2] = 0.4
+    ros[:, 2, 2] = 0.0  # second crossed cell (r + 1, c + 1) cannot carry fire
+    link = link_rate_of_spread(ros, STENCIL_16)
+    assert link[k, 1, 1] == 0.0
+    # the vertical knight move (2, 1) from (1, 1) crosses (2, 1) and (2, 2)
+    k2 = [tuple(o) for o in STENCIL_16.offsets.tolist()].index((2, 1))
+    assert link[k2, 1, 1] == 0.0
+    # Moore links are untouched by cells they do not cross
+    k_e = [tuple(o) for o in STENCIL_16.offsets.tolist()].index((0, 1))
+    assert link[k_e, 1, 0] == pytest.approx(0.4)
+    assert np.all(np.isfinite(link))

@@ -186,13 +186,34 @@ def neighbour_ignition_probability(p: FloatArray, burning: BoolArray, stencil: S
     return 1.0 - survive
 
 
+def _cells_crossed(dr: int, dc: int) -> list[tuple[int, int]]:
+    """Offsets of the cells a link's straight segment passes through, source and target included.
+
+    The segment spends an equal share of its length in each: half and half for the eight Moore
+    moves; a quarter in each of four cells for a knight move (for example ``(1, 2)`` crosses
+    ``(0, 1)`` and ``(1, 1)`` between its end cells).
+    """
+    if max(abs(dr), abs(dc)) <= 1:
+        return [(0, 0), (dr, dc)]
+    if abs(dr) == 2 and abs(dc) == 1:
+        step = dr // 2
+        return [(0, 0), (step, 0), (step, dc), (dr, dc)]
+    if abs(dr) == 1 and abs(dc) == 2:
+        step = dc // 2
+        return [(0, 0), (0, step), (dr, step), (dr, dc)]
+    raise ValueError(f"unsupported stencil offset ({dr}, {dc})")
+
+
 def link_rate_of_spread(ros: FloatArray, stencil: Stencil) -> FloatArray:
     """Effective rate of spread along each cell-to-neighbour link, m/s.
 
-    Fire travelling from the centre of cell ``i`` to the centre of neighbour ``j`` crosses half
-    of each cell, so the travel time is ``d/2/R_i + d/2/R_j`` and the effective rate is the
-    harmonic mean of the two cells' rates in that direction. Using the source cell's rate
-    alone would let fire enter slow fuel, or a retardant drop, at the fast cell's speed.
+    Fire travelling from the centre of cell ``i`` to the centre of neighbour ``j`` spends an
+    equal share of the distance in each cell its straight path crosses: the two end cells for
+    a Moore move, four cells for a knight move. The travel time is the sum of the shares over
+    each cell's rate, so the effective rate is the harmonic mean of those cells' rates in the
+    link's direction. Using the source cell's rate alone would let fire enter slow fuel, or a
+    retardant drop, at the fast cell's speed; ignoring the cells a knight move crosses would
+    let it tunnel through them.
 
     Args:
         ros: ``(K, H, W)`` rate of spread from :class:`SpreadOutput`, m/s.
@@ -200,7 +221,8 @@ def link_rate_of_spread(ros: FloatArray, stencil: Stencil) -> FloatArray:
 
     Returns:
         ``(K, H, W)`` float64 array. ``out[k, r, c]`` is the rate for the link from ``(r, c)``
-        to ``(r, c) + offsets[k]``: ``2 R_i R_j / (R_i + R_j)``, and 0 where either rate is 0
+        to ``(r, c) + offsets[k]``: ``n / sum(1 / R_m)`` over the ``n`` cells crossed
+        (``2 R_i R_j / (R_i + R_j)`` for a Moore move), and 0 where any of those rates is 0
         or the neighbour lies outside the grid.
     """
     k, h, w = ros.shape
@@ -210,13 +232,18 @@ def link_rate_of_spread(ros: FloatArray, stencil: Stencil) -> FloatArray:
     out = np.zeros((k, h, w), dtype=np.float64)
     for i in range(k):
         dr, dc = int(stencil.offsets[i, 0]), int(stencil.offsets[i, 1])
-        # source rows/cols whose neighbour (r + dr, c + dc) is inside the grid
+        # source rows/cols whose neighbour (r + dr, c + dc) is inside the grid; the cells
+        # crossed lie between source and neighbour, so they are inside the grid too
         sr0, sr1 = max(-dr, 0), h + min(-dr, 0)
         sc0, sc1 = max(-dc, 0), w + min(-dc, 0)
-        a = source[i, sr0:sr1, sc0:sc1]
-        b = source[i, sr0 + dr : sr1 + dr, sc0 + dc : sc1 + dc]
-        total = a + b
-        out[i, sr0:sr1, sc0:sc1] = np.divide(2.0 * a * b, total, out=np.zeros_like(total), where=total > 0)
+        if sr0 >= sr1 or sc0 >= sc1:
+            continue
+        crossed = [source[i, sr0 + r : sr1 + r, sc0 + c : sc1 + c] for r, c in _cells_crossed(dr, dc)]
+        passable = np.all([cell > 0 for cell in crossed], axis=0)
+        slowness = np.zeros(passable.shape, dtype=np.float64)  # sum of 1 / R, s/m
+        for cell in crossed:
+            slowness += np.divide(1.0, cell, out=np.zeros_like(slowness), where=passable)
+        out[i, sr0:sr1, sc0:sc1] = np.divide(len(crossed), slowness, out=np.zeros_like(slowness), where=passable)
     return out
 
 
