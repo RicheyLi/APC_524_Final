@@ -1,0 +1,16 @@
+# Front-speed correction of the ignition kernel per (stencil, arrival_shape), dimensionless
+# (docs/plan.md section 2.1). The simulator divides every link rate of spread by `value`, so
+# the rate R of a spread rule means the same front speed on every stencil. Read by
+# wildfire_sim.sim (KernelCorrectionTable); a (stencil, arrival_shape) pair with no entry
+# uses 1.0. The match on arrival_shape is exact.
+#
+# The values are measured in WP 1.4 (scripts/kernel_front_speed.py); until then they are 1.0.
+entries:
+  - stencil: 8
+    arrival_shape: 20.0
+    value: 1.0
+    source: "PLACEHOLDER - measured in WP 1.4"
+  - stencil: 16
+    arrival_shape: 20.0
+    value: 1.0
+    source: "PLACEHOLDER - measured in WP 1.4"
