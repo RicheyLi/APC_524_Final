@@ -7,6 +7,11 @@ updates:
     cooldown:
       default-days: 7
     open-pull-requests-limit: 5
+    groups:
+      # init and analyze must be the same version or the CodeQL job fails; bump them together.
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
 
   - package-ecosystem: uv
     directory: /
