@@ -21,5 +21,5 @@ ignition:
   center: true
 dt_s: 30.0
 duration_s: 7200.0
-stencil: 8
+stencil: 16
 seed: 0

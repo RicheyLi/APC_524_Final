@@ -115,10 +115,12 @@ class SpreadConfig(_Strict):
             ge=1,
             description=(
                 "gamma shape k of the cell-to-cell crossing time, passed to "
-                "spread.base.ignition_probability; 1 = memoryless (front runs 3-4.5x too fast)"
+                "spread.base.draw_crossing_thresholds. 200 (default) is nearly deterministic, so the "
+                "front-speed correction is close to 1 and elongated fires keep their shape; 1 is "
+                "memoryless (front runs several times too fast)"
             ),
         ),
-    ] = 20.0
+    ] = 200.0
 
 
 class IgnitionConfig(_Strict):
@@ -246,7 +248,7 @@ class ScenarioConfig(_Strict):
     suppression: SuppressionConfig = Field(default_factory=SuppressionConfig)
     dt_s: Annotated[float, Field(gt=0, description="time step, s")] = 30.0
     duration_s: Annotated[float, Field(gt=0, description="simulated length of the run, s")] = 3600.0
-    stencil: StencilSize = 8
+    stencil: StencilSize = 16
     seed: Annotated[int, Field(ge=0, description="default seed; the CLI/ensemble may override")] = 0
     ensemble: EnsembleConfig = Field(default_factory=EnsembleConfig)
     engine: Literal["numpy", "numba"] = Field(

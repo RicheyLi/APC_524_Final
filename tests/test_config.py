@@ -46,7 +46,7 @@ def test_minimal_scenario_defaults() -> None:
     )
     assert isinstance(cfg.grid, SyntheticGridConfig)
     assert cfg.spread.rule == "constant"
-    assert cfg.stencil == 8
+    assert cfg.stencil == 16
     assert cfg.suppression.policy == "none"
     assert len(cfg.weather.series) == 1
     series = cfg.weather.to_series()
@@ -123,7 +123,7 @@ def test_ignition_cells_must_lie_inside_a_synthetic_grid() -> None:
 
 def test_arrival_shape_default_and_bounds() -> None:
     raw: dict = {"name": "t", "grid": {"kind": "synthetic", "generator": "flat_uniform"}, "ignition": {"center": True}}
-    assert ScenarioConfig.model_validate(raw).spread.arrival_shape == 20.0
+    assert ScenarioConfig.model_validate(raw).spread.arrival_shape == 200.0
     raw["spread"] = {"arrival_shape": 0.5}
     with pytest.raises(ValidationError):
         ScenarioConfig.model_validate(raw)

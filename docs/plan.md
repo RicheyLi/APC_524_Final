@@ -131,11 +131,12 @@ seeds; values are front speed / R along the grid axes):
 | --- | --- | --- | --- | --- | --- |
 | 1 (memoryless) | 3.07 | 3.85 | 4.47 | 5.80 | off grid |
 | 5 | 1.27 | 1.38 | 1.44 | 1.72 | 1.90 |
-| **20 (default)** | **1.01** | **1.03** | **1.07** | 1.15 | 1.21 |
+| 20 | 1.01 | 1.03 | 1.07 | 1.15 | 1.21 |
 | 50 | 0.93 | 0.96 | 0.99 | 1.02 | 1.07 |
 
-The diagonal speed is within 6 % of the axis speed in every row, so the burn stays round. The
-default is `spread.arrival_shape = 20`. Two things follow:
+The diagonal speed is within 6 % of the axis speed in every row, so the burn stays round.
+Shape 20 was the first default. Phase 1 showed two consequences, and the default is now
+**`spread.arrival_shape = 200`**:
 
 - A residual speed bias remains and differs by stencil. WP 1.4 measured it for the real engine
   (the threshold form runs a little faster than the per-step form in the table: 1.126 on 8
@@ -144,10 +145,11 @@ default is `spread.arrival_shape = 20`. Two things follow:
   it. **Known weakness:** the correction is measured on round fires. Kernel noise speeds up a
   round front but hardly speeds up the head of a narrow fire, so dividing by the correction
   leaves such a head 11 % (8) to 22 % (16) slow. At shape 200 the correction is within 4 % of
-  1 and the problem nearly disappears (open decision, section 13).
-- At k = 20 the kernel's own noise is small, so an ensemble that varies only the seed would
-  produce nearly identical fires. Ensembles therefore also sample input uncertainty
-  (section 6).
+  1 (0.992 on 8 neighbours, 1.042 on 16) and the problem nearly disappears, which is why 200
+  is the default.
+- The kernel's own noise is small (coefficient of variation 7 % per link at shape 200), so an
+  ensemble that varies only the seed would produce nearly identical fires. Ensembles
+  therefore also sample input uncertainty (section 6).
 
 ### 2.2 Rate of spread
 
@@ -455,9 +457,9 @@ Pareto front.
 
 | Decision | Choice |
 | --- | --- |
-| Ignition kernel | Gamma-distributed link crossing time sampled once per link as a threshold; `spread.arrival_shape = 20`; harmonic-mean link rates; per-stencil front-speed correction. |
+| Ignition kernel | Gamma-distributed link crossing time sampled once per link as a threshold; `spread.arrival_shape = 200`; link rates as the harmonic mean over the cells a link crosses; per-(stencil, shape) front-speed correction. |
 | Rothermel implementation | Native vectorized NumPy (WP 2.1), cross-checked against `pyrothermel` (optional extra `rothermel`) and published BehavePlus values. |
-| Default stencil | Decided by the lattice study in WP 1.4; 8 until then. |
+| Default stencil | 16 neighbours, from the lattice study in WP 1.4: better than 8 at every length-to-breadth ratio, at about twice the run time. |
 | Package name | `wildfire_sim` (CLI `wildfire-sim`). |
 | Validation fires | A: 2016 Chimney Fire (calibration). B: to be chosen (test, no retuning). |
 | Weather | One hourly scalar series per run. Hourly analysis where available, disaggregated gridMET otherwise. Spatially varying wind is out of scope. |
@@ -615,18 +617,15 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
 
 **Open decisions.**
 
-- [ ] **Elongated fires on the lattice** (third review, section 14). Options: (a) accept a
-      documented limit on the length-to-breadth ratio (about 3 with 16 neighbours and shape
-      200, i.e. midflame winds up to about 5 m/s) and cap or flag runs beyond it in WP 2.1b;
+- [ ] **Elongated fires on the lattice** (third review, section 14). With the defaults (16
+      neighbours, shape 200) head and flank are within 7 % of the analytic ellipse at a
+      length-to-breadth ratio of 1.5 and within 13 % at 3; at 6 the flanks are 32-46 % too
+      narrow. Options beyond a ratio of 3: (a) accept a documented limit
+      (midflame winds up to about 5 m/s) and cap or flag runs beyond it in WP 2.1b;
       (b) add 32- and 48-neighbour stencils (limit 2.1 and 2.75 at 10 %, at 2-3 times the
       cost per step); (c) replace per-direction rates sampled from the ellipse by rates
       optimized so the lattice polygon best fits the ellipse; (d) change the front-propagation
       method for strong wind (fast marching or level set with a continuous direction field).
-- [ ] **Default `arrival_shape`: 20 or 200.** At 200 the kernel is nearly deterministic, the
-      correction is close to 1 and elongated heads are not over-slowed; run-to-run variation
-      then comes from the ensemble's input perturbations, as section 6 already intends.
-- [ ] **Default stencil: 8 or 16.** 16 is better at every length-to-breadth ratio and costs
-      about twice the run time.
 - [ ] Validation fire B: a US fire in a different dominant fuel type from the Chimney Fire
       (chaparral and oak woodland), 1,000-10,000 ha, wind-driven, with an MTBS perimeter,
       VIIRS coverage and little early suppression.
@@ -641,7 +640,8 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       and retardant per litre (WP 4.6).
 - [ ] Module owners for the three team members.
 
-Resolved: study region and fire A (Chimney Fire); ignition kernel; Rothermel implemented
+Resolved: study region and fire A (Chimney Fire); ignition kernel; default stencil 16 and
+`arrival_shape` 200 (after the lattice study); Rothermel implemented
 natively with `pyrothermel` as a cross-check; package name.
 
 ## 14. Design review log
@@ -699,8 +699,8 @@ engines and any time step.
 | `Grid.apply_unburnable` overwrote BURNING and BURNED cells | Fixed |
 | Knight links (16 neighbours) used only their end cells' rates and tunnelled through slow fuel (strip delay 12 % short) | `link_rate_of_spread` now averages over the four cells a knight link crosses; exact in the deterministic limit |
 | Diagonal moves leaked between barrier cells touching at a corner | The simulator blocks diagonal and knight links that squeeze between unburnable cells, so 8-connected rasterized barriers hold |
-| The lattice cannot reproduce elongated ellipses to the 10 % target (section 2.4) | Recorded as strict expected failures in `tests/test_physics.py`; open decision |
-| The single front-speed correction over-slows elongated fires (section 2.1) | Open decision (shape 200) |
+| The lattice cannot reproduce elongated ellipses to the 10 % target (section 2.4) | Default stencil changed from 8 to 16; with the new defaults the target is met at a ratio of 1.5 and missed by 3 points at 3 (`test_default_kernel_ellipse`); the shape-20 failures stay recorded as strict expected failures; beyond a ratio of 3 is an open decision |
+| The single front-speed correction over-slows elongated fires (section 2.1) | Default `arrival_shape` raised from 20 to 200 |
 | Seed-only ensembles vary burned area by 4 %; with input perturbation 35 % | Confirms section 6 |
 | `ensemble.mean_ci` returned NaN near the float64 limit (found by a property test) | Fixed |
 | The plan's physics-test thresholds for dt halving and the slow strip needed restating | Thresholds and evidence in `docs/lattice_study.md` |

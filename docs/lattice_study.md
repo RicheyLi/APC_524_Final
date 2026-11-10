@@ -15,7 +15,7 @@ Units: lengths in m (or cells of 30 m), times in s, rates in m/s; ratios are dim
 ## Summary
 
 - **Front-speed correction.** Kernel noise makes the uncorrected front run faster than R: by
-  12.6 % on 8 neighbours and 27.7 % on 16 at the default `arrival_shape = 20`. The shipped
+  12.6 % on 8 neighbours and 27.7 % on 16 at `arrival_shape = 20`. The shipped
   correction (below) removes this for a round fire; after it the no-wind front speed is within
   2.3 % of R in every direction.
 - **Ellipses.** The plan's target for the steady-wind test (head, flank and back each within
@@ -106,7 +106,7 @@ measures the largest projection of burned cell centres on the head direction, on
 and (half the spread) on its normal. Head bearings 0, 22.5 and 45 degrees: on a grid axis,
 between an axis and a diagonal, and on a diagonal.
 
-### Results at the default `arrival_shape = 20`
+### Results at `arrival_shape = 20` (the default when this study was run)
 
 Relative error of the simulated distance (data: `img/lattice/ellipse_errors.csv`):
 
@@ -181,7 +181,7 @@ neighbours and 1 / 1.277 = 0.78 R on 16: the -10 % and -21 % head errors in the 
 even where the geometry is exact (head 0° and 45°). The correction table is keyed on
 (stencil, shape) only, so it cannot depend on LB without a contract change.
 
-### Results at `arrival_shape = 200`
+### Results at `arrival_shape = 200` (the default since this study)
 
 At shape 200 the noise speed-up is under 5 % even for a round fire, so the mismatch nearly
 vanishes, and the 16-neighbour stencil is close to its geometric limit
@@ -223,6 +223,11 @@ Rothermel's length-to-breadth ratio (plan section 2.2) reaches 1.5 at a midflame
 cares about are exactly where the lattice is weakest.
 
 ## 4. Recommendations
+
+**Status:** recommendations 1 and 2 were adopted: `ScenarioConfig.stencil` now defaults to 16 and
+`spread.arrival_shape` to 200, and `tests/test_physics.py` checks front speed, ellipse shape
+and the slow-strip delay at those defaults. Recommendations 3 and 4 are an open decision in
+`docs/plan.md` section 13.
 
 1. **Default stencil: 16 neighbours.** It beats 8 neighbours in the geometric limit at every
    LB (worst head error over directions at LB 3: -32 % vs -59 %) and in the simulations at
