@@ -174,6 +174,63 @@ class CostConfig(_Strict):
     usd_per_ha_wildland: CitedValue
 
 
+# ----------------------------------------------------------------------------- ensemble
+
+
+class EnsembleConfig(_Strict):
+    """Monte Carlo ensemble settings (WP 1.6, docs/plan.md section 6).
+
+    Each run of an ensemble draws one value of every factor below and applies it to the whole
+    run (every point of the weather series), so a run is "a bit windier", not noisy in time.
+    The defaults perturb nothing, so a scenario without an ``ensemble`` section behaves as
+    before. How the draws are made is documented in :mod:`wildfire_sim.ensemble`.
+    """
+
+    wind_speed_sigma_frac: Annotated[
+        float,
+        Field(ge=0, description="sigma of ln(factor) for a log-normal wind-speed factor (median 1), dimensionless"),
+    ] = 0.0
+    wind_direction_sigma_deg: Annotated[
+        float,
+        Field(ge=0, description="standard deviation of a normal offset added to wind direction, degrees"),
+    ] = 0.0
+    moisture_sigma_frac: Annotated[
+        float,
+        Field(
+            ge=0,
+            description="sigma of ln(factor) for a log-normal factor (median 1) on all dead and live fuel "
+            "moistures together, dimensionless",
+        ),
+    ] = 0.0
+    ros_multiplier_sigma_frac: Annotated[
+        float,
+        Field(
+            ge=0, description="sigma of ln(factor) for a log-normal rate-of-spread multiplier (median 1), dimensionless"
+        ),
+    ] = 0.0
+    ignition_jitter_cells: Annotated[
+        int,
+        Field(
+            ge=0,
+            description="each ignition cell moves by a uniform integer offset in [-j, j] cells in row and column; "
+            "kept inside the grid and on burnable fuel",
+        ),
+    ] = 0
+    n_runs: Annotated[int, Field(ge=1, description="default number of runs, for the CLI")] = 50
+    base_seed: Annotated[int, Field(ge=0, description="default base seed of the ensemble, for the CLI")] = 0
+
+    @property
+    def perturbs(self) -> bool:
+        """True if any input perturbation is switched on."""
+        return (
+            self.wind_speed_sigma_frac > 0
+            or self.wind_direction_sigma_deg > 0
+            or self.moisture_sigma_frac > 0
+            or self.ros_multiplier_sigma_frac > 0
+            or self.ignition_jitter_cells > 0
+        )
+
+
 # ----------------------------------------------------------------------------- scenario
 
 
@@ -191,6 +248,7 @@ class ScenarioConfig(_Strict):
     duration_s: Annotated[float, Field(gt=0, description="simulated length of the run, s")] = 3600.0
     stencil: StencilSize = 8
     seed: Annotated[int, Field(ge=0, description="default seed; the CLI/ensemble may override")] = 0
+    ensemble: EnsembleConfig = Field(default_factory=EnsembleConfig)
 
     @model_validator(mode="after")
     def _check_times(self) -> ScenarioConfig:

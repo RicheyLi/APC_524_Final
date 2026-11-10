@@ -27,6 +27,7 @@ These are the changes that will go out in the next release.
   - WP 1.2: `wildfire_sim.spread.alexandridis.AlexandridisRule`, registered as `alexandridis` (wind and slope factors of Alexandridis et al. 2008 as a rate), with cited constants and the fuel-model mapping in `configs/alexandridis.yaml`; `steady_wind.yaml` now uses it.
   - WP 1.5: `wildfire_sim.viz`: state, arrival-time and burn-probability maps and GIF animation, off-screen, with a colour-blind-safe palette.
   - WP 1.3: `wildfire_sim.sim.run` and `RunResult`: per-link threshold kernel with interpolated arrival times and an exact in-step cascade, blocked links through barriers, two-clock burn-out, step hooks on a separate random stream, run provenance; `configs/residence_time.yaml` and `configs/kernel_correction.yaml` (placeholders).
+  - WP 1.6: `wildfire_sim.ensemble.run_ensemble` (seeded, optionally parallel, bit-identical serial and parallel) with per-run input perturbations from the new optional `ensemble` scenario section; `running_mean`, `mean_ci`, `runs_for_precision`.
 
 ## Changed
 

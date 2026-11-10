@@ -152,3 +152,71 @@ def test_configs_dir_defaults_to_repo_configs_and_honours_env(tmp_path: Path, mo
     monkeypatch.setenv("WILDFIRE_SIM_CONFIGS", str(tmp_path / "missing"))
     with pytest.raises(FileNotFoundError, match="WILDFIRE_SIM_CONFIGS"):
         configs_dir()
+
+
+# ----------------------------------------------------------------------------- ensemble section (WP 1.6)
+
+_MINIMAL = {"name": "m", "grid": {"kind": "synthetic", "generator": "flat_uniform"}, "ignition": {"center": True}}
+
+
+@pytest.mark.parametrize("name", ["flat_no_wind", "steady_wind", "river_barrier"])
+def test_shipped_scenarios_get_a_neutral_ensemble_section(name: str) -> None:
+    from wildfire_sim.config import EnsembleConfig
+
+    cfg = load_scenario(CONFIGS / "scenarios" / f"{name}.yaml")
+    assert cfg.ensemble == EnsembleConfig()
+
+
+def test_ensemble_defaults_are_neutral() -> None:
+    cfg = ScenarioConfig.model_validate(_MINIMAL)
+    ens = cfg.ensemble
+    assert ens.wind_speed_sigma_frac == 0.0
+    assert ens.wind_direction_sigma_deg == 0.0
+    assert ens.moisture_sigma_frac == 0.0
+    assert ens.ros_multiplier_sigma_frac == 0.0
+    assert ens.ignition_jitter_cells == 0
+    assert ens.n_runs == 50 and ens.base_seed == 0
+    assert not ens.perturbs
+
+
+def test_ensemble_section_roundtrips_through_yaml(tmp_path: Path) -> None:
+    p = tmp_path / "e.yaml"
+    p.write_text(
+        "name: e\n"
+        "grid: {kind: synthetic, generator: flat_uniform}\n"
+        "ignition: {center: true}\n"
+        "ensemble:\n"
+        "  wind_speed_sigma_frac: 0.2\n"
+        "  wind_direction_sigma_deg: 15\n"
+        "  moisture_sigma_frac: 0.1\n"
+        "  ros_multiplier_sigma_frac: 0.25\n"
+        "  ignition_jitter_cells: 2\n"
+        "  n_runs: 100\n"
+        "  base_seed: 7\n",
+        encoding="utf-8",
+    )
+    cfg = load_scenario(p)
+    assert cfg.ensemble.wind_direction_sigma_deg == 15.0
+    assert cfg.ensemble.ignition_jitter_cells == 2
+    assert cfg.ensemble.perturbs
+    out = tmp_path / "again.yaml"
+    dump_yaml(cfg, out)
+    assert load_scenario(out) == cfg
+
+
+@pytest.mark.parametrize(
+    "ensemble",
+    [
+        {"wind_speed_sigma_frac": -0.1},
+        {"wind_direction_sigma_deg": -1},
+        {"moisture_sigma_frac": -0.5},
+        {"ros_multiplier_sigma_frac": -0.01},
+        {"ignition_jitter_cells": -1},
+        {"n_runs": 0},
+        {"base_seed": -3},
+        {"wind_sped_sigma_frac": 0.1},
+    ],
+)
+def test_invalid_ensemble_sections_rejected(ensemble: dict) -> None:
+    with pytest.raises(ValidationError, match="ensemble"):
+        ScenarioConfig.model_validate({**_MINIMAL, "ensemble": ensemble})
