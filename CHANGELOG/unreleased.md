@@ -49,6 +49,7 @@ These are the changes that will go out in the next release.
 
 ## Fixed
 
+- CodeQL workflow: `init` and `analyze` are on the same `github/codeql-action` version again (a Dependabot bump had moved only `analyze`, which makes the job fail); Dependabot now groups the two.
 - `ensemble.mean_ci` returned NaN bounds for finite samples near the float64 limit (found by a property test).
 - `link_rate_of_spread`: a knight link (16-neighbour stencil) now uses the harmonic mean over the four cells its segment crosses. Using only the two end cells let fire tunnel through one cell of slow fuel at each edge of a strip (delay 12 % short).
 - `Grid.apply_unburnable` no longer overwrites BURNING or BURNED cells (a fireline placed under a burning cell erased it from the burned area).
