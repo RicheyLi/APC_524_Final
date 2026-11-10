@@ -1,6 +1,4 @@
 # Physics-test scenario: steady wind from the west; the burn should stretch eastward.
-# NOTE: the constant rule ignores wind, so this burns as a circle until WP 1.2 switches
-# `spread.rule` to `alexandridis`.
 name: steady_wind
 description: Same landscape as flat_no_wind with a 5 m/s wind from the west (blowing toward 90 deg).
 grid:
@@ -15,9 +13,10 @@ weather:
       wind_speed: 5.0
       wind_direction: 270.0
 spread:
-  rule: constant
+  rule: alexandridis
   params:
-    ros: 0.2
+    # m/s; open grass (fuel model 1, no canopy) then spreads at 0.084 m/s before wind and slope
+    ros_base: 0.2
 ignition:
   center: true
 dt_s: 30.0
