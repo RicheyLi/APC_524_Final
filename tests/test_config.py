@@ -220,3 +220,27 @@ def test_ensemble_section_roundtrips_through_yaml(tmp_path: Path) -> None:
 def test_invalid_ensemble_sections_rejected(ensemble: dict) -> None:
     with pytest.raises(ValidationError, match="ensemble"):
         ScenarioConfig.model_validate({**_MINIMAL, "ensemble": ensemble})
+
+
+# ----------------------------------------------------------------------------- engine (WP 1.7)
+
+
+@pytest.mark.parametrize("name", ["flat_no_wind", "steady_wind", "river_barrier"])
+def test_engine_defaults_to_numpy(name: str) -> None:
+    assert load_scenario(CONFIGS / "scenarios" / f"{name}.yaml").engine == "numpy"
+    assert ScenarioConfig.model_validate(_MINIMAL).engine == "numpy"
+
+
+def test_engine_numba_accepted_and_roundtrips(tmp_path: Path) -> None:
+    cfg = ScenarioConfig.model_validate({**_MINIMAL, "engine": "numba"})
+    assert cfg.engine == "numba"
+    p = tmp_path / "n.yaml"
+    dump_yaml(cfg, p)
+    assert "engine: numba" in p.read_text(encoding="utf-8")
+    assert load_scenario(p) == cfg
+
+
+@pytest.mark.parametrize("engine", ["cython", "NUMBA", "", 1])
+def test_invalid_engine_rejected(engine: object) -> None:
+    with pytest.raises(ValidationError, match="engine"):
+        ScenarioConfig.model_validate({**_MINIMAL, "engine": engine})

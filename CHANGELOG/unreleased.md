@@ -31,6 +31,7 @@ These are the changes that will go out in the next release.
   - WP 1.8: `wildfire-sim run`, `ensemble` and `plot` commands; `wildfire_sim.io` writes and reads run and ensemble directories (arrays, events, strict-JSON summary and provenance, resolved scenario, figures). `sim.model_provenance` gives the code and kernel provenance shared by all runs of a scenario.
   - WP 1.4: `tests/test_physics.py` (circularity, ellipse shape, dt independence, barriers, front speed, slow-fuel strip, wind shift); measured front-speed corrections in `configs/kernel_correction.yaml` from `scripts/kernel_front_speed.py`; `docs/lattice_study.md` with `scripts/lattice_study.py`. The study shows neither stencil reproduces an ellipse to 10 % beyond a length-to-breadth ratio of about 1.5; the unmet target is recorded as a strict expected failure.
   - WP 1.9: Hypothesis property tests of the kernel, grid, simulator, config and ensemble invariants (`tests/test_properties.py`); golden-run regression tests with committed arrival-time arrays and a regeneration script (`tests/golden/`); coverage floor raised from 50 % to 85 % (measured 94 %).
+  - WP 1.7: optional compiled engine `wildfire_sim.sim_fast` selected with the new scenario field `engine: numba` (needs the `fast` extra; bit-identical to the NumPy engine in every tested case, about 8 to 10 times faster); `scripts/bench.py` with a machine-normalised regression check; profile and measured costs in `docs/performance.md`; a CI job for engine parity and the benchmark.
 
 ## Changed
 

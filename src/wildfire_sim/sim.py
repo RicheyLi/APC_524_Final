@@ -35,6 +35,7 @@ hooks act at step starts; the spread rule is evaluated once per step, so a rule 
 from __future__ import annotations
 
 import functools
+import importlib.metadata
 import platform
 import subprocess
 import time
@@ -492,29 +493,66 @@ class _FireEngine:
 def model_provenance(config: ScenarioConfig, rule_name: str | None = None) -> dict[str, Any]:
     """Code and kernel provenance shared by every run of ``config`` (JSON-serializable).
 
-    Keys: ``git_commit`` (or None), ``versions`` (python, numpy, scipy, wildfire_sim), ``rule``
-    (class name of the spread rule; the configured registry name when ``rule_name`` is None),
-    ``stencil``, ``arrival_shape``, ``kernel_correction`` and its ``kernel_correction_source``
-    for that stencil and shape, and ``residence_time_s`` (the whole table, seconds).
+    Keys: ``git_commit`` (or None), ``versions`` (python, numpy, scipy, wildfire_sim, and numba
+    when the numba engine is selected), ``engine`` (``config.engine``), ``rule`` (class name of
+    the spread rule; the configured registry name when ``rule_name`` is None), ``stencil``,
+    ``arrival_shape``, ``kernel_correction`` and its ``kernel_correction_source`` for that
+    stencil and shape, and ``residence_time_s`` (the whole table, seconds).
     :func:`run` adds the per-run entries. Used by ensembles, which have no single run to ask.
     """
-    corrections = load_kernel_corrections()
+    return _model_provenance(config, rule_name, load_kernel_corrections(), load_residence_times())
+
+
+def _model_provenance(
+    config: ScenarioConfig,
+    rule_name: str | None,
+    corrections: KernelCorrectionTable,
+    residence: ResidenceTimeTable,
+) -> dict[str, Any]:
+    """:func:`model_provenance` from tables already loaded (a run loads each YAML file once)."""
     entry = corrections.entry_for(config.stencil, config.spread.arrival_shape)
+    versions: dict[str, str | None] = {
+        "python": platform.python_version(),
+        "numpy": np.__version__,
+        "scipy": scipy.__version__,
+        "wildfire_sim": __version__,
+    }
+    if config.engine == "numba":
+        versions["numba"] = _distribution_version("numba")
     return {
         "git_commit": _git_commit(),
-        "versions": {
-            "python": platform.python_version(),
-            "numpy": np.__version__,
-            "scipy": scipy.__version__,
-            "wildfire_sim": __version__,
-        },
+        "versions": versions,
+        "engine": config.engine,
         "rule": config.spread.rule if rule_name is None else rule_name,
         "stencil": config.stencil,
         "arrival_shape": config.spread.arrival_shape,
         "kernel_correction": corrections.value_for(config.stencil, config.spread.arrival_shape),
         "kernel_correction_source": None if entry is None else entry.source,
-        "residence_time_s": load_residence_times().model_dump(mode="json"),
+        "residence_time_s": residence.model_dump(mode="json"),
     }
+
+
+def _distribution_version(name: str) -> str | None:
+    """Installed version of distribution ``name`` without importing it, or None if not installed."""
+    try:
+        return importlib.metadata.version(name)
+    except importlib.metadata.PackageNotFoundError:
+        return None
+
+
+def _engine_class(name: str) -> type[_FireEngine]:
+    """The engine class for ``ScenarioConfig.engine``.
+
+    ``"numba"`` imports :mod:`wildfire_sim.sim_fast`, which imports numba lazily and raises a
+    clear ``ImportError`` when it is not installed.
+    """
+    if name == "numpy":
+        return _FireEngine
+    if name == "numba":
+        from wildfire_sim import sim_fast
+
+        return sim_fast.numba_engine_class()
+    raise ValueError(f"unknown engine {name!r}; expected 'numpy' or 'numba'")
 
 
 def run(
@@ -542,7 +580,9 @@ def run(
 
     Args:
         config: Scenario. Uses ``grid``, ``weather``, ``spread``, ``ignition``, ``dt_s`` (s),
-            ``duration_s`` (s), ``stencil`` and ``seed``.
+            ``duration_s`` (s), ``stencil``, ``seed`` and ``engine`` (``"numpy"``, the reference,
+            or ``"numba"``, the compiled per-step kernel of :mod:`wildfire_sim.sim_fast`; both
+            share all setup here and agree to floating-point rounding).
         seed: Run seed (>= 0); None uses ``config.seed``.
         rule: Spread rule; None builds ``make_spread_rule(config.spread.rule, **config.spread.params)``.
         grid: Starting grid; None builds it from ``config.grid``. A passed grid is copied, never
@@ -557,6 +597,7 @@ def run(
     Raises:
         ValueError: An ignition cell is outside the grid or not FUEL; the grid already burns;
             ``seed`` is negative; ``max_source_age_s`` is not positive.
+        ImportError: ``config.engine`` is ``"numba"`` and numba is not installed.
     """
     wall_start = time.perf_counter()
     seed = config.seed if seed is None else int(seed)
@@ -564,6 +605,7 @@ def run(
         raise ValueError(f"seed must be >= 0, got {seed}")
     if max_source_age_s is not None and not max_source_age_s > 0:
         raise ValueError(f"max_source_age_s must be > 0 s, got {max_source_age_s}")
+    engine_cls = _engine_class(config.engine)  # fails fast if the numba engine is not installed
     if rule is None:
         rule = make_spread_rule(config.spread.rule, **config.spread.params)
 
@@ -583,7 +625,7 @@ def run(
     correction = corrections.value_for(config.stencil, shape_k)
     residence = load_residence_times()
 
-    engine = _FireEngine(g, rule, stencil, thresholds, correction, residence, max_source_age_s, record_events)
+    engine = engine_cls(g, rule, stencil, thresholds, correction, residence, max_source_age_s, record_events)
     series = config.weather.to_series()
     dt = config.dt_s
     t_ign = config.ignition.time_s
@@ -609,7 +651,7 @@ def run(
     provenance: dict[str, Any] = {
         "config": config.model_dump(mode="json"),
         "seed": seed,
-        **model_provenance(config, type(rule).__name__),
+        **_model_provenance(config, type(rule).__name__, corrections, residence),
         "grid_from": "config" if grid is None else "argument",
         "max_source_age_s": max_source_age_s,
         "n_hooks": len(hooks),

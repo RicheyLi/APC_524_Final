@@ -249,6 +249,13 @@ class ScenarioConfig(_Strict):
     stencil: StencilSize = 8
     seed: Annotated[int, Field(ge=0, description="default seed; the CLI/ensemble may override")] = 0
     ensemble: EnsembleConfig = Field(default_factory=EnsembleConfig)
+    engine: Literal["numpy", "numba"] = Field(
+        default="numpy",
+        description=(
+            "per-step fire engine: 'numpy' (reference, always available) or 'numba' (compiled, same "
+            "results to floating-point rounding; needs the 'fast' extra: uv sync --extra fast)"
+        ),
+    )
 
     @model_validator(mode="after")
     def _check_times(self) -> ScenarioConfig:
