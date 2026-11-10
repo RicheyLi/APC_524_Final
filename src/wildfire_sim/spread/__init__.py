@@ -20,7 +20,9 @@ from typing import Any
 from wildfire_sim.spread.base import (
     SpreadOutput,
     SpreadRule,
+    draw_crossing_thresholds,
     ignition_probability,
+    link_rate_of_spread,
     max_stable_dt,
     neighbour_ignition_probability,
 )
@@ -82,7 +84,9 @@ __all__ = [
     "SpreadOutput",
     "SpreadRule",
     "available_rules",
+    "draw_crossing_thresholds",
     "ignition_probability",
+    "link_rate_of_spread",
     "make_spread_rule",
     "max_stable_dt",
     "neighbour_ignition_probability",

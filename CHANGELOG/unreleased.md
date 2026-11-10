@@ -12,17 +12,19 @@ These are the changes that will go out in the next release.
   - `wildfire_sim.data.synthetic`: `flat_uniform`, `slope_ramp`, `with_river`, `with_town` generators and `build_grid`.
   - `wildfire-sim validate` CLI command.
   - Scenario files `configs/scenarios/*.yaml`, `configs/costs.yaml` (placeholders), committed test fixture `tests/fixtures/flat_21x21.npz`.
-  - `docs/plan.md` (model design, dated schedule, gates, work packages).
+  - `docs/plan.md` (model design, milestones, work packages).
 - Optional dependency extras: `fast` (numba), `geo`, `rothermel`, `opt`, `all`.
 - Phase 0 review (WP 0.8, see `docs/plan.md` section 14):
   - `ignition_probability` takes `age` and `shape`: cell-to-cell crossing times are gamma-distributed with mean `d / R`. New optional scenario field `spread.arrival_shape` (default 20).
   - `scripts/kernel_front_speed.py`: measures front speed against the nominal rate of spread.
   - `CostConfig.engine_usd_per_h` (placeholder value in `configs/costs.yaml`).
   - `make_spread_rule` imports `wildfire_sim.spread.<name>` on first use.
+  - `link_rate_of_spread`: harmonic mean of source and target cell rates per link, so fire does not enter slow fuel or retardant at the fast cell's speed.
+  - `draw_crossing_thresholds`: one gamma threshold per link per run, the form the simulator will use (exact under changing rates, common random numbers across policies).
 
 ## Changed
 
-- `docs/revised_plan.md` merged into `docs/plan.md`; the schedule is re-baselined after Gate 1 (Nov 9) was missed.
+- `docs/revised_plan.md` merged into `docs/plan.md`. The plan has no schedule: work is ordered by dependencies and judged by undated milestones. A second design review (section 14) strengthened the kernel, Rothermel, data, validation, suppression and testing sections.
 - `ScenarioConfig` rejects ignition cells outside a synthetic grid.
 - `Grid.validate` rejects non-finite static layers and negative asset values.
 - `load_yaml` raises `ValueError` for malformed YAML; `wildfire-sim validate` reports grid-build errors instead of a traceback.

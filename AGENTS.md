@@ -8,7 +8,7 @@ Git pull from repo each time before you make edits as there are multiple contrib
 
 ## Project-specific guidance
 
-- Read `docs/plan.md` (the single plan: model design, schedule, work packages) and
+- Read `docs/plan.md` (the single plan: model design, milestones, work packages) and
   `CONTRIBUTING.md` for the rules every work package must follow. Implement exactly one work
   package per branch.
 - The repo's `.venv` is created by `uv sync`. If it was made under WSL/Linux, run `uv` from

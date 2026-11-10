@@ -12,13 +12,13 @@ policies on Monte Carlo ensembles.
 ## What it does
 
 * 30 m grid with static (fuel, terrain, land use, assets), weather, state and suppression layers.
-* Swappable spread rules behind one interface: constant rate, Alexandridis et al. (2008), Rothermel (stretch).
-* Per-neighbour ignition probability from a gamma-distributed crossing time with mean `d / R`, so the front moves at the physical rate of spread and results do not depend on the time step.
+* Swappable spread rules behind one interface: constant rate, Alexandridis et al. (2008), Rothermel.
+* Cell-to-cell crossing times drawn from a gamma distribution with mean `d / R`, so the front moves at the physical rate of spread and results do not depend on the time step.
 * Suppression tactics (indirect/parallel lines, ground crews, aircraft) with dispatch delays, work rates, costs and line breaching.
 * Ensembles of seeded runs reported as burn-probability maps and cost distributions.
-* Optuna search over parameterized reactive policies; calibration against the 2016 Chimney Fire.
+* Optuna search over parameterized reactive policies; calibration against the 2016 Chimney Fire and a test on a second fire.
 
-See [docs/plan.md](docs/plan.md) for the model design, the dated schedule and the work packages.
+See [docs/plan.md](docs/plan.md) for the model design, the milestones and the work packages.
 
 ## Installation
 

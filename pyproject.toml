@@ -51,7 +51,7 @@ geo = [
   "py3dep>=0.17",
   "requests>=2.32",
 ]
-# Rothermel rate-of-spread library (WP 2.1).
+# Reference Rothermel library, used only to cross-check the native implementation (WP 2.1).
 rothermel = [
   "pyrothermel",
 ]

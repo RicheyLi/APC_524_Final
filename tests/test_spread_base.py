@@ -2,13 +2,16 @@
 
 import numpy as np
 import pytest
+from scipy import stats
 
 from wildfire_sim import spread
 from wildfire_sim.grid import Grid, Weather
 from wildfire_sim.spread.base import (
     SpreadOutput,
     SpreadRule,
+    draw_crossing_thresholds,
     ignition_probability,
+    link_rate_of_spread,
     max_stable_dt,
     neighbour_ignition_probability,
 )
@@ -242,3 +245,74 @@ def test_make_spread_rule_imports_rule_module_lazily(monkeypatch: pytest.MonkeyP
             spread.make_spread_rule("_no_such_rule")
     finally:
         spread._REGISTRY.pop(name, None)
+
+
+# ----------------------------------------------------------------------------- link rates
+
+
+def test_link_rate_is_unchanged_in_uniform_fuel_and_zero_off_grid() -> None:
+    ros = np.full((8, 4, 5), 0.3)
+    link = link_rate_of_spread(ros, STENCIL_8)
+    assert link.shape == (8, 4, 5)
+    np.testing.assert_allclose(link[:, 1:-1, 1:-1], 0.3)
+    # direction 0 is north: the top row has no northern neighbour
+    assert np.all(link[0, 0, :] == 0.0)
+    # direction 2 is east: the last column has no eastern neighbour
+    assert np.all(link[2, :, -1] == 0.0)
+
+
+def test_link_rate_is_harmonic_mean_of_source_and_target() -> None:
+    """Fire crosses half of each cell, so travel time is d/2/R_source + d/2/R_target."""
+    ros = np.full((8, 3, 3), 0.4)
+    ros[:, 1, 2] = 0.1  # slow cell east of the centre
+    link = link_rate_of_spread(ros, STENCIL_8)
+    expected = 2 * 0.4 * 0.1 / (0.4 + 0.1)
+    assert link[2, 1, 1] == pytest.approx(expected)  # centre -> east
+    assert link[6, 1, 2] == pytest.approx(expected)  # slow cell -> west, same link reversed
+    assert link[0, 1, 1] == pytest.approx(0.4)  # centre -> north is unaffected
+
+
+def test_link_rate_is_zero_into_a_cell_that_cannot_spread() -> None:
+    """A fully retarded or unburnable target (ros 0) must not be reachable at the source's rate."""
+    ros = np.full((8, 3, 3), 0.4)
+    ros[:, 1, 2] = 0.0
+    link = link_rate_of_spread(ros, STENCIL_8)
+    assert link[2, 1, 1] == 0.0
+    assert np.all(link[:, 1, 2] == 0.0)
+    assert np.all(np.isfinite(link))
+
+
+def test_link_rate_rejects_wrong_stencil() -> None:
+    with pytest.raises(ValueError, match="stencil"):
+        link_rate_of_spread(np.zeros((8, 3, 3)), STENCIL_16)
+
+
+# ----------------------------------------------------------------------------- crossing thresholds
+
+
+def test_crossing_thresholds_shape_dtype_and_determinism() -> None:
+    a = draw_crossing_thresholds(np.random.default_rng(7), 20.0, STENCIL_16, (5, 6))
+    b = draw_crossing_thresholds(np.random.default_rng(7), 20.0, STENCIL_16, (5, 6))
+    assert a.shape == (16, 5, 6)
+    assert a.dtype == np.float32
+    assert np.all(a > 0)
+    np.testing.assert_array_equal(a, b)
+    with pytest.raises(ValueError, match="shape"):
+        draw_crossing_thresholds(np.random.default_rng(7), 0.5, STENCIL_8, (5, 6))
+
+
+@pytest.mark.parametrize("shape", [1.0, 5.0, 20.0])
+def test_crossing_thresholds_match_the_hazard_kernel(shape: float) -> None:
+    """Thresholds are the same crossing-time law as ignition_probability: unit-mean gamma(k).
+
+    A link completes when its accumulated progress (integral of R dt / d) reaches its threshold,
+    so P(not yet complete at progress x) must equal the kernel's survival Q(k, k x).
+    """
+    thresholds = draw_crossing_thresholds(np.random.default_rng(0), shape, STENCIL_8, (60, 60)).ravel()
+    assert thresholds.mean() == pytest.approx(1.0, abs=0.02)
+    assert thresholds.var() == pytest.approx(1.0 / shape, rel=0.05)
+    result = stats.kstest(thresholds, stats.gamma(a=shape, scale=1.0 / shape).cdf)
+    assert result.pvalue > 0.001
+    # survival after one step from age 0 with ros 0.2, dt 60, dx 30: progress x = 0.4
+    p = ignition_probability(np.full((8, 1, 1), 0.2), 60.0, 30.0, STENCIL_8, age=np.zeros((1, 1)), shape=shape)
+    assert np.mean(thresholds <= 0.4) == pytest.approx(p[0, 0, 0], abs=0.01)

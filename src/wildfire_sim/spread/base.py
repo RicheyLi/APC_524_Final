@@ -1,11 +1,17 @@
-"""The spread-rule contract and the shared ignition-probability kernel.
+"""The spread-rule contract and the shared ignition kernel.
 
 Every spread rule (constant, Alexandridis, Rothermel) implements :class:`SpreadRule`: given the
-grid and current weather it returns a directional rate of spread for every cell. The
-simulator then turns rates into per-step ignition probabilities with
-:func:`ignition_probability` (gamma-distributed crossing times with mean ``d / R``) and
-combines contributions from burning neighbours with
-:func:`neighbour_ignition_probability`. Rules never draw random numbers.
+grid and current weather it returns a directional rate of spread for every cell. Rules never
+draw random numbers.
+
+The simulator turns rates into ignitions with the kernel functions here. The time fire takes
+to cross one cell-to-neighbour link is gamma-distributed with mean ``d / R``:
+
+* :func:`link_rate_of_spread` combines source and target cell rates into one rate per link.
+* :func:`draw_crossing_thresholds` samples that law once per link for a whole run; the
+  simulator ignites a neighbour when the link's accumulated progress reaches its threshold.
+* :func:`ignition_probability` and :func:`neighbour_ignition_probability` are the equivalent
+  per-step hazard form, kept for analysis and tests.
 
 This module is a frozen contract (see CONTRIBUTING.md).
 """
@@ -176,6 +182,73 @@ def neighbour_ignition_probability(p: FloatArray, burning: BoolArray, stencil: S
         sc0, sc1 = max(-dc, 0), w + min(-dc, 0)
         survive[tr0:tr1, tc0:tc1] *= 1.0 - src_contrib[sr0:sr1, sc0:sc1]
     return 1.0 - survive
+
+
+def link_rate_of_spread(ros: FloatArray, stencil: Stencil) -> FloatArray:
+    """Effective rate of spread along each cell-to-neighbour link, m/s.
+
+    Fire travelling from the centre of cell ``i`` to the centre of neighbour ``j`` crosses half
+    of each cell, so the travel time is ``d/2/R_i + d/2/R_j`` and the effective rate is the
+    harmonic mean of the two cells' rates in that direction. Using the source cell's rate
+    alone would let fire enter slow fuel, or a retardant drop, at the fast cell's speed.
+
+    Args:
+        ros: ``(K, H, W)`` rate of spread from :class:`SpreadOutput`, m/s.
+        stencil: Stencil ``ros`` was computed for.
+
+    Returns:
+        ``(K, H, W)`` float64 array. ``out[k, r, c]`` is the rate for the link from ``(r, c)``
+        to ``(r, c) + offsets[k]``: ``2 R_i R_j / (R_i + R_j)``, and 0 where either rate is 0
+        or the neighbour lies outside the grid.
+    """
+    k, h, w = ros.shape
+    if k != stencil.size:
+        raise ValueError("ros and stencil shapes are inconsistent")
+    source = np.asarray(ros, dtype=np.float64)
+    out = np.zeros((k, h, w), dtype=np.float64)
+    for i in range(k):
+        dr, dc = int(stencil.offsets[i, 0]), int(stencil.offsets[i, 1])
+        # source rows/cols whose neighbour (r + dr, c + dc) is inside the grid
+        sr0, sr1 = max(-dr, 0), h + min(-dr, 0)
+        sc0, sc1 = max(-dc, 0), w + min(-dc, 0)
+        a = source[i, sr0:sr1, sc0:sc1]
+        b = source[i, sr0 + dr : sr1 + dr, sc0 + dc : sc1 + dc]
+        total = a + b
+        out[i, sr0:sr1, sc0:sc1] = np.divide(2.0 * a * b, total, out=np.zeros_like(total), where=total > 0)
+    return out
+
+
+def draw_crossing_thresholds(
+    rng: np.random.Generator, shape: float, stencil: Stencil, grid_shape: tuple[int, int]
+) -> FloatArray:
+    """Draw one random crossing threshold per link, for the whole run.
+
+    This is the same crossing-time law as :func:`ignition_probability`, sampled once instead
+    of step by step. The simulator accumulates each burning cell's dimensionless *progress*
+    along every link, ``x += R_link * dt / d``, and the neighbour ignites when ``x`` reaches
+    the link's threshold. Thresholds are gamma-distributed with mean 1 and shape ``shape``, so
+    the crossing time has mean ``d / R`` and ``P(x < threshold) = Q(shape, shape * x)``.
+
+    Compared with drawing a random number every step this is exact when the rate changes
+    during a crossing (weather shift, retardant), needs no special functions in the time
+    loop, and gives common random numbers: two runs with the same seed and different
+    suppression policies see the same fire "luck" on every link.
+
+    Args:
+        rng: Generator dedicated to spread randomness (never shared with suppression).
+        shape: Gamma shape ``k`` (dimensionless), >= 1; ``ScenarioConfig.spread.arrival_shape``.
+        stencil: Neighbour stencil with ``K`` directions.
+        grid_shape: ``(H, W)``.
+
+    Returns:
+        ``(K, H, W)`` float32 array of dimensionless thresholds, all > 0.
+    """
+    if shape < 1:
+        raise ValueError("shape must be >= 1")
+    size = (stencil.size, *grid_shape)
+    thresholds = rng.gamma(shape, 1.0 / shape, size=size).astype(np.float32)
+    # float32 rounding can turn a tiny draw into 0, which would ignite a neighbour instantly.
+    return np.maximum(thresholds, np.finfo(np.float32).tiny)
 
 
 def max_stable_dt(ros_max: float, dx: float, p_max: float = 0.5) -> float:
