@@ -81,8 +81,11 @@ class HasArrival(Protocol):
             cell ignited; NaN where it never burned.
     """
 
-    grid: Grid
-    arrival_time: FloatArray
+    @property
+    def grid(self) -> Grid: ...
+
+    @property
+    def arrival_time(self) -> FloatArray: ...
 
 
 class DisplayClass(IntEnum):

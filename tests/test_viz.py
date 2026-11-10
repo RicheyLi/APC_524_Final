@@ -329,3 +329,26 @@ def test_no_plt_show_in_viz() -> None:
     source = (REPO_ROOT / "src" / "wildfire_sim" / "viz.py").read_text(encoding="utf-8")
     assert "plt.show" not in source
     assert "pyplot" not in source
+
+
+def test_real_run_result_is_accepted_by_viz(tmp_path: Path) -> None:
+    """Integration: a frozen ``sim.RunResult`` satisfies ``viz.HasArrival`` (also for the type checker)."""
+    from wildfire_sim.config import ScenarioConfig
+    from wildfire_sim.sim import run
+
+    cfg = ScenarioConfig.model_validate(
+        {
+            "name": "viz-integration",
+            "grid": {"kind": "synthetic", "generator": "with_river", "shape": [25, 31], "params": {"col": 22}},
+            "spread": {"rule": "constant", "params": {"ros": 0.3}},
+            "ignition": {"cells": [[12, 6]]},
+            "duration_s": 900.0,
+        }
+    )
+    result = run(cfg, seed=1)
+    typed: viz.HasArrival = result
+    viz.save_figure(viz.plot_arrival(typed), tmp_path / "arrival.png")
+    viz.save_figure(viz.plot_state(result.grid), tmp_path / "state.png")
+    gif = viz.animate(result, tmp_path / "fire.gif", n_frames=5, fps=5)
+    assert gif.stat().st_size > 0
+    assert (tmp_path / "arrival.png").stat().st_size > 0

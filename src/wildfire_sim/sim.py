@@ -489,6 +489,34 @@ class _FireEngine:
 # ----------------------------------------------------------------------------- public entry point
 
 
+def model_provenance(config: ScenarioConfig, rule_name: str | None = None) -> dict[str, Any]:
+    """Code and kernel provenance shared by every run of ``config`` (JSON-serializable).
+
+    Keys: ``git_commit`` (or None), ``versions`` (python, numpy, scipy, wildfire_sim), ``rule``
+    (class name of the spread rule; the configured registry name when ``rule_name`` is None),
+    ``stencil``, ``arrival_shape``, ``kernel_correction`` and its ``kernel_correction_source``
+    for that stencil and shape, and ``residence_time_s`` (the whole table, seconds).
+    :func:`run` adds the per-run entries. Used by ensembles, which have no single run to ask.
+    """
+    corrections = load_kernel_corrections()
+    entry = corrections.entry_for(config.stencil, config.spread.arrival_shape)
+    return {
+        "git_commit": _git_commit(),
+        "versions": {
+            "python": platform.python_version(),
+            "numpy": np.__version__,
+            "scipy": scipy.__version__,
+            "wildfire_sim": __version__,
+        },
+        "rule": config.spread.rule if rule_name is None else rule_name,
+        "stencil": config.stencil,
+        "arrival_shape": config.spread.arrival_shape,
+        "kernel_correction": corrections.value_for(config.stencil, config.spread.arrival_shape),
+        "kernel_correction_source": None if entry is None else entry.source,
+        "residence_time_s": load_residence_times().model_dump(mode="json"),
+    }
+
+
 def run(
     config: ScenarioConfig,
     seed: int | None = None,
@@ -552,7 +580,6 @@ def run(
     thresholds = draw_crossing_thresholds(np.random.default_rng(spread_ss), shape_k, stencil, g.shape)
     suppression_rng = np.random.default_rng(suppression_ss)
     corrections = load_kernel_corrections()
-    correction_entry = corrections.entry_for(config.stencil, shape_k)
     correction = corrections.value_for(config.stencil, shape_k)
     residence = load_residence_times()
 
@@ -582,20 +609,8 @@ def run(
     provenance: dict[str, Any] = {
         "config": config.model_dump(mode="json"),
         "seed": seed,
-        "git_commit": _git_commit(),
-        "versions": {
-            "python": platform.python_version(),
-            "numpy": np.__version__,
-            "scipy": scipy.__version__,
-            "wildfire_sim": __version__,
-        },
-        "rule": type(rule).__name__,
+        **model_provenance(config, type(rule).__name__),
         "grid_from": "config" if grid is None else "argument",
-        "stencil": stencil.size,
-        "arrival_shape": shape_k,
-        "kernel_correction": correction,
-        "kernel_correction_source": None if correction_entry is None else correction_entry.source,
-        "residence_time_s": residence.model_dump(mode="json"),
         "max_source_age_s": max_source_age_s,
         "n_hooks": len(hooks),
         "n_steps": steps_done,
@@ -632,5 +647,6 @@ __all__ = [
     "StepHook",
     "load_kernel_corrections",
     "load_residence_times",
+    "model_provenance",
     "run",
 ]

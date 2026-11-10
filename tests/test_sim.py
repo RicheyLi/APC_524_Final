@@ -564,3 +564,25 @@ def test_uses_custom_rule_and_retardant() -> None:
     cfg = make_config(shape=(5, 21), cells=[(2, 0)], duration=7200.0, arrival_shape=DETERMINISTIC)
     arr = run(cfg, rule=UniformRule(0.2), grid=grid).arrival_time
     assert arr[2, 10] == pytest.approx(10 * 30.0 / 0.1, rel=0.01)
+
+
+def test_model_provenance_matches_a_run() -> None:
+    """The shared provenance helper returns exactly the code/kernel entries a run records."""
+    import json
+
+    from wildfire_sim.sim import model_provenance
+
+    cfg = ScenarioConfig.model_validate(
+        {
+            "name": "prov",
+            "grid": {"kind": "synthetic", "generator": "flat_uniform", "shape": [11, 11]},
+            "spread": {"rule": "constant", "params": {"ros": 0.2}},
+            "ignition": {"center": True},
+            "duration_s": 60.0,
+        }
+    )
+    shared = model_provenance(cfg, "ConstantRule")
+    json.dumps(shared)
+    recorded = run(cfg, seed=0).provenance
+    assert {key: recorded[key] for key in shared} == shared
+    assert model_provenance(cfg)["rule"] == "constant"

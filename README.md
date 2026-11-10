@@ -31,12 +31,20 @@ uv sync --extra all     # + numba, geospatial stack, pyrothermel, optuna
 
 ## Usage
 
+Run from the repository root; outputs go to `runs/` unless you pass `--out`.
+
 ```sh
 uv run wildfire-sim --help
 uv run wildfire-sim validate configs/scenarios/flat_no_wind.yaml
+uv run wildfire-sim run configs/scenarios/steady_wind.yaml --seed 1 --out runs/wind --gif
+uv run wildfire-sim ensemble configs/scenarios/steady_wind.yaml --n 20 --workers 2
+uv run wildfire-sim plot runs/wind
 ```
 
-Running scenarios, ensembles and plots arrives with Phase 1 (see the plan).
+`run` writes the final grid, arrival times, an event log, a summary, provenance and maps;
+`ensemble` writes a burn-probability map and burned-area statistics; `plot` redraws the
+figures of a saved run or ensemble. See [docs/usage.md](docs/usage.md) for every option,
+the output files and the Python API.
 
 ## Development
 

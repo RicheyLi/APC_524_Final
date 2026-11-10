@@ -137,7 +137,7 @@ def draw_factors(rng: np.random.Generator, ensemble: EnsembleConfig) -> dict[str
     z = rng.standard_normal(4)
     return {
         "wind_speed_factor": math.exp(ensemble.wind_speed_sigma_frac * float(z[0])),
-        "wind_direction_offset_deg": ensemble.wind_direction_sigma_deg * float(z[1]),
+        "wind_direction_offset_deg": ensemble.wind_direction_sigma_deg * float(z[1]) + 0.0,  # + 0.0: no -0.0
         "moisture_factor": math.exp(ensemble.moisture_sigma_frac * float(z[2])),
         "ros_multiplier": math.exp(ensemble.ros_multiplier_sigma_frac * float(z[3])),
     }
