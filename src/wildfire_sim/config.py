@@ -10,6 +10,7 @@ fine; renaming or removing fields is not.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -114,10 +115,12 @@ class SpreadConfig(_Strict):
             ge=1,
             description=(
                 "gamma shape k of the cell-to-cell crossing time, passed to "
-                "spread.base.ignition_probability; 1 = memoryless (front runs 3-4.5x too fast)"
+                "spread.base.draw_crossing_thresholds. 200 (default) is nearly deterministic, so the "
+                "front-speed correction is close to 1 and elongated fires keep their shape; 1 is "
+                "memoryless (front runs several times too fast)"
             ),
         ),
-    ] = 20.0
+    ] = 200.0
 
 
 class IgnitionConfig(_Strict):
@@ -173,6 +176,63 @@ class CostConfig(_Strict):
     usd_per_ha_wildland: CitedValue
 
 
+# ----------------------------------------------------------------------------- ensemble
+
+
+class EnsembleConfig(_Strict):
+    """Monte Carlo ensemble settings (WP 1.6, docs/plan.md section 6).
+
+    Each run of an ensemble draws one value of every factor below and applies it to the whole
+    run (every point of the weather series), so a run is "a bit windier", not noisy in time.
+    The defaults perturb nothing, so a scenario without an ``ensemble`` section behaves as
+    before. How the draws are made is documented in :mod:`wildfire_sim.ensemble`.
+    """
+
+    wind_speed_sigma_frac: Annotated[
+        float,
+        Field(ge=0, description="sigma of ln(factor) for a log-normal wind-speed factor (median 1), dimensionless"),
+    ] = 0.0
+    wind_direction_sigma_deg: Annotated[
+        float,
+        Field(ge=0, description="standard deviation of a normal offset added to wind direction, degrees"),
+    ] = 0.0
+    moisture_sigma_frac: Annotated[
+        float,
+        Field(
+            ge=0,
+            description="sigma of ln(factor) for a log-normal factor (median 1) on all dead and live fuel "
+            "moistures together, dimensionless",
+        ),
+    ] = 0.0
+    ros_multiplier_sigma_frac: Annotated[
+        float,
+        Field(
+            ge=0, description="sigma of ln(factor) for a log-normal rate-of-spread multiplier (median 1), dimensionless"
+        ),
+    ] = 0.0
+    ignition_jitter_cells: Annotated[
+        int,
+        Field(
+            ge=0,
+            description="each ignition cell moves by a uniform integer offset in [-j, j] cells in row and column; "
+            "kept inside the grid and on burnable fuel",
+        ),
+    ] = 0
+    n_runs: Annotated[int, Field(ge=1, description="default number of runs, for the CLI")] = 50
+    base_seed: Annotated[int, Field(ge=0, description="default base seed of the ensemble, for the CLI")] = 0
+
+    @property
+    def perturbs(self) -> bool:
+        """True if any input perturbation is switched on."""
+        return (
+            self.wind_speed_sigma_frac > 0
+            or self.wind_direction_sigma_deg > 0
+            or self.moisture_sigma_frac > 0
+            or self.ros_multiplier_sigma_frac > 0
+            or self.ignition_jitter_cells > 0
+        )
+
+
 # ----------------------------------------------------------------------------- scenario
 
 
@@ -188,8 +248,16 @@ class ScenarioConfig(_Strict):
     suppression: SuppressionConfig = Field(default_factory=SuppressionConfig)
     dt_s: Annotated[float, Field(gt=0, description="time step, s")] = 30.0
     duration_s: Annotated[float, Field(gt=0, description="simulated length of the run, s")] = 3600.0
-    stencil: StencilSize = 8
+    stencil: StencilSize = 16
     seed: Annotated[int, Field(ge=0, description="default seed; the CLI/ensemble may override")] = 0
+    ensemble: EnsembleConfig = Field(default_factory=EnsembleConfig)
+    engine: Literal["numpy", "numba"] = Field(
+        default="numpy",
+        description=(
+            "per-step fire engine: 'numpy' (reference, always available) or 'numba' (compiled, same "
+            "results to floating-point rounding; needs the 'fast' extra: uv sync --extra fast)"
+        ),
+    )
 
     @model_validator(mode="after")
     def _check_times(self) -> ScenarioConfig:
@@ -224,6 +292,24 @@ class ScenarioConfig(_Strict):
 
 
 # ----------------------------------------------------------------------------- loading
+
+
+def configs_dir() -> Path:
+    """Directory holding the cited parameter tables (``alexandridis.yaml``, ``costs.yaml``, ...).
+
+    The environment variable ``WILDFIRE_SIM_CONFIGS`` overrides the default, which is the
+    ``configs/`` directory of the repository checkout this package is installed from.
+
+    Raises:
+        FileNotFoundError: The directory does not exist.
+    """
+    override = os.environ.get("WILDFIRE_SIM_CONFIGS")
+    path = Path(override) if override else Path(__file__).resolve().parents[2] / "configs"
+    if not path.is_dir():
+        raise FileNotFoundError(
+            f"configs directory {path} not found; run from a repository checkout or set WILDFIRE_SIM_CONFIGS"
+        )
+    return path
 
 
 def load_yaml[T: BaseModel](path: str | Path, model: type[T]) -> T:

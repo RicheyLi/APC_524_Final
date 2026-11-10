@@ -1,0 +1,24 @@
+# Golden-run scenario (WP 1.9): compact version of configs/scenarios/river_barrier.yaml on the
+# 16-neighbour stencil. A one-cell-wide river at column 25 must stop the fire, knight moves
+# included; the fire burns everything west of it and goes out before duration_s.
+name: golden_river_barrier
+description: 31 x 41 cells of fuel model 1 at 30 m cut by a 1-cell river at column 25, 16-neighbour stencil.
+grid:
+  kind: synthetic
+  generator: with_river
+  shape: [31, 41]
+  dx: 30.0
+  fuel_model: 1
+  params:
+    col: 25
+    width: 1
+spread:
+  rule: constant
+  params:
+    ros: 0.2
+ignition:
+  cells: [[15, 10]]
+dt_s: 30.0
+duration_s: 9000.0
+stencil: 16
+seed: 524

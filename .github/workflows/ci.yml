@@ -117,10 +117,45 @@ jobs:
           uv run coverage report | tee -a $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
+  fast-engine:
+    name: Numba engine parity and benchmark
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Engine parity tests (numba vs numpy)
+        run: uv run --python=3.12 --extra fast pytest -q tests/test_sim_fast.py
+
+      # Fails on a slowdown of more than 20 % in run time normalised by a calibration loop
+      # timed in the same process (machine-independent; see scripts/bench.py and docs/performance.md).
+      # Not blocking yet: the committed baseline was measured on a laptop, and the calibration
+      # is not exact across CPU generations. Make it blocking once the baseline has been
+      # refreshed from this job's bench.json artifact.
+      - name: Benchmark check against the committed baseline
+        continue-on-error: true
+        run: >-
+          uv run --python=3.12 --extra fast python scripts/bench.py
+          --workloads reference --repeats 5 --json bench.json
+          --check scripts/bench_baseline.json --tolerance 0.2
+
+      - name: Upload benchmark numbers
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: bench
+          path: bench.json
+          if-no-files-found: ignore
+
   all-checks-pass:
     name: All checks pass
     if: always()
-    needs: [lint, type-check, test, coverage]
+    needs: [lint, type-check, test, coverage, fast-engine]
     runs-on: ubuntu-latest
     steps:
       - name: Check job results

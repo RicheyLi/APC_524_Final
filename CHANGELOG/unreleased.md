@@ -21,9 +21,22 @@ These are the changes that will go out in the next release.
   - `make_spread_rule` imports `wildfire_sim.spread.<name>` on first use.
   - `link_rate_of_spread`: harmonic mean of source and target cell rates per link, so fire does not enter slow fuel or retardant at the fast cell's speed.
   - `draw_crossing_thresholds`: one gamma threshold per link per run, the form the simulator will use (exact under changing rates, common random numbers across policies).
+- Phase 1 (simulator core, see `docs/plan.md` section 12):
+  - `wildfire_sim.config.configs_dir()` locates the cited parameter tables in `configs/`.
+  - WP 1.1: `wildfire_sim.spread.constant.ConstantRule`, registered as `constant`.
+  - WP 1.2: `wildfire_sim.spread.alexandridis.AlexandridisRule`, registered as `alexandridis` (wind and slope factors of Alexandridis et al. 2008 as a rate), with cited constants and the fuel-model mapping in `configs/alexandridis.yaml`; `steady_wind.yaml` now uses it.
+  - WP 1.5: `wildfire_sim.viz`: state, arrival-time and burn-probability maps and GIF animation, off-screen, with a colour-blind-safe palette.
+  - WP 1.3: `wildfire_sim.sim.run` and `RunResult`: per-link threshold kernel with interpolated arrival times and an exact in-step cascade, blocked links through barriers, two-clock burn-out, step hooks on a separate random stream, run provenance; `configs/residence_time.yaml` and `configs/kernel_correction.yaml` (placeholders).
+  - WP 1.6: `wildfire_sim.ensemble.run_ensemble` (seeded, optionally parallel, bit-identical serial and parallel) with per-run input perturbations from the new optional `ensemble` scenario section; `running_mean`, `mean_ci`, `runs_for_precision`.
+  - WP 1.8: `wildfire-sim run`, `ensemble` and `plot` commands; `wildfire_sim.io` writes and reads run and ensemble directories (arrays, events, strict-JSON summary and provenance, resolved scenario, figures). `sim.model_provenance` gives the code and kernel provenance shared by all runs of a scenario.
+  - WP 1.4: `tests/test_physics.py` (circularity, ellipse shape, dt independence, barriers, front speed, slow-fuel strip, wind shift); measured front-speed corrections in `configs/kernel_correction.yaml` from `scripts/kernel_front_speed.py`; `docs/lattice_study.md` with `scripts/lattice_study.py`. The study shows neither stencil reproduces an ellipse to 10 % beyond a length-to-breadth ratio of about 1.5; the unmet target is recorded as a strict expected failure.
+  - WP 1.9: Hypothesis property tests of the kernel, grid, simulator, config and ensemble invariants (`tests/test_properties.py`); golden-run regression tests with committed arrival-time arrays and a regeneration script (`tests/golden/`); coverage floor raised from 50 % to 85 % (measured 94 %).
+  - WP 1.7: optional compiled engine `wildfire_sim.sim_fast` selected with the new scenario field `engine: numba` (needs the `fast` extra; bit-identical to the NumPy engine in every tested case, about 8 to 10 times faster); `scripts/bench.py` with a machine-normalised regression check; profile and measured costs in `docs/performance.md`; a CI job for engine parity and the benchmark.
 
 ## Changed
 
+- **Defaults changed after the lattice study:** `ScenarioConfig.stencil` 8 to 16 and `spread.arrival_shape` 20 to 200. Fires keep their shape better under wind (head and flank within 7 % of the analytic ellipse at a length-to-breadth ratio of 1.5 and 13 % at 3) and the front-speed correction is close to 1; runs take about twice as long. Scenario files that do not set these fields give different results; the shipped scenarios now use 16 neighbours and the golden arrays were regenerated.
+- `configs/scenarios/flat_no_wind.yaml`: duration 7200 s to 5400 s so the fire stays inside the grid.
 - `docs/revised_plan.md` merged into `docs/plan.md`. The plan has no schedule: work is ordered by dependencies and judged by undated milestones. A second design review (section 14) strengthened the kernel, Rothermel, data, validation, suppression and testing sections.
 - `ScenarioConfig` rejects ignition cells outside a synthetic grid.
 - `Grid.validate` rejects non-finite static layers and negative asset values.
@@ -36,6 +49,9 @@ These are the changes that will go out in the next release.
 
 ## Fixed
 
+- `ensemble.mean_ci` returned NaN bounds for finite samples near the float64 limit (found by a property test).
+- `link_rate_of_spread`: a knight link (16-neighbour stencil) now uses the harmonic mean over the four cells its segment crosses. Using only the two end cells let fire tunnel through one cell of slow fuel at each edge of a strip (delay 12 % short).
+- `Grid.apply_unburnable` no longer overwrites BURNING or BURNED cells (a fireline placed under a burning cell erased it from the burned area).
 - The memoryless ignition kernel (`p = 1 - exp(-R dt / d)`) moved the fire front 3 to 4.5 times faster than `R` and depended on the time step. It remains available as `arrival_shape = 1` only.
 - `ScenarioConfig.n_steps` lost a step to floating-point rounding (3600 s at 0.1 s gave 35999).
 

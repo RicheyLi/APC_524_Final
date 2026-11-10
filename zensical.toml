@@ -9,6 +9,8 @@ nav = [
   { "Installation" = "installation.md" },
   { "Usage" = "usage.md" },
   { "Project plan" = "plan.md" },
+  { "Lattice study" = "lattice_study.md" },
+  { "Performance" = "performance.md" },
   { "API Reference" = "api.md" },
 ]
 

@@ -156,11 +156,12 @@ class Grid:
         return wildland & has_fuel & ~self.fireline
 
     def apply_unburnable(self) -> None:
-        """Set ``state`` to UNBURNABLE wherever :meth:`burnable_mask` is False.
+        """Set ``state`` to UNBURNABLE wherever :meth:`burnable_mask` is False and the cell is FUEL.
 
-        Idempotent. Call after editing static layers or adding a fireline.
+        Idempotent. Call after editing static layers or adding a fireline. Cells that are
+        already BURNING or BURNED keep their state: a line built under a fire does not unburn it.
         """
-        self.state[~self.burnable_mask()] = int(CellState.UNBURNABLE)
+        self.state[~self.burnable_mask() & (self.state == int(CellState.FUEL))] = int(CellState.UNBURNABLE)
 
     def burning_mask(self) -> BoolArray:
         return self.state == int(CellState.BURNING)

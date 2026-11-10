@@ -1,0 +1,27 @@
+# Golden-run scenario (WP 1.9): compact version of configs/scenarios/flat_no_wind.yaml.
+# Flat uniform grass, no wind, constant rule, 8-neighbour stencil. The fire burns the whole
+# grid and goes out before duration_s, so the stored burned set does not depend on when the
+# run stops.
+name: golden_flat_no_wind
+description: 31 x 41 cells of fuel model 1 at 30 m, ignited at the centre, no wind, constant rule.
+grid:
+  kind: synthetic
+  generator: flat_uniform
+  shape: [31, 41]
+  dx: 30.0
+  fuel_model: 1
+weather:
+  series:
+    - time_s: 0
+      wind_speed: 0.0
+      wind_direction: 0.0
+spread:
+  rule: constant
+  params:
+    ros: 0.2
+ignition:
+  center: true
+dt_s: 30.0
+duration_s: 9000.0
+stencil: 8
+seed: 524

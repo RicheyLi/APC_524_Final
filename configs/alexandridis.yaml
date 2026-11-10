@@ -1,0 +1,142 @@
+# Constants for the Alexandridis et al. (2008) spread rule (WP 1.2).
+# Schema: wildfire_sim.spread.alexandridis.AlexandridisParams
+#
+#   ros_k = ros_base (1 + p_veg)(1 + p_den) p_w(theta_k) p_s(k) (1 - retardant)
+#   p_w   = exp(c1 V) exp(c2 V (cos(theta_k) - 1))     V: 10 m wind speed, m/s
+#   p_s   = exp(a theta_s)                             theta_s: slope angle to the neighbour, degrees
+#
+# Paper: Alexandridis, A., Vakalis, D., Siettos, C. I. & Bafas, G. V. (2008). A cellular automata
+# model for forest fire spread prediction: The case of the wildfire that swept through Spetses
+# Island in 1990. Applied Mathematics and Computation 204, 191-201.
+
+ros_base:
+  value: 0.1
+  units: m/s
+  source: "calibration parameter; placeholder until WP 3.1"
+  note: >-
+    Replaces the paper's base ignition probability p_h, which is a per-step probability, with a
+    base rate of spread so the rule fits the gamma crossing-time kernel. Open grass on the
+    synthetic grids (agricultural, sparse) spreads at ros_base * 0.7 * 0.6 = 0.42 ros_base
+    before wind and slope.
+
+a:
+  value: 0.078
+  units: 1/deg
+  source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (slope coefficient a)"
+  note: "Value transcribed from secondary sources; check against the paper."
+
+c1:
+  value: 0.045
+  units: s/m
+  source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (wind coefficient c1)"
+  note: "Value transcribed from secondary sources; check against the paper."
+
+c2:
+  value: 0.131
+  units: s/m
+  source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (wind coefficient c2)"
+  note: "Value transcribed from secondary sources; check against the paper."
+
+# Vegetation-type factor p_veg (dimensionless; must be > -1).
+p_veg:
+  agricultural:
+    value: -0.3
+    units: dimensionless
+    source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_veg, agricultural areas)"
+    note: "Value transcribed from secondary sources; check against the paper."
+  thickets:
+    value: 0.0
+    units: dimensionless
+    source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_veg, thickets)"
+    note: "Value transcribed from secondary sources; check against the paper."
+  forest:
+    value: 0.4
+    units: dimensionless
+    source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_veg, hallepo-pine / dense forest)"
+    note: "Value transcribed from secondary sources; check against the paper."
+
+# Vegetation-density factor p_den (dimensionless; must be > -1).
+p_den:
+  sparse:
+    value: -0.4
+    units: dimensionless
+    source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_den, sparse)"
+    note: "Value transcribed from secondary sources; check against the paper."
+  normal:
+    value: 0.0
+    units: dimensionless
+    source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_den, normal)"
+    note: "Value transcribed from secondary sources; check against the paper."
+  dense:
+    value: 0.3
+    units: dimensionless
+    source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_den, dense)"
+    note: "Value transcribed from secondary sources; check against the paper."
+
+# Fuel model number (Grid.fuel_model) -> the paper's vegetation type. Inclusive ranges, no overlaps.
+# A burnable cell whose fuel model is in no range is an error.
+vegetation_map:
+  source: "team modelling assumption (WP 1.2); fuel model codes from Scott & Burgan (2005) and Anderson (1982)"
+  note: >-
+    The paper has three vegetation types; we assign each fuel model family to the closest one:
+    grass-dominated beds behave like the paper's agricultural land, shrub beds like thickets, and
+    timber understory, litter and slash like forest. Revisit if calibration (WP 3.1) disagrees.
+  ranges:
+    - first: 1
+      last: 3
+      vegetation: agricultural
+      note: "Anderson 13 grass models 1-3 (synthetic test grids use model 1)"
+    - first: 4
+      last: 7
+      vegetation: thickets
+      note: "Anderson 13 shrub models 4-7"
+    - first: 8
+      last: 13
+      vegetation: forest
+      note: "Anderson 13 timber litter 8-10 and logging slash 11-13"
+    - first: 91
+      last: 99
+      vegetation: agricultural
+      note: >-
+        Scott & Burgan NB1-NB9 are non-burnable and normally carry fuel_model 0 after the data
+        pipeline; if one is left burnable (NB3 is agricultural land) it is treated as agricultural.
+    - first: 101
+      last: 109
+      vegetation: agricultural
+      note: "Scott & Burgan GR1-GR9 grass"
+    - first: 121
+      last: 124
+      vegetation: thickets
+      note: "Scott & Burgan GS1-GS4 grass-shrub"
+    - first: 141
+      last: 149
+      vegetation: thickets
+      note: "Scott & Burgan SH1-SH9 shrub"
+    - first: 161
+      last: 165
+      vegetation: forest
+      note: "Scott & Burgan TU1-TU5 timber-understory"
+    - first: 181
+      last: 189
+      vegetation: forest
+      note: "Scott & Burgan TL1-TL9 timber litter"
+    - first: 201
+      last: 204
+      vegetation: forest
+      note: "Scott & Burgan SB1-SB4 slash-blowdown"
+
+# Grid.canopy_cover (fraction in [0, 1]) -> the paper's density class:
+#   sparse if canopy_cover < sparse_below; dense if canopy_cover >= dense_at_or_above; else normal.
+density_map:
+  sparse_below:
+    value: 0.2
+    units: fraction
+    source: "team modelling assumption (WP 1.2)"
+    note: >-
+      The paper's density classes come from land-cover maps; we proxy them with canopy cover.
+      Grass and shrub cells with no canopy therefore count as sparse.
+  dense_at_or_above:
+    value: 0.6
+    units: fraction
+    source: "team modelling assumption (WP 1.2)"
+    note: "Closed canopy (>= 60 % cover) counts as dense vegetation."

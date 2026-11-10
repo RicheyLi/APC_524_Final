@@ -143,3 +143,15 @@ def test_validate_rejects_negative_asset_value(small_grid: Grid) -> None:
     small_grid.asset_value[0, 0] = -1.0
     with pytest.raises(ValueError, match="asset_value"):
         small_grid.validate()
+
+
+def test_apply_unburnable_leaves_burning_and_burned_cells_alone(small_grid: Grid) -> None:
+    """A fireline or land-use edit under a cell that has already caught fire must not erase that fact."""
+    small_grid.state[3, 3] = int(CellState.BURNING)
+    small_grid.state[4, 4] = int(CellState.BURNED)
+    small_grid.fireline[3:6, 3:6] = True
+    small_grid.apply_unburnable()
+    assert small_grid.state[3, 3] == CellState.BURNING
+    assert small_grid.state[4, 4] == CellState.BURNED
+    assert small_grid.state[5, 5] == CellState.UNBURNABLE
+    assert small_grid.burned_area_m2() == 2 * 30.0 * 30.0

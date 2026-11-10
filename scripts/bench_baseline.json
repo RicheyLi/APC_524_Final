@@ -1,0 +1,113 @@
+{
+  "machine": {
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+    "processor": "Intel(R) Core(TM) Ultra 7 256V",
+    "python": "3.12.16",
+    "numpy": "2.5.4",
+    "numba": "0.68.0"
+  },
+  "repeats": 5,
+  "calibration_s": {
+    "numpy": 0.09087390700005926,
+    "numba": 0.021798652999905244
+  },
+  "results": [
+    {
+      "workload": "reference",
+      "engine": "numpy",
+      "stencil": 8,
+      "min_s": 1.0983316039998954,
+      "median_s": 1.1076483980000376,
+      "normalised": 12.188849743186625
+    },
+    {
+      "workload": "reference",
+      "engine": "numpy",
+      "stencil": 16,
+      "min_s": 2.3778034219999427,
+      "median_s": 2.5008727570000246,
+      "normalised": 27.520251297200126
+    },
+    {
+      "workload": "wind",
+      "engine": "numpy",
+      "stencil": 8,
+      "min_s": 1.0603707480000821,
+      "median_s": 1.1045131619999893,
+      "normalised": 12.154348794525463
+    },
+    {
+      "workload": "wind",
+      "engine": "numpy",
+      "stencil": 16,
+      "min_s": 2.2565801240000383,
+      "median_s": 2.35526314599997,
+      "normalised": 25.917925439240047
+    },
+    {
+      "workload": "small",
+      "engine": "numpy",
+      "stencil": 8,
+      "min_s": 0.1318265679999513,
+      "median_s": 0.13299150099999224,
+      "normalised": 1.4634729086744946
+    },
+    {
+      "workload": "small",
+      "engine": "numpy",
+      "stencil": 16,
+      "min_s": 0.21875912199993763,
+      "median_s": 0.22186589000000367,
+      "normalised": 2.4414696949241876
+    },
+    {
+      "workload": "reference",
+      "engine": "numba",
+      "stencil": 8,
+      "min_s": 0.1268140150000363,
+      "median_s": 0.13743841099994825,
+      "normalised": 6.304903839725586
+    },
+    {
+      "workload": "reference",
+      "engine": "numba",
+      "stencil": 16,
+      "min_s": 0.2173792889999504,
+      "median_s": 0.23443405599994094,
+      "normalised": 10.754520290816135
+    },
+    {
+      "workload": "wind",
+      "engine": "numba",
+      "stencil": 8,
+      "min_s": 0.11206560100004026,
+      "median_s": 0.11851790200000778,
+      "normalised": 5.436936952045751
+    },
+    {
+      "workload": "wind",
+      "engine": "numba",
+      "stencil": 16,
+      "min_s": 0.19607732999998007,
+      "median_s": 0.19929096600003504,
+      "normalised": 9.142352327958124
+    },
+    {
+      "workload": "small",
+      "engine": "numba",
+      "stencil": 8,
+      "min_s": 0.02088968299995031,
+      "median_s": 0.023041643000055956,
+      "normalised": 1.0570214132109959
+    },
+    {
+      "workload": "small",
+      "engine": "numba",
+      "stencil": 16,
+      "min_s": 0.02595913400000427,
+      "median_s": 0.0260039309999911,
+      "normalised": 1.1929145805524835
+    }
+  ],
+  "numba_compile_s": 2.4050501920000897
+}
