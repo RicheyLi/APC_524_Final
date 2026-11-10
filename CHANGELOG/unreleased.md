@@ -42,6 +42,7 @@ These are the changes that will go out in the next release.
 
 ## Fixed
 
+- `Grid.apply_unburnable` no longer overwrites BURNING or BURNED cells (a fireline placed under a burning cell erased it from the burned area).
 - The memoryless ignition kernel (`p = 1 - exp(-R dt / d)`) moved the fire front 3 to 4.5 times faster than `R` and depended on the time step. It remains available as `arrival_shape = 1` only.
 - `ScenarioConfig.n_steps` lost a step to floating-point rounding (3600 s at 0.1 s gave 35999).
 

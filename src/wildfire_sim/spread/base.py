@@ -70,8 +70,10 @@ class SpreadRule(Protocol):
         """Compute directional rate of spread for every cell.
 
         Args:
-            grid: Current grid. Rules read static layers, ``retardant`` and ``state``; they
-                must not modify the grid.
+            grid: Current grid. Rules read the static layers, ``fireline`` and ``retardant``;
+                they must not modify the grid, and their output must not depend on ``state``,
+                ``burn_timer``, ``intensity`` or ``arrival_time``: the simulator caches the
+                output and recomputes it only when the weather or a suppression layer changes.
             weather: Weather in force this step.
             stencil: Neighbour directions; ``ros`` has one slab per direction.
 
