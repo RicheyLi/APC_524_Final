@@ -25,6 +25,7 @@ These are the changes that will go out in the next release.
   - `wildfire_sim.config.configs_dir()` locates the cited parameter tables in `configs/`.
   - WP 1.1: `wildfire_sim.spread.constant.ConstantRule`, registered as `constant`.
   - WP 1.2: `wildfire_sim.spread.alexandridis.AlexandridisRule`, registered as `alexandridis` (wind and slope factors of Alexandridis et al. 2008 as a rate), with cited constants and the fuel-model mapping in `configs/alexandridis.yaml`; `steady_wind.yaml` now uses it.
+  - WP 1.5: `wildfire_sim.viz`: state, arrival-time and burn-probability maps and GIF animation, off-screen, with a colour-blind-safe palette.
 
 ## Changed
 
