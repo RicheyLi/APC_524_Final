@@ -152,3 +152,93 @@ def test_registry_roundtrip(small_grid: Grid, calm_weather: Weather) -> None:
         spread.register(name)(_DummyRule)
     with pytest.raises(KeyError):
         spread.make_spread_rule("no_such_rule")
+
+
+# ----------------------------------------------------------------------------- gamma arrival kernel
+
+
+def test_ignition_probability_shape_one_ignores_age() -> None:
+    """shape = 1 is the memoryless kernel: the source cell's age must not matter."""
+    ros = np.full((8, 3, 3), 0.5)
+    age = np.full((3, 3), 400.0)
+    base = ignition_probability(ros, 30.0, 30.0, STENCIL_8)
+    np.testing.assert_allclose(ignition_probability(ros, 30.0, 30.0, STENCIL_8, age=age, shape=1.0), base)
+
+
+def test_ignition_probability_shape_needs_valid_age() -> None:
+    ros = np.full((8, 3, 3), 0.5)
+    with pytest.raises(ValueError, match="age"):
+        ignition_probability(ros, 30.0, 30.0, STENCIL_8, shape=10.0)
+    with pytest.raises(ValueError, match="shape"):
+        ignition_probability(ros, 30.0, 30.0, STENCIL_8, age=np.zeros((3, 3)), shape=0.5)
+    with pytest.raises(ValueError, match="age"):
+        ignition_probability(ros, 30.0, 30.0, STENCIL_8, age=np.zeros((2, 2)), shape=10.0)
+    with pytest.raises(ValueError, match="age"):
+        ignition_probability(ros, 30.0, 30.0, STENCIL_8, age=np.full((3, 3), -1.0), shape=10.0)
+
+
+def test_ignition_probability_gamma_hazard_rises_with_age() -> None:
+    """For shape > 1 a freshly ignited cell rarely ignites a neighbour; an old one almost surely does."""
+    ros = np.full((8, 1, 1), 0.2)  # mean orthogonal arrival = 30 / 0.2 = 150 s
+    young = ignition_probability(ros, 15.0, 30.0, STENCIL_8, age=np.zeros((1, 1)), shape=20.0)
+    mid = ignition_probability(ros, 15.0, 30.0, STENCIL_8, age=np.full((1, 1), 150.0), shape=20.0)
+    old = ignition_probability(ros, 15.0, 30.0, STENCIL_8, age=np.full((1, 1), 3000.0), shape=20.0)
+    assert young[0, 0, 0] < 1e-6
+    assert young[0, 0, 0] < mid[0, 0, 0] < old[0, 0, 0] <= 1.0
+    assert young.min() >= 0.0 and old.max() <= 1.0
+    # zero ros never ignites, whatever the age
+    zero = ignition_probability(np.zeros((8, 1, 1)), 15.0, 30.0, STENCIL_8, age=np.full((1, 1), 1e6), shape=20.0)
+    assert zero.max() == 0.0
+
+
+@pytest.mark.parametrize("shape", [1.0, 5.0, 20.0])
+@pytest.mark.parametrize("dt", [30.0, 7.5])
+def test_ignition_probability_mean_arrival_is_d_over_r(shape: float, dt: float) -> None:
+    """Stepping the kernel reproduces mean arrival time d / R for any time step (to within dt).
+
+    Survival to the end of step n is the product of (1 - p) over the steps so far. Arrivals are
+    recorded at step ends, so the mean discrete arrival time must lie in [d/R, d/R + dt].
+    """
+    ros_value, dx = 0.2, 30.0
+    ros = np.full((8, 1, 1), ros_value)
+    survive, mean, t = 1.0, 0.0, 0.0
+    while t < 3000.0:
+        p = ignition_probability(ros, dt, dx, STENCIL_8, age=np.full((1, 1), t), shape=shape)[0, 0, 0]
+        t += dt
+        mean += t * survive * p
+        survive *= 1.0 - p
+    assert survive < 1e-6
+    assert dx / ros_value <= mean <= dx / ros_value + dt
+
+
+def test_ignition_probability_gamma_is_dt_consistent() -> None:
+    """Two half steps leave the same survival probability as one full step."""
+    ros = np.full((8, 1, 1), 0.2)
+    age = np.full((1, 1), 100.0)
+    full = ignition_probability(ros, 30.0, 30.0, STENCIL_8, age=age, shape=10.0)
+    half1 = ignition_probability(ros, 15.0, 30.0, STENCIL_8, age=age, shape=10.0)
+    half2 = ignition_probability(ros, 15.0, 30.0, STENCIL_8, age=age + 15.0, shape=10.0)
+    np.testing.assert_allclose(1 - full, (1 - half1) * (1 - half2), rtol=1e-9)
+
+
+# ----------------------------------------------------------------------------- registry
+
+
+def test_make_spread_rule_imports_rule_module_lazily(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A rule whose module has not been imported yet is found as ``wildfire_sim.spread.<name>``."""
+    name = "_lazy_rule"
+
+    def fake_import(modname: str) -> object:
+        if modname == f"wildfire_sim.spread.{name}":
+            spread.register(name)(_DummyRule)
+            return object()
+        raise ModuleNotFoundError(name=modname)
+
+    monkeypatch.setattr(spread.importlib, "import_module", fake_import)
+    try:
+        rule = spread.make_spread_rule(name, ros=2.0)
+        assert isinstance(rule, _DummyRule)
+        with pytest.raises(KeyError, match="unknown spread rule"):
+            spread.make_spread_rule("_no_such_rule")
+    finally:
+        spread._REGISTRY.pop(name, None)

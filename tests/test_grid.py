@@ -130,3 +130,16 @@ def test_weather_series_lookup() -> None:
         WeatherSeries(times_s=(10.0,), values=(a,))
     with pytest.raises(ValueError):
         WeatherSeries(times_s=(0.0, 0.0), values=(a, b))
+
+
+@pytest.mark.parametrize("layer", ["elevation", "slope", "asset_value", "retardant", "canopy_cover", "aspect"])
+def test_validate_rejects_non_finite_layers(small_grid: Grid, layer: str) -> None:
+    getattr(small_grid, layer)[0, 0] = np.nan
+    with pytest.raises(ValueError, match=layer):
+        small_grid.validate()
+
+
+def test_validate_rejects_negative_asset_value(small_grid: Grid) -> None:
+    small_grid.asset_value[0, 0] = -1.0
+    with pytest.raises(ValueError, match="asset_value"):
+        small_grid.validate()

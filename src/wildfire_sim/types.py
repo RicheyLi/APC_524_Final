@@ -137,7 +137,7 @@ STENCIL_16: Stencil = _make_stencil(
 )
 """Moore neighbourhood plus the eight knight-move directions, ordered clockwise from north.
 
-Reduces the octagonal bias of the 8-neighbour CA (see docs/revised_plan.md, critique item 4).
+Reduces the octagonal bias of the 8-neighbour CA (see docs/plan.md, "Why the design looks like this", item 4).
 """
 
 

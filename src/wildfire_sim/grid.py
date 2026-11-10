@@ -127,6 +127,11 @@ class Grid:
                 raise ValueError(f"layer {name!r} has dtype {arr.dtype}, expected {np.dtype(dtype)}")
         if self.dx <= 0:
             raise ValueError("dx must be positive")
+        for name in ("canopy_cover", "elevation", "slope", "aspect", "asset_value", "retardant"):
+            if not np.all(np.isfinite(getattr(self, name))):
+                raise ValueError(f"layer {name!r} must be finite everywhere")
+        if np.any(self.asset_value < 0):
+            raise ValueError("asset_value must be >= 0")
         if not (np.all(self.canopy_cover >= 0) and np.all(self.canopy_cover <= 1)):
             raise ValueError("canopy_cover must lie in [0, 1]")
         if np.any(self.slope < 0):

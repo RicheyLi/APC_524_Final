@@ -3,7 +3,8 @@
 Every spread rule (constant, Alexandridis, Rothermel) implements :class:`SpreadRule`: given the
 grid and current weather it returns a directional rate of spread for every cell. The
 simulator then turns rates into per-step ignition probabilities with
-:func:`ignition_probability` and combines contributions from burning neighbours with
+:func:`ignition_probability` (gamma-distributed crossing times with mean ``d / R``) and
+combines contributions from burning neighbours with
 :func:`neighbour_ignition_probability`. Rules never draw random numbers.
 
 This module is a frozen contract (see CONTRIBUTING.md).
@@ -15,6 +16,7 @@ from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 import numpy as np
+from scipy.special import gammaincc
 
 from wildfire_sim.grid import Grid, Weather
 from wildfire_sim.types import BoolArray, FloatArray, Stencil
@@ -74,28 +76,71 @@ class SpreadRule(Protocol):
         ...
 
 
-def ignition_probability(ros: FloatArray, dt: float, dx: float, stencil: Stencil) -> FloatArray:
+def ignition_probability(
+    ros: FloatArray,
+    dt: float,
+    dx: float,
+    stencil: Stencil,
+    *,
+    age: FloatArray | None = None,
+    shape: float = 1.0,
+) -> FloatArray:
     """Per-step probability that a burning cell ignites each neighbour.
 
-    Treats the arrival as a Poisson process with mean arrival time ``d / R``:
+    The time fire takes to cross from cell ``i`` to neighbour ``j`` is a gamma-distributed
+    random variable with mean ``d / R`` and shape parameter ``shape`` (coefficient of variation
+    ``1 / sqrt(shape)``). The probability returned for a step is the conditional probability
+    that the arrival falls in ``[age, age + dt)`` given that it has not happened by ``age``:
 
-    .. math:: p_{ij} = 1 - \\exp(-R_{ij}\\, \\Delta t / d_{ij})
+    .. math:: p_{ij} = 1 - \\frac{S(a_i + \\Delta t)}{S(a_i)}, \\qquad
+              S(t) = Q\\!\\left(k,\\; k\\, R_{ij}\\, t / d_{ij}\\right)
 
-    so the expected arrival time is ``d / R`` regardless of ``dt`` (for ``p`` well below 1).
+    where ``Q`` is the regularized upper incomplete gamma function, ``k`` is ``shape`` and
+    ``a_i`` is the time since cell ``i`` ignited. Because the survival probabilities of
+    successive steps multiply to ``S``, the arrival-time distribution does not depend on
+    ``dt`` (arrivals are recorded at step ends, which adds at most ``dt`` to the mean).
+
+    With ``shape = 1`` the arrival is exponential and this reduces to the memoryless form
+    ``p = 1 - exp(-R dt / d)``, for which ``age`` is not needed. **Do not use ``shape = 1`` for
+    quantitative runs:** on a lattice the front follows the fastest of many random paths, so a
+    memoryless kernel spreads 3 to 4.5 times faster than ``R`` and the speed-up grows as ``dt``
+    shrinks. With ``shape = 20`` the measured front speed is within about 10 % of ``R`` on the
+    8-neighbour stencil (see the kernel section of docs/plan.md).
 
     Args:
-        ros: ``(K, H, W)`` rate of spread, m/s (from :class:`SpreadOutput`).
+        ros: ``(K, H, W)`` rate of spread, m/s (from :class:`SpreadOutput`). Taken as constant
+            over the life of the source cell; the simulator passes the current value.
         dt: Time step, s.
         dx: Cell size, m.
         stencil: Provides the ``(K,)`` distance factors so ``d = dx * distances[k]``.
+        age: ``(H, W)`` time since each source cell ignited, s, >= 0. Values for cells that
+            are not burning are ignored by :func:`neighbour_ignition_probability`. Required
+            when ``shape != 1``.
+        shape: Gamma shape parameter ``k`` (dimensionless), >= 1.
 
     Returns:
-        ``(K, H, W)`` float64 array of probabilities in [0, 1).
+        ``(K, H, W)`` float64 array of probabilities in [0, 1].
     """
     if dt <= 0 or dx <= 0:
         raise ValueError("dt and dx must be positive")
+    if shape < 1:
+        raise ValueError("shape must be >= 1")
     d = (dx * stencil.distances).astype(np.float64)[:, None, None]
-    return 1.0 - np.exp(-np.asarray(ros, dtype=np.float64) * dt / d)
+    rate = np.asarray(ros, dtype=np.float64) / d  # 1/s; mean arrival time is 1 / rate
+    if shape == 1:
+        return 1.0 - np.exp(-rate * dt)
+    if age is None:
+        raise ValueError("age is required when shape != 1")
+    a = np.asarray(age, dtype=np.float64)
+    if a.shape != rate.shape[1:]:
+        raise ValueError(f"age has shape {a.shape}, expected {rate.shape[1:]}")
+    if np.any(a < 0) or not np.all(np.isfinite(a)):
+        raise ValueError("age must be finite and >= 0")
+    survive_now = gammaincc(shape, shape * rate * a[None])
+    survive_next = gammaincc(shape, shape * rate * (a[None] + dt))
+    # Where survival has underflowed to zero the arrival is overdue: ignite with certainty.
+    ratio = np.divide(survive_next, survive_now, out=np.zeros_like(survive_now), where=survive_now > 0)
+    return np.clip(1.0 - ratio, 0.0, 1.0)
 
 
 def neighbour_ignition_probability(p: FloatArray, burning: BoolArray, stencil: Stencil) -> FloatArray:
@@ -136,8 +181,10 @@ def neighbour_ignition_probability(p: FloatArray, burning: BoolArray, stencil: S
 def max_stable_dt(ros_max: float, dx: float, p_max: float = 0.5) -> float:
     """Largest time step keeping the per-step ignition probability below ``p_max``.
 
-    From ``p = 1 - exp(-R dt / dx)``: ``dt = -ln(1 - p_max) * dx / R``. With the default
-    ``p_max = 0.5`` and 1 m/s grass fire on 30 m cells this gives about 21 s.
+    From the memoryless form ``p = 1 - exp(-R dt / dx)``: ``dt = -ln(1 - p_max) * dx / R``.
+    With the default ``p_max = 0.5`` and 1 m/s grass fire on 30 m cells this gives about 21 s.
+    The same bound keeps ``dt`` well under the mean crossing time ``dx / R`` for the gamma
+    kernel (``shape > 1``), so the step-end rounding of arrival times stays small.
 
     Args:
         ros_max: Fastest rate of spread expected in the domain, m/s.

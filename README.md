@@ -6,20 +6,19 @@ resources acting on the grid, and a black-box optimizer that tunes reactive supp
 policies on Monte Carlo ensembles.
 
 * [GitHub](https://github.com/RicheyLi/APC_524_Final) | [Documentation](https://richeyli.github.io/APC_524_Final/)
-* Richey Li and Oscar Ansted, Princeton University
+* Richey Li, Oscar Ansted and Sunny Lin, Princeton University
 * MIT License
 
 ## What it does
 
 * 30 m grid with static (fuel, terrain, land use, assets), weather, state and suppression layers.
-* Swappable spread rules behind one interface: constant probability, Alexandridis et al. (2008), Rothermel.
-* Per-neighbour ignition probability `p = 1 - exp(-R dt / d)` so results do not depend on the time step.
+* Swappable spread rules behind one interface: constant rate, Alexandridis et al. (2008), Rothermel (stretch).
+* Per-neighbour ignition probability from a gamma-distributed crossing time with mean `d / R`, so the front moves at the physical rate of spread and results do not depend on the time step.
 * Suppression tactics (indirect/parallel lines, ground crews, aircraft) with dispatch delays, work rates, costs and line breaching.
 * Ensembles of seeded runs reported as burn-probability maps and cost distributions.
 * Optuna search over parameterized reactive policies; calibration against the 2016 Chimney Fire.
 
-See [docs/plan.md](docs/plan.md) for the dated work plan and
-[docs/revised_plan.md](docs/revised_plan.md) for the model design.
+See [docs/plan.md](docs/plan.md) for the model design, the dated schedule and the work packages.
 
 ## Installation
 
