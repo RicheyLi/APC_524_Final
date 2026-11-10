@@ -108,6 +108,16 @@ class WeatherConfig(_Strict):
 class SpreadConfig(_Strict):
     rule: Annotated[str, Field(min_length=1, description="registered spread rule name")] = "constant"
     params: dict[str, Any] = Field(default_factory=dict, description="keyword arguments for the rule")
+    arrival_shape: Annotated[
+        float,
+        Field(
+            ge=1,
+            description=(
+                "gamma shape k of the cell-to-cell crossing time, passed to "
+                "spread.base.ignition_probability; 1 = memoryless (front runs 3-4.5x too fast)"
+            ),
+        ),
+    ] = 20.0
 
 
 class IgnitionConfig(_Strict):
@@ -134,7 +144,7 @@ class ResourceConfig(_Strict):
     count: Annotated[int, Field(ge=0)] = 0
     dispatch_delay_s: Annotated[float, Field(ge=0)] = 0.0
     work_rate: Annotated[float, Field(ge=0, description="m/h of line, or L per drop")] = 0.0
-    hourly_cost_usd: Annotated[float, Field(ge=0)] = 0.0
+    hourly_cost_usd: Annotated[float, Field(ge=0, description="0 = use the CostConfig rate for this type")] = 0.0
     max_flame_length_m: Annotated[float, Field(ge=0, description="NWCG safety limit; 0 = unlimited")] = 0.0
     source: str = ""
 
@@ -147,10 +157,15 @@ class SuppressionConfig(_Strict):
 
 
 class CostConfig(_Strict):
-    """Unit costs for the objective in docs/revised_plan.md (Strategy search). All cited."""
+    """Unit costs for the objective in docs/plan.md (Strategy search). All cited.
+
+    One hourly rate per :class:`ResourceConfig` type. A resource whose own
+    ``hourly_cost_usd`` is 0 is charged at the rate given here.
+    """
 
     crew_usd_per_h: CitedValue
     dozer_usd_per_h: CitedValue
+    engine_usd_per_h: CitedValue
     aircraft_usd_per_h: CitedValue
     water_usd_per_l: CitedValue
     retardant_usd_per_l: CitedValue
@@ -184,18 +199,48 @@ class ScenarioConfig(_Strict):
             raise ValueError("ignition.time_s must be <= duration_s")
         return self
 
+    @model_validator(mode="after")
+    def _check_ignition_inside_grid(self) -> ScenarioConfig:
+        # Only synthetic grids declare their shape here; cached grids are checked by the simulator.
+        if isinstance(self.grid, SyntheticGridConfig):
+            h, w = self.grid.shape
+            for row, col in self.ignition.cells:
+                if row >= h or col >= w:
+                    raise ValueError(f"ignition cell ({row}, {col}) is outside the grid of shape ({h}, {w})")
+        return self
+
     @property
     def n_steps(self) -> int:
-        return int(self.duration_s // self.dt_s)
+        """Number of whole time steps in the run: ``floor(duration_s / dt_s)``.
+
+        Tolerates floating-point rounding, so ``duration_s = 3600`` with ``dt_s = 0.1`` gives
+        36000 steps, not 35999.
+        """
+        ratio = self.duration_s / self.dt_s
+        nearest = round(ratio)
+        if abs(ratio - nearest) <= 1e-9 * max(1.0, abs(ratio)):
+            return int(nearest)
+        return int(ratio)
 
 
 # ----------------------------------------------------------------------------- loading
 
 
 def load_yaml[T: BaseModel](path: str | Path, model: type[T]) -> T:
-    """Parse ``path`` as YAML and validate it as ``model``."""
+    """Parse ``path`` as YAML and validate it as ``model``.
+
+    Relative paths inside the file (for example ``grid.path``) are left as written and resolve
+    against the current working directory, so run commands from the repository root.
+
+    Raises:
+        ValueError: The file is not valid YAML, is not a mapping, or fails validation
+            (``pydantic.ValidationError`` is a ``ValueError``).
+    """
     with Path(path).open(encoding="utf-8") as fh:
-        raw = yaml.safe_load(fh)
+        try:
+            raw = yaml.safe_load(fh)
+        except yaml.YAMLError as exc:
+            raise ValueError(f"{path}: not valid YAML: {exc}") from exc
     if raw is None:
         raw = {}
     if not isinstance(raw, dict):

@@ -59,7 +59,11 @@ def validate(
     table.add_row("suppression policy", cfg.suppression.policy)
     table.add_row("seed", str(cfg.seed))
     if build:
-        grid = build_grid(cfg.grid)
+        try:
+            grid = build_grid(cfg.grid)
+        except (OSError, TypeError, ValueError, KeyError) as exc:
+            console.print(f"[red]Cannot build grid:[/red] {exc}")
+            raise typer.Exit(code=1) from None
         h, w = grid.shape
         table.add_row("grid shape", f"{h} x {w} cells at {grid.dx:g} m ({grid.n_cells:,} cells)")
         table.add_row("burnable cells", f"{int(grid.burnable_mask().sum()):,}")

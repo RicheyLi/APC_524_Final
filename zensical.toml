@@ -9,7 +9,6 @@ nav = [
   { "Installation" = "installation.md" },
   { "Usage" = "usage.md" },
   { "Project plan" = "plan.md" },
-  { "Revised model plan" = "revised_plan.md" },
   { "API Reference" = "api.md" },
 ]
 

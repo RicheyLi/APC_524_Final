@@ -8,6 +8,10 @@ dozer_usd_per_h:
   value: 300.0
   units: USD/h
   source: "PLACEHOLDER - replace in WP 4.6"
+engine_usd_per_h:
+  value: 250.0
+  units: USD/h
+  source: "PLACEHOLDER - replace in WP 4.6 (Type 3 wildland engine with crew)"
 aircraft_usd_per_h:
   value: 8000.0
   units: USD/h

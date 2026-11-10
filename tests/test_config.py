@@ -89,3 +89,54 @@ def test_load_yaml_rejects_non_mapping(tmp_path: Path) -> None:
     empty.write_text("")
     with pytest.raises(ValidationError):
         load_yaml(empty, ScenarioConfig)
+
+
+@pytest.mark.parametrize(
+    ("dt", "duration", "expected"),
+    [(30.0, 7200.0, 240), (0.1, 3600.0, 36000), (0.3, 0.9, 3), (7.0, 20.0, 2)],
+)
+def test_n_steps_is_robust_to_float_rounding(dt: float, duration: float, expected: int) -> None:
+    cfg = ScenarioConfig.model_validate(
+        {
+            "name": "t",
+            "grid": {"kind": "synthetic", "generator": "flat_uniform"},
+            "ignition": {"center": True},
+            "dt_s": dt,
+            "duration_s": duration,
+        }
+    )
+    assert cfg.n_steps == expected
+
+
+def test_ignition_cells_must_lie_inside_a_synthetic_grid() -> None:
+    raw: dict = {
+        "name": "t",
+        "grid": {"kind": "synthetic", "generator": "flat_uniform", "shape": [11, 21]},
+        "ignition": {"cells": [[10, 20]]},
+    }
+    ScenarioConfig.model_validate(raw)
+    raw["ignition"] = {"cells": [[11, 0]]}
+    with pytest.raises(ValidationError, match="outside the grid"):
+        ScenarioConfig.model_validate(raw)
+
+
+def test_arrival_shape_default_and_bounds() -> None:
+    raw: dict = {"name": "t", "grid": {"kind": "synthetic", "generator": "flat_uniform"}, "ignition": {"center": True}}
+    assert ScenarioConfig.model_validate(raw).spread.arrival_shape == 20.0
+    raw["spread"] = {"arrival_shape": 0.5}
+    with pytest.raises(ValidationError):
+        ScenarioConfig.model_validate(raw)
+
+
+def test_costs_cover_every_resource_type() -> None:
+    """Each ResourceConfig type has an hourly rate in CostConfig."""
+    costs = load_costs(CONFIGS / "costs.yaml")
+    for kind in ("crew", "dozer", "engine", "aircraft"):
+        assert getattr(costs, f"{kind}_usd_per_h").value >= 0
+
+
+def test_load_yaml_reports_malformed_yaml_as_value_error(tmp_path: Path) -> None:
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("name: [unclosed\n")
+    with pytest.raises(ValueError, match="not valid YAML"):
+        load_scenario(bad)
