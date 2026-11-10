@@ -30,6 +30,7 @@ These are the changes that will go out in the next release.
   - WP 1.6: `wildfire_sim.ensemble.run_ensemble` (seeded, optionally parallel, bit-identical serial and parallel) with per-run input perturbations from the new optional `ensemble` scenario section; `running_mean`, `mean_ci`, `runs_for_precision`.
   - WP 1.8: `wildfire-sim run`, `ensemble` and `plot` commands; `wildfire_sim.io` writes and reads run and ensemble directories (arrays, events, strict-JSON summary and provenance, resolved scenario, figures). `sim.model_provenance` gives the code and kernel provenance shared by all runs of a scenario.
   - WP 1.4: `tests/test_physics.py` (circularity, ellipse shape, dt independence, barriers, front speed, slow-fuel strip, wind shift); measured front-speed corrections in `configs/kernel_correction.yaml` from `scripts/kernel_front_speed.py`; `docs/lattice_study.md` with `scripts/lattice_study.py`. The study shows neither stencil reproduces an ellipse to 10 % beyond a length-to-breadth ratio of about 1.5; the unmet target is recorded as a strict expected failure.
+  - WP 1.9: Hypothesis property tests of the kernel, grid, simulator, config and ensemble invariants (`tests/test_properties.py`); golden-run regression tests with committed arrival-time arrays and a regeneration script (`tests/golden/`); coverage floor raised from 50 % to 85 % (measured 94 %).
 
 ## Changed
 
@@ -46,6 +47,7 @@ These are the changes that will go out in the next release.
 
 ## Fixed
 
+- `ensemble.mean_ci` returned NaN bounds for finite samples near the float64 limit (found by a property test).
 - `link_rate_of_spread`: a knight link (16-neighbour stencil) now uses the harmonic mean over the four cells its segment crosses. Using only the two end cells let fire tunnel through one cell of slow fuel at each edge of a strip (delay 12 % short).
 - `Grid.apply_unburnable` no longer overwrites BURNING or BURNED cells (a fireline placed under a burning cell erased it from the burned area).
 - The memoryless ignition kernel (`p = 1 - exp(-R dt / d)`) moved the fire front 3 to 4.5 times faster than `R` and depended on the time step. It remains available as `arrival_shape = 1` only.

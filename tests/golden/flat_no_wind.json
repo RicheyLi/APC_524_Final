@@ -1,0 +1,23 @@
+{
+  "arrival_shape": 20.0,
+  "final_time_s": 4170.0,
+  "git_commit": "1b7f18b24ea2406bdee307aba4a05780c1dc07c6",
+  "kernel_correction": 1.126,
+  "kernel_correction_source": "scripts/kernel_front_speed.py: area-equivalent-radius front speed / R, constant rule R = 0.2 m/s, dx = 30 m, no wind, flat uniform fuel, reference radius 40 cells, 20 seeds, standard error 0.0016",
+  "n_burned": 1271,
+  "n_steps": 139,
+  "rule": "ConstantRule",
+  "scenario": "tests/golden/flat_no_wind.yaml",
+  "seed": 524,
+  "shape": [
+    31,
+    41
+  ],
+  "stencil": 8,
+  "versions": {
+    "numpy": "2.5.4",
+    "python": "3.12.16",
+    "scipy": "1.18.1",
+    "wildfire_sim": "0.1.0"
+  }
+}

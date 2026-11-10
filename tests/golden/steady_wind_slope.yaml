@@ -1,0 +1,31 @@
+# Golden-run scenario (WP 1.9): compact version of configs/scenarios/steady_wind.yaml on a slope.
+# Alexandridis rule (constants from configs/alexandridis.yaml), 5 m/s wind from the west and a
+# rise/run 0.2 slope facing west (uphill is east), so wind and slope both push the head east.
+# Ignited near the west edge; the run stops while the head is still inside the grid, so the
+# stored burned set records the shape of the burn.
+name: golden_steady_wind_slope
+description: 31 x 41 cells of fuel model 1 at 30 m on a west-facing 0.2 slope, 5 m/s west wind, Alexandridis rule.
+grid:
+  kind: synthetic
+  generator: slope_ramp
+  shape: [31, 41]
+  dx: 30.0
+  fuel_model: 1
+  params:
+    slope: 0.2
+    aspect_deg: 270.0
+weather:
+  series:
+    - time_s: 0
+      wind_speed: 5.0
+      wind_direction: 270.0
+spread:
+  rule: alexandridis
+  params:
+    ros_base: 0.2
+ignition:
+  cells: [[15, 6]]
+dt_s: 30.0
+duration_s: 3600.0
+stencil: 8
+seed: 524

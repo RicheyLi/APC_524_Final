@@ -407,12 +407,15 @@ def mean_ci(values: FloatArray, level: float = 0.95) -> tuple[float, float, floa
     """
     _check_level(level)
     arr = _as_sample(values, 2)
-    mean = float(arr.mean())
-    sd = float(arr.std(ddof=1))
-    if sd == 0.0:
-        return mean, mean, mean
-    half = float(stats.t.ppf(0.5 + level / 2, arr.size - 1)) * sd / math.sqrt(arr.size)
-    return mean, mean - half, mean + half
+    # Work on values scaled to [-1, 1] so neither the sum nor the variance can overflow.
+    scale = float(np.max(np.abs(arr)))
+    if scale == 0.0:
+        return 0.0, 0.0, 0.0
+    unit = arr / scale
+    mean = float(unit.mean())
+    sd = float(unit.std(ddof=1))
+    half = float(stats.t.ppf(0.5 + level / 2, arr.size - 1)) * sd / math.sqrt(arr.size) if sd > 0.0 else 0.0
+    return mean * scale, (mean - half) * scale, (mean + half) * scale
 
 
 def runs_for_precision(values: FloatArray, rel_half_width: float, level: float = 0.95) -> int:

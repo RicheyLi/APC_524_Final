@@ -74,6 +74,7 @@ lint = [
 ]
 test = [
     "coverage",
+    "hypothesis>=6.170.15",
     "pytest",
 ]
 typecheck = [
@@ -123,7 +124,7 @@ source = ["src/", "tests/"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-fail_under = 50
+fail_under = 85
 exclude_also = [
     "if TYPE_CHECKING:",
     "if typing.TYPE_CHECKING:",
