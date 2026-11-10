@@ -9,6 +9,7 @@ from wildfire_sim.config import (
     CostConfig,
     ScenarioConfig,
     SyntheticGridConfig,
+    configs_dir,
     dump_yaml,
     load_costs,
     load_scenario,
@@ -140,3 +141,14 @@ def test_load_yaml_reports_malformed_yaml_as_value_error(tmp_path: Path) -> None
     bad.write_text("name: [unclosed\n")
     with pytest.raises(ValueError, match="not valid YAML"):
         load_scenario(bad)
+
+
+def test_configs_dir_defaults_to_repo_configs_and_honours_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("WILDFIRE_SIM_CONFIGS", raising=False)
+    assert configs_dir() == CONFIGS
+    assert (configs_dir() / "costs.yaml").is_file()
+    monkeypatch.setenv("WILDFIRE_SIM_CONFIGS", str(tmp_path))
+    assert configs_dir() == tmp_path
+    monkeypatch.setenv("WILDFIRE_SIM_CONFIGS", str(tmp_path / "missing"))
+    with pytest.raises(FileNotFoundError, match="WILDFIRE_SIM_CONFIGS"):
+        configs_dir()

@@ -10,6 +10,7 @@ fine; renaming or removing fields is not.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -224,6 +225,24 @@ class ScenarioConfig(_Strict):
 
 
 # ----------------------------------------------------------------------------- loading
+
+
+def configs_dir() -> Path:
+    """Directory holding the cited parameter tables (``alexandridis.yaml``, ``costs.yaml``, ...).
+
+    The environment variable ``WILDFIRE_SIM_CONFIGS`` overrides the default, which is the
+    ``configs/`` directory of the repository checkout this package is installed from.
+
+    Raises:
+        FileNotFoundError: The directory does not exist.
+    """
+    override = os.environ.get("WILDFIRE_SIM_CONFIGS")
+    path = Path(override) if override else Path(__file__).resolve().parents[2] / "configs"
+    if not path.is_dir():
+        raise FileNotFoundError(
+            f"configs directory {path} not found; run from a repository checkout or set WILDFIRE_SIM_CONFIGS"
+        )
+    return path
 
 
 def load_yaml[T: BaseModel](path: str | Path, model: type[T]) -> T:
