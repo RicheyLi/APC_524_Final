@@ -48,7 +48,8 @@ These are the changes that will go out in the next release.
 - `.gitattributes` enforces LF line endings.
 
 - `docs/plan.md`: fourth design review (section 14). New work packages 1.10 (dormant sources: a fire survives a period of zero spread rate), 1.11 (grid-edge detection), 1.12 (front-normal intensity) and 2.1d (lattice-fitted ellipse rates and a length-to-breadth cap); WP 4.3 draws suppression randomness once per cell, not per step; fire grids are sized from the observed perimeter; fire B criteria restated; spotting (6.1) is required by the strategy experiments (4.7). Also from that review: 10 m wind converted to 20-ft wind before the wind adjustment factor; 10-h moisture no longer taken from gridMET; arrival-time error scored against the interval between satellite overpasses; roads, streams and built lines share one breach model (new WP 2.9); urban cells burn by a scaled surrogate (new WP 1.13). No code changes.
-- `configs/alexandridis.yaml`: notes record that the constants match Table 1 of Russo et al. (2014); values unchanged.
+- `docs/plan.md`: new WP 1.14 (optional `ScenarioConfig.start_time_utc`); breach model coefficients from Wilson (1988) written into section 3; frozen-module changes of WPs 1.12, 1.13, 1.14 and 2.5 recorded as signed off.
+- `configs/alexandridis.yaml`: notes record that the constants were verified against Alexandridis et al. (2008), Tables 2-4; values unchanged.
 
 ## Fixed
 

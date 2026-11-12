@@ -23,19 +23,19 @@ a:
   value: 0.078
   units: 1/deg
   source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (slope coefficient a)"
-  note: "Matches Table 1 of Russo, Russo, Vakalis & Siettos (2014), Chem. Eng. Trans. 36, 253-258, which reproduces the 2008 values; the 2008 paper itself was not consulted."
+  note: "Verified against the paper (p_den Table 2, p_veg Table 3, a, c1 and c2 Table 4)."
 
 c1:
   value: 0.045
   units: s/m
   source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (wind coefficient c1)"
-  note: "Matches Table 1 of Russo, Russo, Vakalis & Siettos (2014), Chem. Eng. Trans. 36, 253-258, which reproduces the 2008 values; the 2008 paper itself was not consulted."
+  note: "Verified against the paper (p_den Table 2, p_veg Table 3, a, c1 and c2 Table 4)."
 
 c2:
   value: 0.131
   units: s/m
   source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (wind coefficient c2)"
-  note: "Matches Table 1 of Russo, Russo, Vakalis & Siettos (2014), Chem. Eng. Trans. 36, 253-258, which reproduces the 2008 values; the 2008 paper itself was not consulted."
+  note: "Verified against the paper (p_den Table 2, p_veg Table 3, a, c1 and c2 Table 4)."
 
 # Vegetation-type factor p_veg (dimensionless; must be > -1).
 p_veg:
@@ -43,17 +43,17 @@ p_veg:
     value: -0.3
     units: dimensionless
     source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_veg, agricultural areas)"
-    note: "Matches Table 1 of Russo, Russo, Vakalis & Siettos (2014), Chem. Eng. Trans. 36, 253-258, which reproduces the 2008 values; the 2008 paper itself was not consulted."
+    note: "Verified against the paper (p_den Table 2, p_veg Table 3, a, c1 and c2 Table 4)."
   thickets:
     value: 0.0
     units: dimensionless
     source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_veg, thickets)"
-    note: "Matches Table 1 of Russo, Russo, Vakalis & Siettos (2014), Chem. Eng. Trans. 36, 253-258, which reproduces the 2008 values; the 2008 paper itself was not consulted."
+    note: "Verified against the paper (p_den Table 2, p_veg Table 3, a, c1 and c2 Table 4)."
   forest:
     value: 0.4
     units: dimensionless
     source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_veg, hallepo-pine / dense forest)"
-    note: "Matches Table 1 of Russo, Russo, Vakalis & Siettos (2014), Chem. Eng. Trans. 36, 253-258, which reproduces the 2008 values; the 2008 paper itself was not consulted."
+    note: "Verified against the paper (p_den Table 2, p_veg Table 3, a, c1 and c2 Table 4)."
 
 # Vegetation-density factor p_den (dimensionless; must be > -1).
 p_den:
@@ -61,17 +61,17 @@ p_den:
     value: -0.4
     units: dimensionless
     source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_den, sparse)"
-    note: "Matches Table 1 of Russo, Russo, Vakalis & Siettos (2014), Chem. Eng. Trans. 36, 253-258, which reproduces the 2008 values; the 2008 paper itself was not consulted."
+    note: "Verified against the paper (p_den Table 2, p_veg Table 3, a, c1 and c2 Table 4)."
   normal:
     value: 0.0
     units: dimensionless
     source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_den, normal)"
-    note: "Matches Table 1 of Russo, Russo, Vakalis & Siettos (2014), Chem. Eng. Trans. 36, 253-258, which reproduces the 2008 values; the 2008 paper itself was not consulted."
+    note: "Verified against the paper (p_den Table 2, p_veg Table 3, a, c1 and c2 Table 4)."
   dense:
     value: 0.3
     units: dimensionless
     source: "Alexandridis et al. (2008), Appl. Math. Comput. 204, 191-201 (p_den, dense)"
-    note: "Matches Table 1 of Russo, Russo, Vakalis & Siettos (2014), Chem. Eng. Trans. 36, 253-258, which reproduces the 2008 values; the 2008 paper itself was not consulted."
+    note: "Verified against the paper (p_den Table 2, p_veg Table 3, a, c1 and c2 Table 4)."
 
 # Fuel model number (Grid.fuel_model) -> the paper's vegetation type. Inclusive ranges, no overlaps.
 # A burnable cell whose fuel model is in no range is an error.
