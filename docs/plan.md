@@ -687,7 +687,7 @@ threshold changed there and in the test together, never loosened silently.
 | 2.5 | `data/osm.py` | 0.3 | `osmnx` roads, water, buildings for the bbox; apply the barrier rule of section 3 (wide features become unburnable cells; narrow ones become breaks, their width in metres stored in a new optional `Grid` layer `break_width_m`, signed off); `asset_value = buildings per cell * usd_per_building` from `costs.yaml` | Known polygon rasterizes to the expected cells; a 6 m road creates no unburnable cell and a line of cells with `break_width_m = 6` |
 | 2.6 | `scripts/download_data.py`, `data/cache.py`, `docs/data.md`, weekly `network` CI job | 2.2-2.5 | One command builds `data/cache/<region>/grid.npz`, `weather.yaml` and `manifest.json` (sources, versions, dates, SHA-256) for a named region; regions defined for fires A and B, each as the bounding box of the fire's observed final perimeter plus a buffer of at least 3 km on every side (so the grid size follows the fire, section 2); writes a 5 km x 5 km crop of each to `tests/fixtures/` (committed); `docs/data.md` records access method, licence and attribution per source | Script runs end to end; cached grid validates; no cell of the observed perimeter lies within the buffer of the grid edge; fixtures under 2 MB each; rebuilding from cache reproduces the manifest hashes |
 | 2.7 | `data/validation.py` | 0.3 | MTBS perimeter, VIIRS detections and daily perimeters where published, for fires A and B; ignition point and time from the incident record with citation; `observed_burn_mask(grid, until=None) -> bool array`, `detections(grid) -> list[(t_clear, t_detect, row, col)]`, where `t_detect` is the detecting overpass and `t_clear` the last earlier overpass that viewed the place without cloud and without fire, or the ignition time (section 7); the overpass times of the satellite come from the product's own records, not from a nominal schedule | Mocked inputs rasterize correctly; a place detected on the third overpass after a cloudy second one gets `t_clear` from the first; live test marked `network` |
-| 2.9 | `breaks.py`, `sim.py`, `sim_fast.py`, `configs/breach.yaml` | 1.12, 2.5 | Break crossing (section 3). A cell with `break_width_m > 0` or a constructed line acts as a barrier until it is breached. One uniform number `u_c` per cell is drawn at setup from a fourth child of the run's `SeedSequence` (`spawn(4)`; the first three children are unchanged, so existing runs keep their draws). A break is breached the first time `p_b(I_peak, width) >= u_c`, with `I_peak` the highest `grid.intensity` any adjacent flaming cell has had; it then burns as ordinary fuel. `p_b` is Wilson's (1988) logistic model with the coefficients of section 3 as `CitedValue`s in `configs/breach.yaml` (intensity converted from kW/m to MW/m; tree presence from the canopy cover of the cell and its neighbours), together with the fitted range of width and intensity. Below flame contact the break holds: `p_b` is 0 while the flame length `L = 1.192 I^0.5` (Nelson 1980, I in MW/m) is shorter than the break width. WP 4.3 calls the same function for the lines crews build | Breach probability rises with intensity and falls with width; Wilson's equation on its own reproduces the paper's 29 %, 55 % and 88 % for a 3 m break without trees at 2, 5 and 10 MW/m and 72 % with trees at 2 MW/m; with the flame-contact floor a rule with zero intensity never breaches, a 3 m break holds for certain below 6.3 MW/m and a 1 m line below 0.70 MW/m, with or without trees; a grid without breaks is bit-identical to before; the set of breached cells is the same for dt and dt / 2; two runs with one seed and different hooks see the same `u_c` |
+| 2.9 | `breaks.py`, `sim.py`, `sim_fast.py`, `configs/breach.yaml` | 1.12, 2.5 | Break crossing (section 3). A cell with `break_width_m > 0` or a constructed line acts as a barrier until it is breached. One uniform number `u_c` per cell is drawn at setup from a fourth child of the run's `SeedSequence` (`spawn(4)`; the first three children are unchanged, so existing runs keep their draws). A break is breached the first time `p_b(I_peak, width) >= u_c`, with `I_peak` the highest `grid.intensity` any adjacent flaming cell has had; it then burns as ordinary fuel. `p_b` is Wilson's (1988) logistic model with the coefficients of section 3 as `CitedValue`s in `configs/breach.yaml` (intensity converted from kW/m to MW/m; tree presence from the canopy cover of the cell and its neighbours), together with the fitted range of width and intensity and a minimum intensity (placeholder 0.18 MW/m, section 13) below which `p_b` is 0. WP 4.3 calls the same function for the lines crews build | Breach probability rises with intensity and falls with width; reproduces the paper's 29 %, 55 % and 88 % for a 3 m break without trees at 2, 5 and 10 MW/m and 72 % with trees at 2 MW/m; below the minimum intensity no break is breached, so a rule with zero intensity never breaches; a grid without breaks is bit-identical to before; the set of breached cells is the same for dt and dt / 2; two runs with one seed and different hooks see the same `u_c` |
 | 2.8 | `metrics.py` | `RunResult`, `EnsembleResult` | `burned_area_ha`, `jaccard(sim_mask, obs_mask)`, `sorensen`, `arrival_interval_error(arrival, detections, footprint_m, window_end_s)` (the interval score of section 7: zero inside `(t_clear, t_detect]`, distance to the nearer end outside, earliest simulated arrival within the detection footprint, never-reached detections scored against the window end), `area_ratio`, `suppression_cost(fleet, costs)`, `asset_loss(grid)` (the asset value of every burned cell, urban cells included), `bootstrap_ci(values, level)`, `paired_difference_ci(a, b, level)` | Hand-computed cases; intervals cover a known mean at the stated rate in a simulation test |
 
 ### Phase 3 - Calibration and validation
@@ -771,8 +771,9 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
 - [ ] Minimum set of values still to be sourced, each with a flagged placeholder so no work
       package is blocked: holdover times per fuel model (WP 1.10; placeholder 12 h for every
       fuel, enough to carry a fire through one night); the urban surrogate (WP 1.13;
-      placeholders: fuel model TL3, `ros_factor` 0.5, `residence_factor` 30). All four are in
-      the sensitivity analysis (WP 3.2).
+      placeholders: fuel model TL3, `ros_factor` 0.5, `residence_factor` 30); the minimum
+      intensity of the breach model (WP 2.9; placeholder 0.18 MW/m). All five are in the
+      sensitivity analysis (WP 3.2).
 - [ ] Whether the HRRR archive has the analysis hours for both fires' dates (WP 2.4). The
       RTMA archive on AWS starts in 2019, so it cannot serve fire A; the HRRR archive starts
       in 2014 and has gaps. If either fire is not covered, both use disaggregated gridMET.
@@ -797,13 +798,16 @@ Decided after the fourth review:
   an MTBS perimeter, VIIRS coverage and little early suppression, 1,000-10,000 ha. A fire in
   another fuel group may be added as a stress test, reported as such; a timber fire needs WP
   6.2 first.
-- **Breach floor:** flame contact. A break holds while the local flame length is shorter
-  than its width (flame length from Nelson 1980, `L = 1.192 I^0.5` with I in MW/m, the
-  relation Wilson used); above that, Wilson's probability applies (WP 2.9). Known cost:
-  the floor overrides Wilson's fit where the two disagree. His 3 m breaks without trees were
-  crossed 29 % of the time at 2 MW/m and 55 % at 5 MW/m; with the floor they hold up to
-  6.3 MW/m and then jump to 66 %. Crossing of a break wider than the flames is by embers,
-  which is left to the spotting model (WP 6.1), with or without trees nearby.
+- **Breach floor:** a minimum intensity. Below it a break always holds; at or above it
+  Wilson's probability applies unchanged, so his fitted numbers are kept (WP 2.9). The floor
+  is 0.18 MW/m, a placeholder: it is the lower bound implied by the ranges the paper states
+  (slowest spread 0.1 m/s, lightest fuel 1 t/ha, `I = 1.8 w r`), not an observed fire, and
+  the lowest intensity in Wilson's data may be higher. Known limits: the fit starts at
+  1.5 m, so a 1 m hand line is an extrapolation and comes out at 61 % crossed just above the
+  floor; Wilson himself notes that Kuznetsov (1985) saw 1 of 43 breaks 1.4 m wide crossed
+  where this model predicts 84-94 %. Flame contact (a break holding while the flames are
+  shorter than it is wide) was considered and rejected because it overrides the fit where
+  Wilson's 3 m breaks were crossed 29-55 % of the time.
 - **Burned wildland has no dollar value** (`usd_per_ha_wildland` = 0), so every strategy
   experiment includes a town.
 - **A building is worth 400,000 USD,** a team assumption stated in the README.
