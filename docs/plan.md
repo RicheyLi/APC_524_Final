@@ -425,9 +425,8 @@ the profile in [performance.md](performance.md)):
 Starting a worker pool costs 9-17 s, so the optimizer (WP 4.5) must keep one pool for the whole
 search instead of starting one per candidate.
 
-**These numbers do not cover fire A.** The Chimney Fire burned roughly 18,700 ha over about
-three weeks (figure recalled, not yet checked: confirm it from the MTBS record in WP 2.7),
-which is almost twice the whole reference area. Its grid has about ten times the cells, and
+**These numbers do not cover fire A.** The Chimney Fire burned 46,344 acres (about 18,750 ha)
+over about three weeks, which is almost twice the whole reference area. Its grid has about ten times the cells, and
 even the early-growth window used for calibration is days, not 12 hours. Calibration cost is
 therefore one to two orders of magnitude above the table. It is measured on the fire A grid
 before the calibration study is sized (WP 3.1), and the same is done for runs with
