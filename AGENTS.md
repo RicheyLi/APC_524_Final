@@ -2,7 +2,7 @@ You are creating a final project for a Software Engineering course.
 
 Push changes to this repo: https://github.com/RicheyLi/APC_524_Final
 
-Create documentation as you go, use Pytest for test-driven development for automated testing of the repository. Establish version control with git, use cookie cutter to initiate project and use logical package structures to seperate files. Use a virtual environment for package management. Use any other software engineering best practices as you build.
+Create documentation as you go, use Pytest for test-driven development for automated testing of the repository. Establish version control with git, use cookie cutter to initiate project and use logical package structures to seperate files. Use a virtual environment for package management. Use any other software engineering best practices as you build. Prioritize correctness and faithfulness to established literature and physics over quick implementation.
 
 Git pull from repo each time before you make edits as there are multiple contributors.
 
