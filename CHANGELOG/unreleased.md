@@ -47,6 +47,8 @@ These are the changes that will go out in the next release.
 - Repository URLs point at `RicheyLi/APC_524_Final`; PyPI publishing workflow removed.
 - `.gitattributes` enforces LF line endings.
 
+- `docs/plan.md`: fourth design review (section 14). New work packages 1.10 (dormant sources: a fire survives a period of zero spread rate), 1.11 (grid-edge detection), 1.12 (front-normal intensity) and 2.1d (lattice-fitted ellipse rates and a length-to-breadth cap); WP 4.3 draws suppression randomness once per cell, not per step; fire grids are sized from the observed perimeter; fire B criteria restated; spotting (6.1) is required by the strategy experiments (4.7). No code changes.
+
 ## Fixed
 
 - CodeQL workflow: `init` and `analyze` are on the same `github/codeql-action` version again (a Dependabot bump had moved only `analyze`, which makes the job fail); Dependabot now groups the two.
