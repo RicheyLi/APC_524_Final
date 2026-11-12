@@ -27,12 +27,12 @@ fix:
     uv run --python=3.12 ruff format .
     uv run --python=3.12 ruff check . --fix
 
-# Verify formatting, linting, types, and tests on Python 3.12 without modifying source files
+# Verify formatting, linting, types, and tests (in parallel) on Python 3.12 without modifying source files
 check:
     uv run --python=3.12 ruff format --check .
     uv run --python=3.12 ruff check .
     uv run --python=3.12 ty check .
-    uv run --python=3.12 pytest
+    uv run --python=3.12 pytest -n auto
 
 # Apply automatic fixes, then run the local quality gate
 fix-and-check: fix check
