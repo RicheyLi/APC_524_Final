@@ -677,7 +677,7 @@ threshold changed there and in the test together, never loosened silently.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
-| 2.1a | `spread/rothermel.py`, `configs/fuel_models.csv` | 0.4 | Native Rothermel (1972) surface spread with Albini (1976) revisions, vectorized over the grid: reaction intensity, propagating flux, wind and slope factors, moisture damping, live fuel extinction moisture, dynamic herbaceous transfer for the Scott & Burgan dynamic models. Fuel parameters for all 40 models (loads, SAV ratios, depth, extinction moisture, heat content) in the CSV with the source cited. Outputs head ros (m/s), Byram intensity (kW/m), flame length (m, Byram 1959), heat per unit area. Evaluated once per unique (fuel model, moisture, wind, slope) combination and mapped back to cells | Head ros, intensity and flame length for at least GR1, GR4, SH2, SH5, TU1, TL3 at three moisture/wind/slope cases within 2 % of published BehavePlus values recorded in the test with their source; zero ros at extinction moisture; agrees with `pyrothermel` within 2 % where installed (`pytest.importorskip`) |
+| 2.1a | `spread/rothermel.py`, `configs/fuel_models.csv` | 0.4 | Native Rothermel (1972) surface spread with Albini (1976) revisions, vectorized over the grid: reaction intensity, propagating flux, wind and slope factors, moisture damping, live fuel extinction moisture, dynamic herbaceous transfer for the Scott & Burgan dynamic models. Fuel parameters for all 40 models (loads, SAV ratios, depth, extinction moisture, heat content) in the CSV with the source cited. Outputs head ros (m/s), Byram intensity (kW/m), flame length (m, Byram 1959), heat per unit area, and residence time `t_r = 384 / sigma` min (Anderson 1969; Andrews 2018), which replaces the placeholder values in `configs/residence_time.yaml`. Evaluated once per unique (fuel model, moisture, wind, slope) combination and mapped back to cells | Head ros, intensity and flame length for at least GR1, GR4, SH2, SH5, TU1, TL3 at three moisture/wind/slope cases within 2 % of published BehavePlus values recorded in the test with their source; zero ros at extinction moisture; agrees with `pyrothermel` within 2 % where installed (`pytest.importorskip`) |
 | 2.1b | `spread/ellipse.py` | 2.1a | Midflame wind: the 10 m wind divided by 1.15 to give the 20-ft wind (Turner and Lawson 1978; the factor in `configs/` with its citation), then times the wind adjustment factor (sheltered and unsheltered, Andrews 2012); vector combination of wind and slope into direction of maximum spread and effective wind; length-to-breadth and directional rates from the formulas in section 2.2 (U capped at a documented value); `RothermelRule` registered as `"rothermel"` returning `(K, H, W)` rates times `(1 - retardant)` | A 10 m wind of 11.5 m/s gives the midflame wind of a 20-ft wind of 10 m/s; upslope with no wind spreads uphill; cross-slope wind gives a direction between wind and slope; back rate equals `R_head (1 - e) / (1 + e)`; physics tests 1.4 pass with this rule |
 | 2.1c | `spread/moisture.py` | 0.3 | One-hour dead fuel moisture from temperature and relative humidity by an equilibrium moisture content model (source cited), applied hourly; documented offsets for 10-h | Reproduces the source's tabulated values; moisture rises overnight and falls in the afternoon for a synthetic diurnal series |
 | 2.1d | `spread/ellipse.py`, `scripts/lattice_study.py`, `docs/lattice_study.md`, `tests/test_physics.py` | 2.1b, 1.4 | Elongated fires on the lattice (section 2.4). (1) Lattice-fitted rates: for a given length-to-breadth ratio and head bearing, per-direction rates chosen to minimize the largest radial error between the lattice polygon (convex hull of the rate-scaled stencil directions) and the analytic ellipse, replacing rates sampled from the ellipse; selected by a rule parameter whose default the study sets. (2) The lattice study repeated with them, at head bearings 0, 13.3 (midway between adjacent 16-neighbour directions), 22.5 and 45 degrees. (3) A cap `lb_max` at the largest ratio for which head and flank stay within 10 % at every bearing, applied in the ellipse rule; `provenance` counts the cell-hours in which it applied and the CLI warns | Head and flank within 10 % of the analytic ellipse at every tested bearing for every ratio up to `lb_max`, in `tests/test_physics.py`; the strict expected-failure record updated; if the fitted rates gain less than the study's stated margin over sampled rates, the doc says so and only the cap ships; with a constant-rate rule, results bit-identical to before |
@@ -687,7 +687,7 @@ threshold changed there and in the test together, never loosened silently.
 | 2.5 | `data/osm.py` | 0.3 | `osmnx` roads, water, buildings for the bbox; apply the barrier rule of section 3 (wide features become unburnable cells; narrow ones become breaks, their width in metres stored in a new optional `Grid` layer `break_width_m`, signed off); `asset_value = buildings per cell * usd_per_building` from `costs.yaml` | Known polygon rasterizes to the expected cells; a 6 m road creates no unburnable cell and a line of cells with `break_width_m = 6` |
 | 2.6 | `scripts/download_data.py`, `data/cache.py`, `docs/data.md`, weekly `network` CI job | 2.2-2.5 | One command builds `data/cache/<region>/grid.npz`, `weather.yaml` and `manifest.json` (sources, versions, dates, SHA-256) for a named region; regions defined for fires A and B, each as the bounding box of the fire's observed final perimeter plus a buffer of at least 3 km on every side (so the grid size follows the fire, section 2); writes a 5 km x 5 km crop of each to `tests/fixtures/` (committed); `docs/data.md` records access method, licence and attribution per source | Script runs end to end; cached grid validates; no cell of the observed perimeter lies within the buffer of the grid edge; fixtures under 2 MB each; rebuilding from cache reproduces the manifest hashes |
 | 2.7 | `data/validation.py` | 0.3 | MTBS perimeter, VIIRS detections and daily perimeters where published, for fires A and B; ignition point and time from the incident record with citation; `observed_burn_mask(grid, until=None) -> bool array`, `detections(grid) -> list[(t_clear, t_detect, row, col)]`, where `t_detect` is the detecting overpass and `t_clear` the last earlier overpass that viewed the place without cloud and without fire, or the ignition time (section 7); the overpass times of the satellite come from the product's own records, not from a nominal schedule | Mocked inputs rasterize correctly; a place detected on the third overpass after a cloudy second one gets `t_clear` from the first; live test marked `network` |
-| 2.9 | `breaks.py`, `sim.py`, `sim_fast.py`, `configs/breach.yaml` | 1.12, 2.5 | Break crossing (section 3). A cell with `break_width_m > 0` or a constructed line acts as a barrier until it is breached. One uniform number `u_c` per cell is drawn at setup from a fourth child of the run's `SeedSequence` (`spawn(4)`; the first three children are unchanged, so existing runs keep their draws). A break is breached the first time `p_b(I_peak, width) >= u_c`, with `I_peak` the highest `grid.intensity` any adjacent flaming cell has had; it then burns as ordinary fuel. `p_b` is Wilson's (1988) logistic model with the coefficients of section 3 as `CitedValue`s in `configs/breach.yaml` (intensity converted from kW/m to MW/m; tree presence from the canopy cover of the cell and its neighbours), together with the fitted range of width and intensity and a minimum intensity below which a break always holds. WP 4.3 calls the same function for the lines crews build | Breach probability rises with intensity and falls with width; reproduces the paper's 29 %, 55 % and 88 % for a 3 m break without trees at 2, 5 and 10 MW/m and 72 % with trees at 2 MW/m; a rule with zero intensity never breaches; a grid without breaks is bit-identical to before; the set of breached cells is the same for dt and dt / 2; two runs with one seed and different hooks see the same `u_c` |
+| 2.9 | `breaks.py`, `sim.py`, `sim_fast.py`, `configs/breach.yaml` | 1.12, 2.5 | Break crossing (section 3). A cell with `break_width_m > 0` or a constructed line acts as a barrier until it is breached. One uniform number `u_c` per cell is drawn at setup from a fourth child of the run's `SeedSequence` (`spawn(4)`; the first three children are unchanged, so existing runs keep their draws). A break is breached the first time `p_b(I_peak, width) >= u_c`, with `I_peak` the highest `grid.intensity` any adjacent flaming cell has had; it then burns as ordinary fuel. `p_b` is Wilson's (1988) logistic model with the coefficients of section 3 as `CitedValue`s in `configs/breach.yaml` (intensity converted from kW/m to MW/m; tree presence from the canopy cover of the cell and its neighbours), together with the fitted range of width and intensity and a minimum intensity (placeholder 0.18 MW/m, section 13) below which `p_b` is 0. WP 4.3 calls the same function for the lines crews build | Breach probability rises with intensity and falls with width; reproduces the paper's 29 %, 55 % and 88 % for a 3 m break without trees at 2, 5 and 10 MW/m and 72 % with trees at 2 MW/m; below the minimum intensity no break is breached, so a rule with zero intensity never breaches; a grid without breaks is bit-identical to before; the set of breached cells is the same for dt and dt / 2; two runs with one seed and different hooks see the same `u_c` |
 | 2.8 | `metrics.py` | `RunResult`, `EnsembleResult` | `burned_area_ha`, `jaccard(sim_mask, obs_mask)`, `sorensen`, `arrival_interval_error(arrival, detections, footprint_m, window_end_s)` (the interval score of section 7: zero inside `(t_clear, t_detect]`, distance to the nearer end outside, earliest simulated arrival within the detection footprint, never-reached detections scored against the window end), `area_ratio`, `suppression_cost(fleet, costs)`, `asset_loss(grid)` (the asset value of every burned cell, urban cells included), `bootstrap_ci(values, level)`, `paired_difference_ci(a, b, level)` | Hand-computed cases; intervals cover a known mean at the stated rate in a simulation test |
 
 ### Phase 3 - Calibration and validation
@@ -752,47 +752,33 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
 
 **Open decisions.**
 
-- [ ] **Elongated fires on the lattice** (third review, section 14). With the defaults (16
-      neighbours, shape 200) head and flank are within 7 % of the analytic ellipse at a
-      length-to-breadth ratio of 1.5 and within 13 % at 3; at 6 the flanks are 32-46 % too
-      narrow. Options beyond a ratio of 3: (a) accept a documented limit
-      (midflame winds up to about 5 m/s) and cap or flag runs beyond it in WP 2.1b;
-      (b) add 32- and 48-neighbour stencils (limit 2.1 and 2.75 at 10 %, at 2-3 times the
-      cost per step); (c) replace per-direction rates sampled from the ellipse by rates
-      optimized so the lattice polygon best fits the ellipse; (d) change the front-propagation
-      method for strong wind (fast marching or level set with a continuous direction field).
-      **Proposed by the fourth review, awaiting sign-off:** (c) with the cap of (a), as WP
-      2.1d, which must be merged before Phase 3. If the fitted rates do not reach a ratio of
-      3 at every bearing, (d) is reconsidered before calibration, not after.
-- [ ] Validation fire B (fourth review, awaiting sign-off; this replaces "a different
-      dominant fuel type"): a US fire in the same broad fuel group as the Chimney Fire (shrub
-      and grass, surface fire dominant) but a different place and wind direction, wind-driven,
-      with an MTBS perimeter, VIIRS coverage and little early suppression, and small enough
-      that its grid is affordable (1,000-10,000 ha). A fire in another fuel group may be
-      added as a stress test, reported as such; a timber fire needs WP 6.2 first.
-- [ ] Holdover times per fuel model and their source (needed by WP 1.10): how long a stalled
-      fire edge can resume spreading. Hours for grass, days for heavy fuels; no value is
-      chosen yet.
-- [ ] Minimum intensity for the breach model (WP 2.9). Wilson's (1988) coefficients are
-      verified against the paper (section 3), but the fit gives a 47 % chance of crossing a
-      1.5 m break, and 59 % for a 1 m hand line, at zero intensity, so it needs a floor below
-      which a break holds. Candidates: the lowest intensity in Wilson's data (his slowest
-      fire spread at 0.1 m/s); or flame contact, a break holding while the flame length is
-      shorter than its width, which Wilson found a sensible approximation for breaks without
-      trees (flame length from Nelson 1980, `L = 1.192 I^0.5`, I in MW/m).
-- [ ] Urban surrogate (WP 1.13): which timber fuel model stands in for urban cells, and the
-      values of `ros_factor` and `residence_factor`. No source is known; they are team
-      assumptions until one is found.
-- [ ] Hourly weather source (RTMA or HRRR archive) and whether it covers both fires' dates;
-      otherwise disaggregated gridMET for both, for consistency.
-- [ ] Whether burned wildland carries a dollar value (`usd_per_ha_wildland`, currently 0). At 0
-      with no assets nearby the optimal policy is to do nothing, so experiments need a town.
-- [ ] Dollar value per building (currently a 400 000 USD placeholder).
-- [ ] Residence times per fuel model and their source (needed by WP 1.3). Candidate: Anderson
-      (1969), `t_r = 384 / sigma` minutes with `sigma` the surface-area-to-volume ratio in 1/ft.
+- [ ] **Which fire is fire B.** The criteria are settled (below). Candidates, all wind-driven
+      brush fires in southern California inside the size range, with sizes and dates from
+      the incident records:
+
+      | Fire | Year | Size | Active | Notes |
+      | --- | --- | --- | --- | --- |
+      | Springs (Ventura Co.) | 2013 | 24,251 acres (9,814 ha) | 2-6 May | Chaparral; long-range spotting reported; predates the HRRR archive |
+      | Canyon 2 (Orange Co.) | 2017 | 9,217 acres (3,730 ha) | 9-17 Oct | About 7,500 acres on the first day; 25 structures destroyed |
+      | Lilac (San Diego Co.) | 2017 | 4,100 acres (1,659 ha) | 7-16 Dec | Reached nearly its full size within hours, so at most one or two overpasses saw it grow; 157 structures destroyed |
+      | Maria (Ventura Co.) | 2019 | 9,999 acres (4,046 ha) | 31 Oct-6 Nov | Started at night on South Mountain; burned into orchards and farmland |
+      | Silverado (Orange Co.) | 2020 | 13,390 acres (5,419 ha) | 26 Oct-7 Nov | Gusts to 80 mph; aircraft grounded at first, so little early air attack; slightly above the size range |
+
+      To check before choosing: the wind during the main run against the length-to-breadth
+      cap of WP 2.1d (a Santa Ana fire may sit above it for most of its growth); how many
+      VIIRS overpasses saw the fire growing; that an MTBS perimeter and a LANDFIRE version
+      older than the fire exist.
+- [ ] Minimum set of values still to be sourced, each with a flagged placeholder so no work
+      package is blocked: holdover times per fuel model (WP 1.10; placeholder 12 h for every
+      fuel, enough to carry a fire through one night); the urban surrogate (WP 1.13;
+      placeholders: fuel model TL3, `ros_factor` 0.5, `residence_factor` 30); the minimum
+      intensity of the breach model (WP 2.9; placeholder 0.18 MW/m). All five are in the
+      sensitivity analysis (WP 3.2).
+- [ ] Whether the HRRR archive has the analysis hours for both fires' dates (WP 2.4). The
+      RTMA archive on AWS starts in 2019, so it cannot serve fire A; the HRRR archive starts
+      in 2014 and has gaps. If either fire is not covered, both use disaggregated gridMET.
 - [ ] Cost figures with sources: hourly rates and mobilization costs per resource type; water
-      and retardant per litre (WP 4.6).
-- [ ] Module owners for the three team members.
+      and retardant per litre. Left as placeholders until WP 4.6.
 
 Resolved: study region and fire A (Chimney Fire); ignition kernel; default stencil 16 and
 `arrival_shape` 200 (after the lattice study); Rothermel implemented
@@ -800,6 +786,38 @@ natively with `pyrothermel` as a cross-check; package name; frozen-module change
 off: optional `SpreadOutput.heat_per_area` (WP 1.12), `LandUse.URBAN` burnable (WP 1.13),
 optional `Grid` layer `break_width_m` (WP 2.5), optional `ScenarioConfig.start_time_utc`
 (WP 1.14); breach model coefficients (Wilson 1988, verified against the paper).
+
+Decided after the fourth review:
+
+- **Elongated fires on the lattice:** lattice-fitted directional rates with a cap on the
+  length-to-breadth ratio (WP 2.1d, before Phase 3). A different front-propagation method is
+  reconsidered only if the fitted rates do not reach a ratio of 3 at every bearing. Larger
+  stencils are not added.
+- **Fire B criteria:** a US fire in the same broad fuel group as the Chimney Fire (shrub and
+  grass, surface fire dominant) but a different place and wind direction, wind-driven, with
+  an MTBS perimeter, VIIRS coverage and little early suppression, 1,000-10,000 ha. A fire in
+  another fuel group may be added as a stress test, reported as such; a timber fire needs WP
+  6.2 first.
+- **Breach floor:** a minimum intensity. Below it a break always holds; at or above it
+  Wilson's probability applies unchanged, so his fitted numbers are kept (WP 2.9). The floor
+  is 0.18 MW/m, a placeholder: it is the lower bound implied by the ranges the paper states
+  (slowest spread 0.1 m/s, lightest fuel 1 t/ha, `I = 1.8 w r`), not an observed fire, and
+  the lowest intensity in Wilson's data may be higher. Known limits: the fit starts at
+  1.5 m, so a 1 m hand line is an extrapolation and comes out at 61 % crossed just above the
+  floor; Wilson himself notes that Kuznetsov (1985) saw 1 of 43 breaks 1.4 m wide crossed
+  where this model predicts 84-94 %. Flame contact (a break holding while the flames are
+  shorter than it is wide) was considered and rejected because it overrides the fit where
+  Wilson's 3 m breaks were crossed 29-55 % of the time.
+- **Burned wildland has no dollar value** (`usd_per_ha_wildland` = 0), so every strategy
+  experiment includes a town.
+- **A building is worth 400,000 USD,** a team assumption stated in the README.
+- **Residence time:** Anderson (1969), `t_r = 384 / sigma` minutes with `sigma` the
+  characteristic surface-area-to-volume ratio in 1/ft, as given in Andrews (2018, section
+  4.2). WP 2.1a computes it from the fuel-model table and replaces the placeholder values in
+  `configs/residence_time.yaml`.
+- **Hourly weather:** one source for both fires; HRRR analysis hours if the archive covers
+  both, disaggregated gridMET for both otherwise.
+- **Module owners:** all three team members own every module.
 
 ## 14. Design review log
 
@@ -908,6 +926,7 @@ Smaller findings of the same review, each checked against a source where it rest
 - [gridMET variables (Earth Engine catalog)](https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_GRIDMET)
 - [Russo et al. 2014, CA risk assessment on Spetses, with the 2008 parameter table (Chem. Eng. Trans. 36)](https://www.aidic.it/cet/14/36/043.pdf)
 - [Wilson 1988, width of firebreak necessary to stop grass fires (Can. J. For. Res. 18)](https://www.frames.gov/catalog/11823)
+- [Andrews 2018, the Rothermel surface fire spread model and associated developments (RMRS-GTR-371)](https://www.fs.usda.gov/research/treesearch/55928)
 - [NASA VIIRS 375 m active fire product](https://viirsland.gsfc.nasa.gov/Products/NASA/FireESDR.html)
 - [Finney 1998, FARSITE model development and evaluation (RMRS-RP-4)](https://www.fs.usda.gov/rm/pubs/rmrs_rp004.pdf)
 - [Forest-fire model (the original baseline)](https://en.wikipedia.org/wiki/Forest-fire_model)
