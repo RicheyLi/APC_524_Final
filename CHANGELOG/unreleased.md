@@ -47,7 +47,8 @@ These are the changes that will go out in the next release.
 - Repository URLs point at `RicheyLi/APC_524_Final`; PyPI publishing workflow removed.
 - `.gitattributes` enforces LF line endings.
 
-- `docs/plan.md`: fourth design review (section 14). New work packages 1.10 (dormant sources: a fire survives a period of zero spread rate), 1.11 (grid-edge detection), 1.12 (front-normal intensity) and 2.1d (lattice-fitted ellipse rates and a length-to-breadth cap); WP 4.3 draws suppression randomness once per cell, not per step; fire grids are sized from the observed perimeter; fire B criteria restated; spotting (6.1) is required by the strategy experiments (4.7). No code changes.
+- `docs/plan.md`: fourth design review (section 14). New work packages 1.10 (dormant sources: a fire survives a period of zero spread rate), 1.11 (grid-edge detection), 1.12 (front-normal intensity) and 2.1d (lattice-fitted ellipse rates and a length-to-breadth cap); WP 4.3 draws suppression randomness once per cell, not per step; fire grids are sized from the observed perimeter; fire B criteria restated; spotting (6.1) is required by the strategy experiments (4.7). Also from that review: 10 m wind converted to 20-ft wind before the wind adjustment factor; 10-h moisture no longer taken from gridMET; arrival-time error scored against the interval between satellite overpasses; roads, streams and built lines share one breach model (new WP 2.9); urban cells burn by a scaled surrogate (new WP 1.13). No code changes.
+- `configs/alexandridis.yaml`: notes record that the constants match Table 1 of Russo et al. (2014); values unchanged.
 
 ## Fixed
 
