@@ -1,0 +1,19 @@
+# Flame length from fireline intensity (Byram 1959): L = coefficient * I ** exponent, with L the
+# flame length in m and I Byram's fireline intensity in kW/m. Read by wildfire_sim.sim
+# (FlameLengthModel, flame_length_from_intensity).
+#
+# Byram gave L = 0.45 I^0.46 with L in feet and I in Btu/(ft s). Converting units
+# (1 ft = 0.3048 m; 1 Btu/(ft s) = 1.05506 kJ / 0.3048 m = 3.4615 kW/m) gives
+# 0.3048 * 0.45 / 3.4615^0.46 = 0.0775, so L = 0.0775 I^0.46 in SI units, the form tabulated
+# by Alexander (1982). Check: I = 1000 kW/m gives L = 0.0775 * 1000^0.46 = 1.86 m.
+#
+# The simulator applies it to the local, front-normal intensity (docs/plan.md section 2.2), so
+# a flank has shorter flames than the head; the crew safety limit (WP 4.3) reads that value.
+coefficient:
+  value: 0.0775
+  units: "m (kW/m)^-0.46"
+  source: "Byram (1959), Combustion of forest fuels, in Davis (ed.), Forest Fire: Control and Use, McGraw-Hill; coefficient converted from Byram's 0.45 (ft, Btu/(ft s)) as shown above; same SI form in Alexander (1982), Calculating and interpreting forest fire intensities, Can. J. Bot. 60: 349-357"
+exponent:
+  value: 0.46
+  units: dimensionless
+  source: "Byram (1959), as above"

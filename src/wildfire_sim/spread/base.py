@@ -37,13 +37,21 @@ class SpreadOutput:
             ``(r, c)`` spreads toward its neighbour in stencil direction ``k``. Must be >= 0 and
             exactly 0 wherever the source cell cannot burn.
         intensity: ``(H, W)`` Byram fireline intensity at the head, kW/m. Used for line
-            breaching and crew safety. May be all zeros for rules that do not model it.
+            breaching and crew safety. May be all zeros for rules that do not model it. This is
+            the head value: the simulator scales it down to the local front-normal rate when a
+            cell ignites (docs/plan.md section 2.2), so a flank is cooler than the head.
         flame_length: ``(H, W)`` head flame length, m. May be all zeros.
+        heat_per_area: Optional ``(H, W)`` heat released per unit area by the flaming front,
+            kJ/m^2 (finite, >= 0), or None (default). When given, the simulator computes a
+            cell's fireline intensity as ``heat_per_area * R_n`` (Byram: kJ/m^2 x m/s = kW/m)
+            with ``R_n`` the local front-normal rate, capped at ``intensity``. When None, it
+            scales ``intensity`` by ``R_n / max_k ros`` instead.
     """
 
     ros: FloatArray
     intensity: FloatArray
     flame_length: FloatArray
+    heat_per_area: FloatArray | None = None
 
     def validate(self, stencil: Stencil, shape: tuple[int, int]) -> None:
         k = stencil.size
@@ -53,6 +61,11 @@ class SpreadOutput:
             raise ValueError("intensity and flame_length must have the grid shape")
         if np.any(self.ros < 0) or not np.all(np.isfinite(self.ros)):
             raise ValueError("ros must be finite and >= 0")
+        if self.heat_per_area is not None:
+            if self.heat_per_area.shape != shape:
+                raise ValueError(f"heat_per_area has shape {self.heat_per_area.shape}, expected {shape}")
+            if np.any(self.heat_per_area < 0) or not np.all(np.isfinite(self.heat_per_area)):
+                raise ValueError("heat_per_area must be finite and >= 0")
 
 
 @runtime_checkable

@@ -102,6 +102,25 @@ the cells with a link that leaves the grid):
 If you see the warning, enlarge the grid or shorten the run. Do not average such runs with
 the others without saying so.
 
+## Fireline intensity and flame length
+
+A spread rule reports the intensity of a head fire. The simulator scales it to the rate at
+which the front actually advanced through each cell, normal to itself, so flanks and the back
+are cooler than the head (see `docs/plan.md` section 2.2 and `docs/lattice_study.md` section 6
+for the accuracy on elongated fires):
+
+```python
+from wildfire_sim.sim import flame_length_from_intensity, front_normal_rate
+
+result.front_intensity  # (H, W) kW/m when the front crossed each cell; NaN = never burned
+result.grid.intensity  # the same value, only while a cell is flaming
+flame_length_from_intensity(result.front_intensity[burned])  # m, Byram (1959): 0.0775 * I ** 0.46
+front_normal_rate(result.arrival_time, stencil, dx)  # m/s, the estimate behind it
+```
+
+The constant and Alexandridis rules report no intensity, so these are zero for them; the
+Rothermel rule (WP 2.1) fills them in.
+
 ## Redraw figures
 
 `plot` regenerates the figures of a run or ensemble directory from its data files alone,

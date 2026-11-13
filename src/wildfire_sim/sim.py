@@ -35,6 +35,19 @@ revised downward by a later round before the step commits). Hence, for a given s
 times do not depend on ``dt`` beyond floating-point rounding as long as the rates are constant
 over each step.
 
+**Front-normal intensity** (WP 1.12, docs/plan.md section 2.2). A spread rule reports the
+fireline intensity of a head fire, but Byram's intensity is heat per unit area times the rate
+at which the front advances *normal to itself*, so flanks and the back are far cooler. When a
+cell ignites, the engine estimates that rate as ``R_n = 1 / |grad T|`` from a least-squares
+plane through the arrival times of the cell and of its stencil neighbours that burned no later
+than it (:func:`front_normal_rate`). The cell's intensity is ``heat_per_area * R_n`` when the
+rule gives ``SpreadOutput.heat_per_area`` and ``intensity * R_n / max_k ros`` otherwise, in
+both cases capped at the rule's head ``intensity``. With fewer than two burned neighbours that
+are not collinear with the cell the plane is undetermined and ``R_n`` is the rate of the link
+that ignited the cell. Initial ignition cells get the head value. The value is fixed at
+ignition, shown in ``grid.intensity`` while the cell flames, and returned for every burned
+cell as :attr:`RunResult.front_intensity`. Arrival times do not depend on any of this.
+
 **Reaching the grid edge** (WP 1.11, docs/plan.md section 2). The model cannot say what
 would have burned beyond the grid, so a fire that reaches the edge is a lower bound from then
 on. A cell within ``stencil.max_offset`` cells of the grid edge has a link that leaves the grid;
@@ -188,6 +201,56 @@ def load_residence_times(path: str | Path | None = None) -> ResidenceTimeTable:
     return load_yaml(configs_dir() / "residence_time.yaml" if path is None else path, ResidenceTimeTable)
 
 
+class FlameLengthModel(BaseModel):
+    """Byram's (1959) flame length ``L = coefficient * I ** exponent`` (``configs/flame_length.yaml``).
+
+    Attributes:
+        coefficient: Flame length, m, at an intensity of 1 kW/m.
+        exponent: Dimensionless power of the fireline intensity (kW/m).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    coefficient: CitedValue
+    exponent: CitedValue
+
+    @model_validator(mode="after")
+    def _positive(self) -> FlameLengthModel:
+        for key, cited in (("coefficient", self.coefficient), ("exponent", self.exponent)):
+            if not (cited.value > 0 and np.isfinite(cited.value)):
+                raise ValueError(f"flame length {key} must be finite and > 0, got {cited.value}")
+        return self
+
+    def flame_length(self, intensity: FloatArray | float) -> FloatArray:
+        """Flame length, m, for fireline intensity ``intensity``, kW/m (>= 0; any shape, same shape out)."""
+        value = np.asarray(intensity, dtype=np.float64)
+        if np.any(value < 0) or np.any(np.isnan(value)):
+            raise ValueError("intensity must be >= 0 kW/m and not NaN")
+        return self.coefficient.value * value**self.exponent.value
+
+
+def load_flame_length_model(path: str | Path | None = None) -> FlameLengthModel:
+    """Load Byram's flame-length constants; default ``configs_dir() / "flame_length.yaml"``."""
+    return load_yaml(configs_dir() / "flame_length.yaml" if path is None else path, FlameLengthModel)
+
+
+def flame_length_from_intensity(intensity: FloatArray | float, model: FlameLengthModel | None = None) -> FloatArray:
+    """Flame length from fireline intensity (Byram 1959): ``L = 0.0775 * I ** 0.46``.
+
+    Use it on the local, front-normal intensity (``grid.intensity`` or
+    :attr:`RunResult.front_intensity`) to get the local flame length that the crew safety limit
+    needs (WP 4.3): a flank can be workable while the head is not.
+
+    Args:
+        intensity: Fireline intensity, kW/m (>= 0), any shape.
+        model: The constants; None loads ``configs/flame_length.yaml``.
+
+    Returns:
+        Flame length, m, float64, same shape as ``intensity`` (0 where the intensity is 0).
+    """
+    return (load_flame_length_model() if model is None else model).flame_length(intensity)
+
+
 def load_holdover_times(path: str | Path | None = None) -> HoldoverTable:
     """Load the holdover-time table; default ``configs_dir() / "holdover.yaml"``."""
     return load_yaml(configs_dir() / "holdover.yaml" if path is None else path, HoldoverTable)
@@ -215,6 +278,10 @@ class RunResult:
             ``"ignition"`` (initial ignition) or ``"spread"``, plus at most one ``"edge"`` event
             directly after the ignition of the first cell to burn within ``stencil.max_offset``
             cells of the grid edge. Empty if events were not recorded.
+        front_intensity: ``(H, W)`` float64, fireline intensity, kW/m, each cell had when the
+            front crossed it: the rule's head value scaled to the local front-normal rate (see
+            the module docstring). NaN exactly where the cell never ignited. ``grid.intensity``
+            holds the same value only while a cell is flaming.
         elapsed_s: Wall-clock time of the run, s.
         provenance: JSON-serializable record of what produced the result (resolved config,
             seed, ``start_time_utc`` (ISO 8601 wall-clock instant of simulated time 0, or None),
@@ -228,6 +295,7 @@ class RunResult:
     arrival_time: FloatArray
     burned_mask: BoolArray
     events: list[tuple[float, str, int, int]]
+    front_intensity: FloatArray
     elapsed_s: float
     provenance: dict[str, Any]
 
@@ -270,13 +338,17 @@ def _blocked_links(barrier: BoolArray, stencil: Stencil) -> BoolArray:
     return blocked
 
 
-def _earliest(idx: IntArray, times: FloatArray) -> tuple[IntArray, FloatArray]:
-    """Reduce candidate ``(cell, time)`` pairs to the earliest time per cell (cells ascending)."""
-    order = np.lexsort((times, idx))  # by cell, then time
-    idx, times = idx[order], times[order]
+def _earliest(idx: IntArray, times: FloatArray, speeds: FloatArray) -> tuple[IntArray, FloatArray, FloatArray]:
+    """Reduce candidate ``(cell, time, link speed)`` triples to the earliest time per cell (cells ascending).
+
+    Among candidates with the same earliest time the fastest link is kept, so the choice does
+    not depend on the order in which candidates were found.
+    """
+    order = np.lexsort((-speeds, times, idx))  # by cell, then time, then speed descending
+    idx, times, speeds = idx[order], times[order], speeds[order]
     first = np.ones(idx.size, dtype=bool)
     first[1:] = idx[1:] != idx[:-1]
-    return idx[first], times[first]
+    return idx[first], times[first], speeds[first]
 
 
 def _ignition_cells(ignition: IgnitionConfig, grid: Grid) -> list[tuple[int, int]]:
@@ -293,6 +365,94 @@ def _ignition_cells(ignition: IgnitionConfig, grid: Grid) -> list[tuple[int, int
             state = CellState(int(grid.state[r, c])).name
             raise ValueError(f"ignition cell ({r}, {c}) is not burnable fuel (state {state})")
     return unique
+
+
+_COLLINEAR_TOL = 1e-9  # sim_fast._step_py repeats this literal
+"""Relative size of the determinant below which the burned neighbours count as collinear."""
+
+
+def _plane_fit_rate(
+    arrival: FloatArray, idx: IntArray, offsets: IntArray, h: int, w: int, dx: float
+) -> tuple[FloatArray, BoolArray]:
+    """Front-normal rate of spread at cells ``idx`` from a plane fitted to nearby arrival times.
+
+    For each cell, the points are the cell itself and every stencil neighbour inside the grid
+    whose arrival time is finite and not later than the cell's. A plane ``T = c + g . x`` is
+    fitted to them by least squares (``x`` in metres, east and south, relative to the cell;
+    ``T`` relative to the cell's arrival), and the rate is ``1 / |g|``. The compiled engine
+    (``sim_fast._step_py``, step 4b) evaluates the same formulas cell by cell.
+
+    Args:
+        arrival: ``(H * W,)`` float64 arrival times, s; NaN where never ignited.
+        idx: ``(m,)`` flat indices of the cells (each with a finite arrival time).
+        offsets: ``(K, 2)`` int ``(d_row, d_col)`` per stencil direction.
+        h, w: Grid shape.
+        dx: Cell size, m.
+
+    Returns:
+        ``(rate, ok)``: ``(m,)`` float64 rate, m/s (``inf`` where the fitted gradient is zero,
+        as where two fronts meet), and ``(m,)`` bool, False where fewer than two neighbours
+        qualify or they are collinear with the cell (``rate`` is then NaN).
+    """
+    rows, cols = np.divmod(idx, w)
+    tr = rows[None, :] + offsets[:, 0:1]  # (K, m)
+    tc = cols[None, :] + offsets[:, 1:2]
+    inside = (tr >= 0) & (tr < h) & (tc >= 0) & (tc < w)
+    tn = arrival[np.where(inside, tr * w + tc, 0)]
+    with np.errstate(invalid="ignore"):
+        use = inside & (tn <= arrival[idx])  # False for NaN (not burned yet)
+    tau = np.where(use, tn - arrival[idx], 0.0)  # (K, m), s, <= 0
+    used = use.astype(np.float64)
+    x = offsets[:, 1].astype(np.float64) * dx  # (K,) east, m
+    y = offsets[:, 0].astype(np.float64) * dx  # (K,) south, m
+
+    n = 1.0 + used.sum(axis=0)  # the cell itself is the point x = y = t = 0
+    sx, sy, st = x @ used, y @ used, tau.sum(axis=0)
+    sxx, sxy, syy = (x * x) @ used, (x * y) @ used, (y * y) @ used
+    sxt, syt = x @ tau, y @ tau
+    cxx = sxx - sx * sx / n
+    cxy = sxy - sx * sy / n
+    cyy = syy - sy * sy / n
+    cxt = sxt - sx * st / n
+    cyt = syt - sy * st / n
+    det = cxx * cyy - cxy * cxy
+    ok = (n >= 3.0) & (det > _COLLINEAR_TOL * (cxx + cyy) ** 2)
+    safe = np.where(ok, det, 1.0)
+    gx = (cxt * cyy - cyt * cxy) / safe
+    gy = (cyt * cxx - cxt * cxy) / safe
+    slowness = np.sqrt(gx * gx + gy * gy)  # s/m
+    rate = np.full(idx.shape, np.inf)
+    np.divide(1.0, slowness, out=rate, where=slowness > 0)
+    rate[~ok] = np.nan
+    return rate, ok
+
+
+def front_normal_rate(arrival_time: FloatArray, stencil: Stencil, dx: float) -> FloatArray:
+    """Rate at which the front advanced normal to itself through each burned cell, m/s.
+
+    ``R_n = 1 / |grad T|`` with the gradient of the arrival time taken from a least-squares
+    plane through each cell and its stencil neighbours that burned no later than it, the
+    estimate the simulator uses for the fireline intensity (docs/plan.md section 2.2). It needs
+    only the arrival times, so it can be applied to any finished run.
+
+    Args:
+        arrival_time: ``(H, W)`` arrival times, s; NaN where the cell never burned.
+        stencil: The stencil the run used.
+        dx: Cell size, m.
+
+    Returns:
+        ``(H, W)`` float64, m/s. NaN where the cell never burned or the plane is undetermined
+        (fewer than two earlier-burned neighbours not collinear with the cell: the ignition
+        point and cells reached through a one-cell gap); ``inf`` where the gradient is zero.
+    """
+    arrival = np.asarray(arrival_time, dtype=np.float64)
+    h, w = int(arrival.shape[0]), int(arrival.shape[1])
+    flat = np.ascontiguousarray(arrival).reshape(-1)
+    idx = np.flatnonzero(~np.isnan(flat))
+    rate, _ = _plane_fit_rate(flat, idx, np.asarray(stencil.offsets, dtype=np.int64), h, w, dx)
+    out = np.full(h * w, np.nan)
+    out[idx] = rate
+    return out.reshape(h, w)
 
 
 def edge_band_mask(shape: tuple[int, int], width: int) -> BoolArray:
@@ -395,6 +555,7 @@ class _FireEngine:
         self.h, self.w = grid.shape
         self.k = stencil.size
         self.offsets = [(int(dr), int(dc)) for dr, dc in stencil.offsets.tolist()]
+        self._offsets_array = np.asarray(stencil.offsets, dtype=np.int64)  # (K, 2)
         self.link_length_m = grid.dx * np.asarray(stencil.distances, dtype=np.float64)  # (K,)
         self.correction = correction
         self.residence = residence
@@ -409,8 +570,15 @@ class _FireEngine:
         self.timer = np.zeros(n, dtype=np.float64)  # remaining flaming time, s
         self.dormant_since = np.full(n, np.nan, dtype=np.float64)  # s; NaN while not dormant
         self.holdover_s = np.zeros(n, dtype=np.float64)  # holdover time of each cell's fuel, s
+        self.may_stall = np.zeros(n, dtype=bool)  # has a zero-rate, unblocked link to a burnable cell
         self.burning = np.empty(0, dtype=np.intp)  # flat indices of BURNING cells
         self._tentative = np.full(n, np.inf, dtype=np.float64)  # scratch for _cascade, kept all-inf
+        self._tentative_speed = np.zeros(n, dtype=np.float64)  # igniting link speed of _tentative, m/s
+        self.front_intensity = np.full(n, np.nan, dtype=np.float64)  # kW/m, fixed at ignition
+        self.link_speed_scale = self.link_length_m * correction  # (K,) rate (1/s) -> link rate, m/s
+        self.ros_head = np.zeros(n, dtype=np.float64)  # max_k ros of the rule output, m/s
+        self.head_intensity = np.zeros(n, dtype=np.float64)  # rule output, kW/m
+        self.heat: FloatArray | None = None  # rule output heat per unit area, kJ/m^2, or None
         self.events: list[tuple[float, str, int, int]] = []
 
         self.blocked = self._compute_blocked()
@@ -424,6 +592,24 @@ class _FireEngine:
         barrier = (self.grid.state == _UNBURNABLE) | ~self.grid.burnable_mask()
         return _blocked_links(barrier, self.stencil)
 
+    def _compute_may_stall(self) -> BoolArray:
+        """``(H * W,)`` bool: cells with a link that could be stalled, whatever burns later.
+
+        True where some link inside the grid has a rate of 0, is not blocked by barrier geometry
+        and leads to a cell that is not UNBURNABLE. Only these cells can ever be dormant, so
+        the burn-out of an ordinary front never has to look at its links twice. Recomputed
+        with the link rates (a hook that makes cells UNBURNABLE reports a change).
+        """
+        state = self.grid.state
+        m = self.stencil.max_offset
+        burnable = np.pad(state != _UNBURNABLE, m, constant_values=False)  # outside the grid: no target
+        rate = self.rate.reshape(self.k, self.h, self.w)
+        may = np.zeros((self.h, self.w), dtype=bool)
+        for k, (dr, dc) in enumerate(self.offsets):
+            target = burnable[m + dr : m + dr + self.h, m + dc : m + dc + self.w]
+            may |= target & ~(rate[k] > 0) & ~self.blocked[k]
+        return may.reshape(-1)
+
     def refresh(self, weather: Weather, changed: bool) -> None:
         """Recompute the rule output and link rates if the weather or (``changed``) the grid changed."""
         if changed:
@@ -436,15 +622,30 @@ class _FireEngine:
         link[self.blocked] = 0.0
         self.rate = (link / self.link_length_m[:, None, None]).reshape(self.k, -1)
         self.holdover_s = self.holdover.lookup(self.grid.fuel_model).reshape(-1)
+        self.may_stall = self._compute_may_stall()
+        self.ros_head = np.ascontiguousarray(out.ros.max(axis=0), dtype=np.float64).reshape(-1)
+        self.head_intensity = np.ascontiguousarray(out.intensity, dtype=np.float64).reshape(-1)
+        self.heat = (
+            None if out.heat_per_area is None else np.ascontiguousarray(out.heat_per_area, dtype=np.float64).reshape(-1)
+        )
         self.out = out
         self.weather = weather
 
     # -- life cycle -----------------------------------------------------------------------
 
     def ignite(
-        self, idx: IntArray, times: FloatArray, kind: str, step_events: list[tuple[float, str, int, int]]
+        self,
+        idx: IntArray,
+        times: FloatArray,
+        kind: str,
+        step_events: list[tuple[float, str, int, int]],
+        link_speed: FloatArray | None = None,
     ) -> None:
-        """Set cells ``idx`` (flat) BURNING at ``times`` (s) and start their flaming clock."""
+        """Set cells ``idx`` (flat) BURNING at ``times`` (s); start their flaming clock and fix their intensity.
+
+        ``link_speed`` is the rate, m/s, of the link that ignited each cell (the fallback for
+        the front-normal rate); None marks an initial ignition, which gets the head intensity.
+        """
         assert self.out is not None
         rows, cols = np.divmod(idx, self.w)
         grid = self.grid
@@ -454,11 +655,32 @@ class _FireEngine:
         ros_head = self.out.ros[:, rows, cols].max(axis=0)
         crossing = np.divide(grid.dx, ros_head, out=np.zeros_like(ros_head, dtype=np.float64), where=ros_head > 0)
         self.timer[idx] = crossing + self.residence.lookup(grid.fuel_model[rows, cols])
+        self.front_intensity[idx] = self._front_intensity(idx, link_speed)
         if self.record_events:
             step_events.extend(
                 (float(t), kind, int(r), int(c))
                 for t, r, c in zip(times.tolist(), rows.tolist(), cols.tolist(), strict=True)
             )
+
+    def _front_intensity(self, idx: IntArray, link_speed: FloatArray | None) -> FloatArray:
+        """Fireline intensity, kW/m, of cells ``idx`` just ignited (arrival times already stored).
+
+        Head intensity of the rule scaled to the front-normal rate (module docstring); the head
+        value itself for an initial ignition (``link_speed`` None).
+        """
+        head = self.head_intensity[idx]
+        if link_speed is None or not head.any():  # initial ignition, or a rule without intensity (cap of 0)
+            return head.copy()
+        rate, ok = _plane_fit_rate(self.arrival, idx, self._offsets_array, self.h, self.w, self.grid.dx)
+        rate = np.where(ok, rate, link_speed)
+        if self.heat is not None:
+            raw = self.heat[idx] * np.where(np.isinf(rate), 0.0, rate)
+        else:
+            ros_head = self.ros_head[idx]
+            ratio = np.ones_like(rate)
+            np.divide(np.where(np.isinf(rate), 0.0, rate), ros_head, out=ratio, where=ros_head > 0)
+            raw = head * ratio
+        return np.where(np.isinf(rate), head, np.minimum(raw, head))
 
     def _time_window(
         self, src: IntArray, t: float, t_end: float, arrival: FloatArray | None = None
@@ -484,8 +706,11 @@ class _FireEngine:
 
     def _crossings(
         self, src: IntArray, start: FloatArray, tau: FloatArray, *, fresh: bool
-    ) -> tuple[IntArray, FloatArray]:
-        """FUEL cells reached from ``src`` within their windows, with the earliest crossing time (s).
+    ) -> tuple[IntArray, FloatArray, FloatArray]:
+        """FUEL cells reached from ``src`` within their windows: earliest crossing time (s) and link rate (m/s).
+
+        The link rate is that of the link that got there first: the harmonic-mean rate of
+        spread along it, without the front-speed correction.
 
         Args:
             src: Flat indices of the sources.
@@ -496,6 +721,7 @@ class _FireEngine:
         """
         cand_idx: list[IntArray] = []
         cand_t: list[FloatArray] = []
+        cand_v: list[FloatArray] = []
         for k in range(self.k):
             ok, targets = self._targets(src, k)
             if targets.size == 0:
@@ -509,11 +735,14 @@ class _FireEngine:
             s_start, s_stop = start[ok][hit], start[ok][hit] + tau[ok][hit]
             cand_idx.append(targets[hit])
             cand_t.append(np.minimum(s_start + need[hit] / rate[hit], s_stop))  # min() guards rounding
+            cand_v.append(rate[hit] * self.link_speed_scale[k])
         if not cand_idx:
-            return np.empty(0, dtype=np.intp), np.empty(0, dtype=np.float64)
-        return _earliest(np.concatenate(cand_idx), np.concatenate(cand_t))
+            return np.empty(0, dtype=np.intp), np.empty(0, dtype=np.float64), np.empty(0, dtype=np.float64)
+        return _earliest(np.concatenate(cand_idx), np.concatenate(cand_t), np.concatenate(cand_v))
 
-    def _cascade(self, idx: IntArray, times: FloatArray, t: float, t_end: float) -> tuple[IntArray, FloatArray]:
+    def _cascade(
+        self, idx: IntArray, times: FloatArray, speeds: FloatArray, t: float, t_end: float
+    ) -> tuple[IntArray, FloatArray, FloatArray]:
         """Exact in-step propagation from cells first reached at ``times`` (s).
 
         Inside one step the link rates are constant and a newly lit cell's progress starts at
@@ -522,45 +751,60 @@ class _FireEngine:
         correction: re-propagate from every cell whose tentative arrival improved, until
         nothing improves. Cells stay FUEL until the end, so an arrival can still be revised.
 
+        Args:
+            idx, times, speeds: Cells first reached from the cells burning at the step start,
+                their crossing times (s) and the rates (m/s) of the links that reached them.
+
         Returns:
-            Flat indices of every cell lit in this step and their arrival times, s.
+            Flat indices of every cell lit in this step, their arrival times, s, and the rate,
+            m/s, of the link that ignited each.
         """
         best = self._tentative  # persistent (n,) array of +inf; entries touched here are reset
+        best_v = self._tentative_speed
         best[idx] = times
+        best_v[idx] = speeds
         touched = [idx]
         frontier = idx
         while frontier.size:
             start, tau = self._time_window(frontier, t, t_end, arrival=best[frontier])
-            cand, cand_t = self._crossings(frontier, start, tau, fresh=True)
+            cand, cand_t, cand_v = self._crossings(frontier, start, tau, fresh=True)
+            tie = (cand_t == best[cand]) & (cand_v > best_v[cand])  # same time by a faster link
+            best_v[cand[tie]] = cand_v[tie]
             better = cand_t < best[cand]
             frontier = cand[better]
             best[frontier] = cand_t[better]
+            best_v[frontier] = cand_v[better]
             touched.append(frontier)
         lit = np.unique(np.concatenate(touched))
         lit_t = best[lit].copy()
+        lit_v = best_v[lit].copy()
         best[lit] = np.inf
-        return lit, lit_t
+        return lit, lit_t, lit_v
 
-    def _link_status(self, src: IntArray) -> tuple[BoolArray, BoolArray]:
-        """For each cell of ``src``: has it a *live* link, and has it a *stalled* link?
-
-        Both kinds of link lead to a FUEL neighbour inside the grid. A live link has a rate
-        > 0 and can still complete. A stalled link has a rate of exactly 0 without being
-        blocked by barrier geometry: one of the cells it crosses cannot spread under the
-        current weather or retardant, which can change.
-        """
+    def _has_live_link(self, src: IntArray) -> BoolArray:
+        """Whether each source still has an unblocked link with rate > 0 into a FUEL neighbour."""
         live = np.zeros(src.shape, dtype=bool)
+        for k in range(self.k):
+            live |= self._targets(src, k)[0]
+        return live
+
+    def _has_stalled_link(self, src: IntArray) -> BoolArray:
+        """Whether each cell of ``src`` has a *stalled* link into a FUEL neighbour inside the grid.
+
+        A stalled link has a rate of exactly 0 without being blocked by barrier geometry: one of
+        the cells it crosses cannot spread under the current weather or retardant, which can
+        change. (A live link, by contrast, has a rate > 0 and can still complete.)
+        """
         stalled = np.zeros(src.shape, dtype=bool)
         rows, cols = np.divmod(src, self.w)
         blocked = self.blocked.reshape(self.k, -1)
         for k, (dr, dc) in enumerate(self.offsets):
             tr, tc = rows + dr, cols + dc
-            fuel = (tr >= 0) & (tr < self.h) & (tc >= 0) & (tc < self.w)
-            fuel[fuel] = self.grid.state[tr[fuel], tc[fuel]] == _FUEL
-            moving = self.rate[k, src] > 0
-            live |= fuel & moving
-            stalled |= fuel & ~moving & ~blocked[k, src]
-        return live, stalled
+            ok = (tr >= 0) & (tr < self.h) & (tc >= 0) & (tc < self.w)
+            ok &= ~(self.rate[k, src] > 0) & ~blocked[k, src]
+            ok[ok] = self.grid.state[tr[ok], tc[ok]] == _FUEL
+            stalled |= ok
+        return stalled
 
     def advance(self, t: float, t_end: float) -> None:
         """Spread over the step ``[t, t_end)``: crossings, cascade, progress, burn-out."""
@@ -573,13 +817,13 @@ class _FireEngine:
 
         src = self.burning
         start, tau = self._time_window(src, t, t_end)
-        first_idx, first_t = self._crossings(src, start, tau, fresh=False)
+        first_idx, first_t, first_v = self._crossings(src, start, tau, fresh=False)
         self.progress[:, src] += self.rate[:, src] * tau
 
         step_events: list[tuple[float, str, int, int]] = []
         if first_idx.size:
-            new_idx, new_t = self._cascade(first_idx, first_t, t, t_end)
-            self.ignite(new_idx, new_t, "spread", step_events)
+            new_idx, new_t, new_v = self._cascade(first_idx, first_t, first_v, t, t_end)
+            self.ignite(new_idx, new_t, "spread", step_events, link_speed=new_v)
             _, new_tau = self._time_window(new_idx, t, t_end)
             self.progress[:, new_idx] = self.rate[:, new_idx] * new_tau  # progress starts at 0 at ignition
             self.burning = np.concatenate([src, new_idx])
@@ -593,15 +837,18 @@ class _FireEngine:
         src = self.burning
         arrival = self.arrival[src]
         self.timer[src] = np.maximum(self.timer[src] - (t_end - np.maximum(t, arrival)), 0.0)
-        source, stalled = self._link_status(src)
+        source = self._has_live_link(src)
+        flaming = self.timer[src] > 0
+        idle = ~source & ~flaming & self.may_stall[src]  # candidates for dormancy; none on an ordinary front
         if self.max_age is not None:
             young = (t_end - arrival) < self.max_age
             source &= young
-            stalled &= young
-        flaming = self.timer[src] > 0
+            idle &= young
         # Dormant: nothing left to do now, but a stalled link may come back. The clock starts
         # at the end of the first step that leaves the cell dormant and stops when it spreads.
-        dormant = stalled & ~source & ~flaming
+        dormant = idle
+        if idle.any():
+            dormant[idle] = self._has_stalled_link(src[idle])
         since = np.where(dormant, self.dormant_since[src], np.nan)
         since[dormant & np.isnan(since)] = t_end
         self.dormant_since[src] = since
@@ -616,7 +863,7 @@ class _FireEngine:
         grid.intensity[out_r, out_c] = 0.0
         in_r, in_c = rows[keep], cols[keep]
         grid.burn_timer[in_r, in_c] = self.timer[src[keep]]
-        grid.intensity[in_r, in_c] = np.where(flaming[keep], self.out.intensity[in_r, in_c], 0.0)
+        grid.intensity[in_r, in_c] = np.where(flaming[keep], self.front_intensity[src[keep]], 0.0)
         self.burning = src[keep]
 
 
@@ -810,6 +1057,7 @@ def run(
         arrival_time=arrival,
         burned_mask=~np.isnan(arrival),
         events=engine.events,
+        front_intensity=engine.front_intensity.reshape(g.shape),
         elapsed_s=elapsed,
         provenance=provenance,
     )
@@ -829,6 +1077,7 @@ def _ignite_initial(engine: _FireEngine, cells: list[tuple[int, int]], t_ign: fl
 
 
 __all__ = [
+    "FlameLengthModel",
     "HoldoverTable",
     "KernelCorrectionEntry",
     "KernelCorrectionTable",
@@ -837,6 +1086,9 @@ __all__ = [
     "StepHook",
     "edge_band_mask",
     "first_edge_arrival",
+    "flame_length_from_intensity",
+    "front_normal_rate",
+    "load_flame_length_model",
     "load_holdover_times",
     "load_kernel_corrections",
     "load_residence_times",
