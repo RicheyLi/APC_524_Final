@@ -11,11 +11,12 @@ fine; renaming or removing fields is not.
 from __future__ import annotations
 
 import os
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from wildfire_sim.grid import Weather, WeatherSeries
 from wildfire_sim.types import StencilSize
@@ -258,6 +259,21 @@ class ScenarioConfig(_Strict):
             "results to floating-point rounding; needs the 'fast' extra: uv sync --extra fast)"
         ),
     )
+    start_time_utc: AwareDatetime | None = Field(
+        default=None,
+        description=(
+            "wall-clock instant of simulated time 0 (WP 1.14): an ISO 8601 datetime with a UTC offset, "
+            "for example 2016-08-13T23:00:00Z; stored in UTC. None (default) leaves the run without a "
+            "calendar date. It does not change the simulation; it lets weather series, satellite "
+            "overpasses and aircraft daylight be aligned with simulated seconds"
+        ),
+    )
+
+    @field_validator("start_time_utc")
+    @classmethod
+    def _start_in_utc(cls, value: datetime | None) -> datetime | None:
+        # AwareDatetime has already rejected a datetime without a timezone.
+        return None if value is None else value.astimezone(UTC)
 
     @model_validator(mode="after")
     def _check_times(self) -> ScenarioConfig:
@@ -276,6 +292,20 @@ class ScenarioConfig(_Strict):
                 if row >= h or col >= w:
                     raise ValueError(f"ignition cell ({row}, {col}) is outside the grid of shape ({h}, {w})")
         return self
+
+    def time_at(self, t_s: float) -> datetime | None:
+        """Wall-clock time of simulated time ``t_s``.
+
+        Args:
+            t_s: Simulated time, s since the start of the run (may be fractional or negative).
+
+        Returns:
+            ``start_time_utc + t_s`` seconds as a timezone-aware UTC datetime, or None when the
+            scenario has no ``start_time_utc``.
+        """
+        if self.start_time_utc is None:
+            return None
+        return self.start_time_utc + timedelta(seconds=float(t_s))
 
     @property
     def n_steps(self) -> int:

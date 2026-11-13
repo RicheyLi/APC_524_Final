@@ -40,13 +40,27 @@ The command prints a summary table. The run directory contains:
 | `arrival_time.npy` | `(H, W)` float64, time each cell ignited, s since the start; NaN = never burned. |
 | `events.csv` | One row per ignition, in time order: `t_s,kind,row,col`; `kind` is `ignition` (initial) or `spread`. |
 | `summary.json` | Scenario name, seed, burned cells, burned area (m^2 and ha), simulated time (s), steps executed, time of last ignition (s), wall-clock time (s), count of cells in each final state. |
-| `provenance.json` | Resolved config, seed, git commit, Python/numpy/scipy/package versions, spread rule, stencil, kernel correction, residence times, steps executed. |
+| `provenance.json` | Resolved config, seed, `start_time_utc`, git commit, Python/numpy/scipy/package versions, spread rule, stencil, kernel correction, residence times, steps executed. |
 | `scenario.yaml` | The resolved scenario with the seed used; `wildfire-sim run DIR/scenario.yaml` reproduces the run. |
 | `final.png` | Map of the final cell states. |
 | `arrival.png` | Map of arrival time with isochrones. |
 | `fire.gif` | Only with `--gif`: the spread replayed from the arrival times. |
 
 All JSON files are strict JSON: missing or undefined numbers are `null`, never `NaN`.
+
+## Wall-clock start time
+
+A scenario may say when simulated time 0 is, with an ISO 8601 datetime that carries a UTC
+offset (a datetime without one is rejected):
+
+```yaml
+start_time_utc: "2016-08-13T16:00:00-07:00"   # stored as 2016-08-13T23:00:00Z
+```
+
+The field is optional and does not change the simulation. `ScenarioConfig.time_at(t_s)` returns
+the datetime of a simulated time in UTC (or `None` without a start), and the start is written
+to `provenance.json` as `start_time_utc`. The data pipeline uses it to line up hourly weather,
+satellite overpasses and aircraft daylight with simulated seconds.
 
 ## Run an ensemble
 

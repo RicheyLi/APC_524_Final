@@ -1,5 +1,6 @@
 """Tests for wildfire_sim.config: schema validation and YAML round-trips."""
 
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -244,3 +245,68 @@ def test_engine_numba_accepted_and_roundtrips(tmp_path: Path) -> None:
 def test_invalid_engine_rejected(engine: object) -> None:
     with pytest.raises(ValidationError, match="engine"):
         ScenarioConfig.model_validate({**_MINIMAL, "engine": engine})
+
+
+# ----------------------------------------------------------------------------- wall clock (WP 1.14)
+
+
+def _minimal(**extra: object) -> dict:
+    return {
+        "name": "m",
+        "grid": {"kind": "synthetic", "generator": "flat_uniform"},
+        "ignition": {"center": True},
+        **extra,
+    }
+
+
+@pytest.mark.parametrize("name", ["flat_no_wind", "steady_wind", "river_barrier"])
+def test_shipped_scenarios_have_no_start_time(name: str) -> None:
+    cfg = load_scenario(CONFIGS / "scenarios" / f"{name}.yaml")
+    assert cfg.start_time_utc is None
+    assert cfg.time_at(0.0) is None
+    assert cfg.time_at(3600.0) is None
+
+
+def test_time_at_is_start_plus_simulated_seconds() -> None:
+    cfg = ScenarioConfig.model_validate(_minimal(start_time_utc="2016-08-13T23:00:00Z"))
+    start = datetime(2016, 8, 13, 23, 0, 0, tzinfo=UTC)
+    assert cfg.start_time_utc == start
+    assert cfg.time_at(0) == start
+    assert cfg.time_at(3600) == start + timedelta(hours=1)
+    assert cfg.time_at(3600) == datetime(2016, 8, 14, 0, 0, 0, tzinfo=UTC)
+    assert cfg.time_at(0.5) == start + timedelta(milliseconds=500)
+    at = cfg.time_at(86400.0)
+    assert at is not None and at.utcoffset() == timedelta(0)
+
+
+@pytest.mark.parametrize("naive", ["2016-08-13T23:00:00", "2016-08-13 23:00", datetime(2016, 8, 13, 23, 0, 0)])
+def test_start_time_without_a_timezone_is_rejected(naive: object) -> None:
+    with pytest.raises(ValidationError, match="start_time_utc"):
+        ScenarioConfig.model_validate(_minimal(start_time_utc=naive))
+
+
+def test_start_time_with_an_offset_is_stored_in_utc() -> None:
+    """16:00 at UTC-7 (Pacific daylight time) is 23:00 UTC: the same instant, normalised."""
+    cfg = ScenarioConfig.model_validate(_minimal(start_time_utc="2016-08-13T16:00:00-07:00"))
+    assert cfg.start_time_utc == datetime(2016, 8, 13, 23, 0, 0, tzinfo=UTC)
+    assert cfg.start_time_utc is not None and cfg.start_time_utc.utcoffset() == timedelta(0)
+    assert cfg.model_dump(mode="json")["start_time_utc"] == "2016-08-13T23:00:00Z"
+
+
+def test_start_time_roundtrips_through_yaml(tmp_path: Path) -> None:
+    for start in ("2016-08-13T23:00:00Z", None):
+        cfg = ScenarioConfig.model_validate(_minimal(start_time_utc=start))
+        path = tmp_path / "s.yaml"
+        dump_yaml(cfg, path)
+        assert load_scenario(path) == cfg
+
+
+def test_start_time_as_a_yaml_timestamp(tmp_path: Path) -> None:
+    """An unquoted ISO timestamp in YAML (parsed by PyYAML into a datetime) is accepted with an offset only."""
+    path = tmp_path / "s.yaml"
+    body = "name: m\ngrid: {kind: synthetic, generator: flat_uniform}\nignition: {center: true}\n"
+    path.write_text(body + "start_time_utc: 2016-08-13T23:00:00+00:00\n")
+    assert load_scenario(path).start_time_utc == datetime(2016, 8, 13, 23, 0, 0, tzinfo=UTC)
+    path.write_text(body + "start_time_utc: 2016-08-13T23:00:00\n")
+    with pytest.raises(ValueError, match="start_time_utc"):
+        load_scenario(path)

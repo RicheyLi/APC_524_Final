@@ -171,7 +171,8 @@ class RunResult:
             ``"ignition"`` (initial ignition) or ``"spread"``. Empty if events were not recorded.
         elapsed_s: Wall-clock time of the run, s.
         provenance: JSON-serializable record of what produced the result (resolved config,
-            seed, git commit, package versions, kernel settings, steps executed, final time).
+            seed, ``start_time_utc`` (ISO 8601 wall-clock instant of simulated time 0, or None),
+            git commit, package versions, kernel settings, steps executed, final time).
     """
 
     grid: Grid
@@ -651,6 +652,7 @@ def run(
     provenance: dict[str, Any] = {
         "config": config.model_dump(mode="json"),
         "seed": seed,
+        "start_time_utc": None if config.start_time_utc is None else config.start_time_utc.isoformat(),
         **_model_provenance(config, type(rule).__name__, corrections, residence),
         "grid_from": "config" if grid is None else "argument",
         "max_source_age_s": max_source_age_s,

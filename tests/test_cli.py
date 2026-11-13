@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -16,6 +17,7 @@ import pytest
 from typer.testing import CliRunner, Result
 
 from wildfire_sim.cli import app
+from wildfire_sim.config import load_scenario
 from wildfire_sim.grid import Grid
 from wildfire_sim.types import CellState
 
@@ -398,3 +400,28 @@ def test_plot_unrelated_dir(tmp_path: Path) -> None:
 
 def test_plot_missing_dir(tmp_path: Path) -> None:
     _assert_user_error(runner.invoke(app, ["plot", str(tmp_path / "nope")]), "not found")
+
+
+# ----------------------------------------------------------------------------- wall clock (WP 1.14)
+
+
+def test_run_records_the_start_time_in_provenance(tmp_path: Path) -> None:
+    scenario = tmp_path / "dated.yaml"
+    scenario.write_text(TINY + "start_time_utc: '2016-08-13T16:00:00-07:00'\n")
+    out = tmp_path / "dated"
+    result = runner.invoke(app, ["run", str(scenario), "--out", str(out)])
+    assert result.exit_code == 0, result.output
+    provenance = _strict_json(out / "provenance.json")
+    assert provenance["start_time_utc"] == "2016-08-13T23:00:00+00:00"
+    assert load_scenario(out / "scenario.yaml").start_time_utc == datetime(2016, 8, 13, 23, tzinfo=UTC)
+
+
+def test_run_without_a_start_time_records_none(run_dir: Path) -> None:
+    assert _strict_json(run_dir / "provenance.json")["start_time_utc"] is None
+
+
+def test_naive_start_time_is_a_user_error(tmp_path: Path) -> None:
+    scenario = tmp_path / "naive.yaml"
+    scenario.write_text(TINY + "start_time_utc: '2016-08-13T16:00:00'\n")
+    result = runner.invoke(app, ["run", str(scenario), "--out", str(tmp_path / "x")])
+    _assert_user_error(result, "Invalid scenario")
