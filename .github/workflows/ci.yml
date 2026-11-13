@@ -130,7 +130,10 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Engine parity tests (numba vs numpy)
-        run: uv run --python=3.12 --extra fast pytest -q tests/test_sim_fast.py
+        run: >-
+          uv run --python=3.12 --extra fast pytest -q
+          tests/test_sim_fast.py tests/test_dormant.py tests/test_edge.py
+          tests/test_intensity.py tests/test_urban.py
 
       # Fails on a slowdown of more than 20 % in run time normalised by a calibration loop
       # timed in the same process (machine-independent; see scripts/bench.py and docs/performance.md).
