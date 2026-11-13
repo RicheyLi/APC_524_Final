@@ -199,7 +199,7 @@ compared; minimum of 3 runs each, 3-4 rounds):
 
 | What | NumPy engine | Numba engine |
 | --- | --- | --- |
-| Dormant sources and edge detection, rule without intensity (the benchmark's constant rule) | within noise | about +5 % |
+| Dormant sources and edge detection, rule without intensity (the benchmark's constant rule) | within noise | +5 to +9 % |
 | Front-normal intensity, rule that reports intensity (uniform 0.2 m/s, 8 / 16 neighbours) | +8 % / +5 % | +2 % / +2 % |
 
 Two guards keep the ordinary case cheap: a burned-out cell is checked for stalled links only if
