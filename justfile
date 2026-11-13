@@ -55,11 +55,9 @@ pdb *ARGS:
     @echo "Running with arg: {{ARGS}}"
     uv run --python=3.12 pytest --pdb --maxfail=10 {{ARGS}}
 
-# Run tests with coverage across all supported Python versions
+# Run the tests in parallel with coverage on the primary Python (as CI does), then report
 coverage:
-    uv run --python=3.12 coverage run -m pytest
-    uv run --python=3.13 coverage run -m pytest
-    uv run --python=3.12 coverage combine
+    uv run --python=3.12 pytest -n auto --cov --cov-report=
     uv run --python=3.12 coverage report
     uv run --python=3.12 coverage html
 

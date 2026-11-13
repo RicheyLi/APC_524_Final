@@ -36,6 +36,7 @@ These are the changes that will go out in the next release.
 
 ## Changed
 
+- CI runs the tests in parallel (`pytest -n auto`) and collects coverage on Python 3.12 only, with `pytest-cov` (new dev dependency); `just coverage` does the same. Before, each of the three test jobs ran the suite on one core under coverage, which was 97 % of the CI wall time.
 - **Defaults changed after the lattice study:** `ScenarioConfig.stencil` 8 to 16 and `spread.arrival_shape` 20 to 200. Fires keep their shape better under wind (head and flank within 7 % of the analytic ellipse at a length-to-breadth ratio of 1.5 and 13 % at 3) and the front-speed correction is close to 1; runs take about twice as long. Scenario files that do not set these fields give different results; the shipped scenarios now use 16 neighbours and the golden arrays were regenerated.
 - `configs/scenarios/flat_no_wind.yaml`: duration 7200 s to 5400 s so the fire stays inside the grid.
 - `docs/revised_plan.md` merged into `docs/plan.md`. The plan has no schedule: work is ordered by dependencies and judged by undated milestones. A second design review (section 14) strengthened the kernel, Rothermel, data, validation, suppression and testing sections.
