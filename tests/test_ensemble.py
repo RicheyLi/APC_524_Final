@@ -91,6 +91,7 @@ def assert_same(a: EnsembleResult, b: EnsembleResult) -> None:
     np.testing.assert_array_equal(a.burn_probability, b.burn_probability)
     assert a.seeds == b.seeds
     assert a.perturbations == b.perturbations
+    np.testing.assert_array_equal(a.reached_edge_s, b.reached_edge_s)
 
 
 # ----------------------------------------------------------------------------- seeds, shapes

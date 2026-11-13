@@ -32,7 +32,7 @@ from hypothesis.extra.numpy import arrays
 from wildfire_sim.config import ScenarioConfig, dump_yaml, load_scenario
 from wildfire_sim.ensemble import derive_seeds, mean_ci
 from wildfire_sim.grid import LAYER_SPECS, Grid, Weather
-from wildfire_sim.sim import RunResult, run
+from wildfire_sim.sim import RunResult, edge_band_mask, first_edge_arrival, run
 from wildfire_sim.spread.base import (
     SpreadOutput,
     draw_crossing_thresholds,
@@ -494,7 +494,20 @@ def test_single_run_invariants(land: Landscape) -> None:
         assert np.nanmin(arrival) >= land.ignition_time
         assert np.nanmax(arrival) < final_time
 
-    events = result.events
+    # At most one "edge" event, directly after the ignition of the first cell burned in the edge band.
+    edge = first_edge_arrival(arrival, _stencil(land.stencil))
+    edge_events = [e for e in result.events if e[1] == "edge"]
+    if edge is None:
+        assert edge_events == [] and result.provenance["reached_edge_s"] is None
+    else:
+        assert edge_events == [(edge[0], "edge", edge[1], edge[2])]
+        assert result.provenance["reached_edge_s"] == edge[0] == arrival[edge[1], edge[2]]
+        at = result.events.index(edge_events[0])
+        assert result.events[at - 1][0] == edge[0] and result.events[at - 1][2:] == edge[1:]
+        band = edge_band_mask(arrival.shape, _stencil(land.stencil).max_offset)
+        assert edge[0] == np.nanmin(arrival[band])
+
+    events = [e for e in result.events if e[1] != "edge"]
     assert len(events) == int(burned.sum())
     times = [e[0] for e in events]
     assert times == sorted(times)

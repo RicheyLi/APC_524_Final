@@ -8,7 +8,8 @@ A **run directory** (:func:`write_run`) holds:
 * ``grid.npz`` - final grid (:meth:`wildfire_sim.grid.Grid.save`);
 * ``arrival_time.npy`` - ``(H, W)`` float64 ignition time of each cell, s; NaN = never burned;
 * ``events.csv`` - one row per ignition, header ``t_s,kind,row,col``;
-* ``summary.json`` - burned cells and area, simulated time, steps, timings, final state counts;
+* ``summary.json`` - burned cells and area, simulated time, steps, timings, final state counts
+  and ``reached_edge_s`` (when the fire reached the edge of its grid, s; ``null`` if it did not);
 * ``provenance.json`` - :attr:`wildfire_sim.sim.RunResult.provenance`;
 * ``scenario.yaml`` - the resolved scenario (with the seed actually used);
 * ``final.png``, ``arrival.png`` and, optionally, ``fire.gif`` - figures.
@@ -16,9 +17,12 @@ A **run directory** (:func:`write_run`) holds:
 An **ensemble directory** (:func:`write_ensemble`) holds:
 
 * ``ensemble.npz`` - compressed ``burn_probability`` ``(H, W)``, ``arrival_times`` ``(n, H, W)``
-  float32 s, ``burned_area_m2`` ``(n,)``, ``seeds`` ``(n,)`` int64 and ``dx_m`` (cell size, m);
-* ``runs.csv`` - one row per run: index, seed, burned area (m^2, ha) and every perturbation;
-* ``summary.json`` - burned-area statistics (mean with 95 % CI, median, min, max, 90th percentile);
+  float32 s, ``burned_area_m2`` ``(n,)``, ``seeds`` ``(n,)`` int64, ``reached_edge_s`` ``(n,)``
+  (s; NaN for a run that stayed inside its grid) and ``dx_m`` (cell size, m);
+* ``runs.csv`` - one row per run: index, seed, burned area (m^2, ha), ``reached_edge_s`` (empty
+  if the run stayed inside its grid) and every perturbation;
+* ``summary.json`` - burned-area statistics (mean with 95 % CI, median, min, max, 90th
+  percentile), the number of runs that reached the grid edge and the earliest such time;
 * ``provenance.json`` - resolved config, seeds, git commit, package versions, kernel settings;
 * ``scenario.yaml`` - the resolved scenario (with ``ensemble.n_runs`` / ``base_seed`` used);
 * ``burn_probability.png``, ``burned_area.png`` - figures.
@@ -108,6 +112,7 @@ _SHARED_PROVENANCE_KEYS = (
     "kernel_correction_source",
     "residence_time_s",
     "holdover_s",
+    "urban",
 )
 
 
@@ -208,7 +213,9 @@ def run_summary(result: sim.RunResult, name: str) -> dict[str, Any]:
     Returns:
         Dict with ``scenario``, ``seed``, ``burned_cells``, ``burned_area_m2``, ``burned_area_ha``,
         ``simulated_time_s``, ``steps``, ``last_ignition_s`` (None if nothing burned),
-        ``wall_clock_s`` and ``final_state_counts`` (cells per :class:`CellState` name).
+        ``reached_edge_s`` (time, s, at which the fire reached the edge band of its grid, or
+        None; when set, the burned area is a lower bound), ``wall_clock_s`` and
+        ``final_state_counts`` (cells per :class:`CellState` name).
     """
     burned = int(np.count_nonzero(result.burned_mask))
     area_m2 = burned * result.grid.dx**2
@@ -222,6 +229,7 @@ def run_summary(result: sim.RunResult, name: str) -> dict[str, Any]:
         "simulated_time_s": float(result.provenance["final_time_s"]),
         "steps": int(result.provenance["n_steps"]),
         "last_ignition_s": float(finite.max()) if finite.size else None,
+        "reached_edge_s": result.provenance.get("reached_edge_s"),
         "wall_clock_s": result.elapsed_s,
         "final_state_counts": {s.name: int(np.count_nonzero(result.grid.state == int(s))) for s in CellState},
     }
@@ -298,10 +306,15 @@ def ensemble_summary(result: EnsembleResult, base_seed: int, workers: int) -> di
     """Burned-area statistics of an ensemble, m^2 (and the mean in ha).
 
     The 95 % confidence interval of the mean (Student t, :func:`wildfire_sim.ensemble.mean_ci`)
-    is ``null`` for a single run.
+    is ``null`` for a single run. ``n_reached_edge`` counts the runs whose fire reached the edge
+    band of the grid and ``first_reached_edge_s`` is the earliest time, s, at which one did
+    (``null`` if none). When ``n_reached_edge > 0`` those runs are lower bounds, so every
+    burned-area statistic here understates the fire.
     """
     area = np.asarray(result.burned_area_m2, dtype=np.float64)
     n = int(area.size)
+    edge = np.asarray(result.reached_edge_s, dtype=np.float64)
+    edge = edge[np.isfinite(edge)]
     ci: list[float] | None = list(mean_ci(area, 0.95)[1:]) if n >= 2 else None
     mean = float(area.mean())
     return {
@@ -314,6 +327,8 @@ def ensemble_summary(result: EnsembleResult, base_seed: int, workers: int) -> di
         "min_burned_area_m2": float(area.min()),
         "max_burned_area_m2": float(area.max()),
         "p90_burned_area_m2": float(np.percentile(area, 90)),
+        "n_reached_edge": int(edge.size),
+        "first_reached_edge_s": float(edge.min()) if edge.size else None,
         "workers": int(workers),
         "wall_clock_s": result.elapsed_s,
     }
@@ -389,16 +404,24 @@ def write_ensemble(result: EnsembleResult, config: ScenarioConfig, out: Path, *,
         arrival_times=result.arrival_times,
         burned_area_m2=result.burned_area_m2,
         seeds=seeds,
+        reached_edge_s=np.asarray(result.reached_edge_s, dtype=np.float64),
         dx_m=np.float64(dx),
     )
     keys = list(result.perturbations[0]) if result.perturbations else []
     with (out / "runs.csv").open("w", newline="", encoding="utf-8") as fh:
         writer = csv.writer(fh)
-        writer.writerow(["index", "seed", "burned_area_m2", "burned_area_ha", *keys])
-        for i, (seed, area, pert) in enumerate(
-            zip(result.seeds, result.burned_area_m2.tolist(), result.perturbations, strict=True)
+        writer.writerow(["index", "seed", "burned_area_m2", "burned_area_ha", "reached_edge_s", *keys])
+        for i, (seed, area, edge, pert) in enumerate(
+            zip(
+                result.seeds,
+                result.burned_area_m2.tolist(),
+                np.asarray(result.reached_edge_s, dtype=np.float64).tolist(),
+                result.perturbations,
+                strict=True,
+            )
         ):
-            writer.writerow([i, seed, area, area / M2_PER_HA, *(pert[k] for k in keys)])
+            edge_text = edge if math.isfinite(edge) else ""
+            writer.writerow([i, seed, area, area / M2_PER_HA, edge_text, *(pert[k] for k in keys)])
     summary = ensemble_summary(result, base_seed, workers)
     write_json(out / "summary.json", summary)
     provenance = {

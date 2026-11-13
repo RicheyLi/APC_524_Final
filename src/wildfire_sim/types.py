@@ -32,7 +32,7 @@ class CellState(IntEnum):
     """Fire state of one cell. Stored as ``int8`` in :attr:`wildfire_sim.grid.Grid.state`."""
 
     UNBURNABLE = 0
-    """Cannot ignite: water, bare rock, urban pavement, or a completed fireline."""
+    """Cannot ignite: water, bare rock, a wide road, or a completed fireline."""
     FUEL = 1
     """Unburned fuel that can ignite."""
     BURNING = 2
@@ -51,8 +51,12 @@ class LandUse(IntEnum):
 
     @property
     def burnable(self) -> bool:
-        """Whether cells of this class can carry fire at all."""
-        return self is LandUse.WILDLAND
+        """Whether cells of this class can carry fire at all.
+
+        Wildland and urban cells can (urban cells burn by a scaled surrogate fuel, see
+        :mod:`wildfire_sim.urban`); water and roads cannot.
+        """
+        return self in (LandUse.WILDLAND, LandUse.URBAN)
 
 
 StencilSize = Literal[8, 16]

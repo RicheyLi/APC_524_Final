@@ -86,6 +86,51 @@ The ensemble directory contains:
 | `burn_probability.png` | Map of burn probability. |
 | `burned_area.png` | Histogram of burned area (ha) and the running mean against the number of runs. |
 
+## When the fire reaches the edge of the grid
+
+The model cannot say what would have burned beyond its grid, so a fire that reaches the edge
+is only a lower bound from then on. Every run records the time at which fire first reached a
+cell within `stencil.max_offset` cells of the grid edge (one cell for 8 neighbours, two for 16:
+the cells with a link that leaves the grid):
+
+- `provenance.json` and `summary.json` of a run hold `reached_edge_s` (`null` if the fire
+  stayed inside), and `events.csv` has one `edge` row;
+- an ensemble's `summary.json` holds `n_reached_edge` and `first_reached_edge_s`, and
+  `runs.csv` and `ensemble.npz` hold `reached_edge_s` per run;
+- `wildfire-sim run` and `wildfire-sim ensemble` print a warning when it happened.
+
+If you see the warning, enlarge the grid or shorten the run. Do not average such runs with
+the others without saying so.
+
+## Fireline intensity and flame length
+
+A spread rule reports the intensity of a head fire. The simulator scales it to the rate at
+which the front actually advanced through each cell, normal to itself, so flanks and the back
+are cooler than the head (see `docs/plan.md` section 2.2 and `docs/lattice_study.md` section 6
+for the accuracy on elongated fires):
+
+```python
+from wildfire_sim.sim import flame_length_from_intensity, front_normal_rate
+
+result.front_intensity  # (H, W) kW/m when the front crossed each cell; NaN = never burned
+result.grid.intensity  # the same value, only while a cell is flaming
+flame_length_from_intensity(result.front_intensity[burned])  # m, Byram (1959): 0.0775 * I ** 0.46
+front_normal_rate(result.arrival_time, stencil, dx)  # m/s, the estimate behind it
+```
+
+The constant and Alexandridis rules report no intensity, so these are zero for them; the
+Rothermel rule (WP 2.1) fills them in.
+
+## Towns
+
+Urban cells burn. An urban cell carries a surrogate timber fuel model, and the simulator slows
+its spread and lengthens its flaming with the three values in `configs/urban.yaml` (fuel model
+TL3, `ros_factor` 0.5, `residence_factor` 30). These are team assumptions that stand in for
+structure-to-structure fire spread, not a model of it. The `with_town` generator writes the
+surrogate fuel model into its town cells; a grid built by hand must do the same, because an
+urban cell with `fuel_model` 0 cannot burn. Setting `ros_factor` to 0 makes towns unburnable.
+Water and roads never burn.
+
 ## Redraw figures
 
 `plot` regenerates the figures of a run or ensemble directory from its data files alone,

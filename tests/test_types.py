@@ -66,4 +66,5 @@ def test_enums() -> None:
     assert len(CellState) == 4
     assert LandUse.WILDLAND.burnable
     assert not LandUse.WATER.burnable
-    assert not LandUse.URBAN.burnable
+    assert LandUse.URBAN.burnable  # urban cells burn by a scaled surrogate fuel (WP 1.13)
+    assert not LandUse.ROAD.burnable

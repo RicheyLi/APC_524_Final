@@ -342,3 +342,17 @@ def test_knight_link_rate_includes_the_cells_it_crosses() -> None:
     k_e = [tuple(o) for o in STENCIL_16.offsets.tolist()].index((0, 1))
     assert link[k_e, 1, 0] == pytest.approx(0.4)
     assert np.all(np.isfinite(link))
+
+
+def test_spread_output_heat_per_area_is_optional_and_validated() -> None:
+    """WP 1.12: ``heat_per_area`` defaults to None; when given it must have the grid shape and be finite, >= 0."""
+    h, w = 4, 5
+    base = {"ros": np.zeros((8, h, w)), "intensity": np.zeros((h, w)), "flame_length": np.zeros((h, w))}
+    assert SpreadOutput(**base).heat_per_area is None
+    SpreadOutput(**base, heat_per_area=np.full((h, w), 5000.0)).validate(STENCIL_8, (h, w))
+    SpreadOutput(**base, heat_per_area=np.zeros((h, w))).validate(STENCIL_8, (h, w))
+    with pytest.raises(ValueError, match="heat_per_area has shape"):
+        SpreadOutput(**base, heat_per_area=np.zeros((w, h))).validate(STENCIL_8, (h, w))
+    for bad in (-1.0, np.nan, np.inf):
+        with pytest.raises(ValueError, match="heat_per_area must be finite"):
+            SpreadOutput(**base, heat_per_area=np.full((h, w), bad)).validate(STENCIL_8, (h, w))

@@ -60,7 +60,15 @@ def test_with_town_block_and_assets() -> None:
     assert urban.sum() == 9
     assert urban[6:9, 6:9].all()
     assert g.asset_value.sum() == pytest.approx(9000.0)
-    assert (g.state[6:9, 6:9] == int(CellState.UNBURNABLE)).all()
+    # urban cells burn (WP 1.13): FUEL, carrying the surrogate fuel model of configs/urban.yaml
+    assert (g.state[6:9, 6:9] == int(CellState.FUEL)).all()
+    assert (g.fuel_model[6:9, 6:9] == 183).all()
+    assert g.burnable_mask().all()
+    assert (g.fuel_model[~urban] == 1).all()
+    custom = with_town((15, 15), center=(7, 7), size=3, urban_fuel_model=165)
+    assert (custom.fuel_model[6:9, 6:9] == 165).all()
+    with pytest.raises(ValueError, match="urban_fuel_model"):
+        with_town((15, 15), urban_fuel_model=0)
     # block clipped at the edge still works
     g_edge = with_town((15, 15), center=(0, 0), size=3)
     assert (g_edge.land_use == int(LandUse.URBAN)).sum() == 4
