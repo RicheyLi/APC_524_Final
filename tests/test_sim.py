@@ -590,3 +590,21 @@ def test_model_provenance_matches_a_run() -> None:
     recorded = run(cfg, seed=0).provenance
     assert {key: recorded[key] for key in shared} == shared
     assert model_provenance(cfg)["rule"] == "constant"
+
+
+# ----------------------------------------------------------------------------- wall clock (WP 1.14)
+
+
+def test_start_time_does_not_change_the_run_and_is_recorded() -> None:
+    """The start time is a label: arrays and events are bit-identical with and without it."""
+    plain = make_config(center=True, duration=900.0)
+    dated = ScenarioConfig.model_validate({**plain.model_dump(), "start_time_utc": "2016-08-13T23:00:00+00:00"})
+    a, b = run(plain, seed=4), run(dated, seed=4)
+    np.testing.assert_array_equal(a.arrival_time, b.arrival_time)
+    np.testing.assert_array_equal(a.grid.state, b.grid.state)
+    np.testing.assert_array_equal(a.grid.burn_timer, b.grid.burn_timer)
+    assert a.events == b.events
+    assert a.provenance["start_time_utc"] is None
+    assert a.provenance["config"]["start_time_utc"] is None
+    assert b.provenance["start_time_utc"] == "2016-08-13T23:00:00+00:00"
+    json.dumps(b.provenance, allow_nan=False)
