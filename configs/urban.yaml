@@ -1,0 +1,28 @@
+# Urban cells (docs/plan.md section 2.6, WP 1.13). Read by wildfire_sim.urban (UrbanModel).
+#
+# Urban cells burn. They follow the same logic as wildland cells, scaled to be harder to burn:
+# an urban cell carries a surrogate timber fuel model, the simulator multiplies its rate of
+# spread (from whichever spread rule is in use) by ros_factor, and it flames for
+# residence_factor times the surrogate fuel's residence time.
+#
+# ALL THREE VALUES ARE TEAM ASSUMPTIONS, NOT MEASUREMENTS, AND PLACEHOLDERS (open decision in
+# docs/plan.md section 13). This is a stand-in for structure-to-structure fire spread, not a
+# model of it. All three are inputs of the sensitivity analysis (WP 3.2).
+#
+# ros_factor 0 makes urban cells unburnable, the behaviour before WP 1.13: a town holds, and
+# only its rim is exposed.
+fuel_model:
+  value: 183
+  units: "fuel model number (Scott & Burgan 2005)"
+  source: "PLACEHOLDER - team assumption (docs/plan.md sections 2.6 and 13): TL3, moderate load conifer litter, as the surrogate fuel of an urban cell"
+  note: "written into urban cells by the data generators; a slow-burning timber litter model"
+ros_factor:
+  value: 0.5
+  units: dimensionless
+  source: "PLACEHOLDER - team assumption (docs/plan.md sections 2.6 and 13): fire takes twice as long to cross into and through an urban cell as through the surrogate fuel"
+  note: "in [0, 1]; multiplies the urban cell's rate of spread in every direction, after the spread rule"
+residence_factor:
+  value: 30.0
+  units: dimensionless
+  source: "PLACEHOLDER - team assumption (docs/plan.md sections 2.6 and 13): an urban cell flames 30 times as long as the surrogate fuel (TL3 placeholder 120 s -> 1 h)"
+  note: ">= 1; multiplies the residence time of the urban cell's fuel model"

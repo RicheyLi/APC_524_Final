@@ -121,6 +121,16 @@ front_normal_rate(result.arrival_time, stencil, dx)  # m/s, the estimate behind 
 The constant and Alexandridis rules report no intensity, so these are zero for them; the
 Rothermel rule (WP 2.1) fills them in.
 
+## Towns
+
+Urban cells burn. An urban cell carries a surrogate timber fuel model, and the simulator slows
+its spread and lengthens its flaming with the three values in `configs/urban.yaml` (fuel model
+TL3, `ros_factor` 0.5, `residence_factor` 30). These are team assumptions that stand in for
+structure-to-structure fire spread, not a model of it. The `with_town` generator writes the
+surrogate fuel model into its town cells; a grid built by hand must do the same, because an
+urban cell with `fuel_model` 0 cannot burn. Setting `ros_factor` to 0 makes towns unburnable.
+Water and roads never burn.
+
 ## Redraw figures
 
 `plot` regenerates the figures of a run or ensemble directory from its data files alone,
