@@ -201,10 +201,16 @@ and 3 % at a length-to-breadth ratio of 3. A spread rule reports head values onl
 simulator computes each cell's intensity from the local front-normal rate, estimated from the
 arrival times of the cell and its already-burned neighbours as 1 / |grad T| (WP 1.12). Flame
 length follows from that intensity (Byram 1959). Giving every cell the head intensity, as
-Phase 1 does, would make the crew safety limit and line breaching (section 4) treat a flank
-like a head and rule out flank attack, the standard tactic. Scaling by the rate along the link
+Phase 1 did before WP 1.12, would make the crew safety limit and line breaching (section 4)
+treat a flank like a head and rule out flank attack, the standard tactic. Scaling by the rate along the link
 that ignited the cell is not enough either: fire reaches the flank along a ray from the
 origin, whose speed is about three times the front-normal speed there at a ratio of 3.
+
+As built (WP 1.12), the estimate is exact on the polygon the lattice burns, so it inherits the
+lattice's shape error: within 3 % on a round fire and 20 % at a ratio of 1.5, but at a ratio
+of 3 the flank reads 27-45 % too hot and a head that lies between two stencil directions
+reads 0.4 of the head value ([lattice_study.md](lattice_study.md), section 6). Suppression
+results on elongated fires therefore also wait for WP 2.1d.
 
 **Why Rothermel is implemented here and not only wrapped.** `pyrothermel` publishes only a
 Windows wheel; on Linux it needs a C++ toolchain, so in CI (Ubuntu) every Rothermel test would
@@ -237,9 +243,10 @@ moisture of extinction on a humid night, and a fresh retardant drop can stop spr
 fades. Real fires hold over through such periods and resume. A cell whose remaining links are
 stalled this way therefore stays a *dormant* source, keeping its link progress, for up to a
 holdover time per fuel model, and resumes when the rate returns (WP 1.10). It is not flaming
-while dormant. Phase 1 as built ends the cell, and with it the fire: a 10-minute stall on
-`flat_no_wind` ends the run with 195 cells burned instead of 4,087 (fourth review, section
-14). A link that is blocked by barrier geometry does not make a cell dormant; that cannot end.
+while dormant. Before WP 1.10 the engine ended the cell, and with it the fire: a 10-minute
+stall on `flat_no_wind` ended the run with 195 cells burned instead of 4,087 (fourth review,
+section 14). A link that is blocked by barrier geometry does not make a cell dormant; that
+cannot end.
 
 ### 2.4 Time step, barriers and stencils
 
@@ -564,6 +571,8 @@ Undated; each is a set of conditions that are either met or not.
 YAML file and a seed; the engine meets the performance target recorded in
 `docs/performance.md`; a fire survives a period of zero spread rate, reports reaching the
 edge of its grid, has front-normal intensity and can burn through a town (WPs 1.10-1.13).
+Status: met for the constant and Alexandridis rules; the Rothermel rule (WPs 2.1a-b) is the
+one condition still open.
 
 **M2 - model is validated.** Calibrated on fire A; run on fire B without retuning; overlap and
 arrival-time errors reported for both, with the sensitivity analysis. No reported run reaches
@@ -601,7 +610,10 @@ src/wildfire_sim/
   spread/constant.py                                               [WP 1.1]
   spread/alexandridis.py                                           [WP 1.2]
   spread/rothermel.py, spread/ellipse.py, spread/moisture.py       [WP 2.1]
-  sim.py              time loop, event log, RunResult, provenance  [WP 1.3]
+  sim.py              time loop, event log, RunResult, provenance,  [WP 1.3, 1.10-1.14]
+                      dormant sources, edge detection, front-normal
+                      intensity, flame length
+  urban.py            urban-cell parameters (surrogate fuel, factors) [WP 1.13]
   viz.py              maps, burn-probability plots, GIF            [WP 1.5]
   ensemble.py         parallel seeded runs, input perturbation     [WP 1.6]
   sim_fast.py         Numba front-only engine                      [WP 1.7]
@@ -614,8 +626,8 @@ src/wildfire_sim/
   optimize.py         Optuna study                                 [WP 4.5]
   spotting.py, spread/crown.py                                     [WP 6.1, 6.2]
 configs/              scenarios/*.yaml, costs.yaml, resources.yaml, alexandridis.yaml,
-                      residence_time.yaml, holdover.yaml, urban.yaml, breach.yaml,
-                      kernel_correction.yaml, fuel_models.csv, calibrated.yaml
+                      residence_time.yaml, holdover.yaml, urban.yaml, flame_length.yaml,
+                      breach.yaml, kernel_correction.yaml, fuel_models.csv, calibrated.yaml
 scripts/              kernel_front_speed.py, bench.py, download_data.py, calibrate.py,
                       sensitivity.py, run_experiments.py
 docs/decisions/       one short record per design decision
@@ -650,7 +662,7 @@ on; "Acceptance" is what the PR's tests must show.
 | 0.8 | First review fixes: gamma kernel and `spread.arrival_shape`; lazy rule import; `n_steps` rounding; ignition-cell bounds; `engine_usd_per_h`; finite-value grid validation; CLI error handling; `scripts/kernel_front_speed.py` | done |
 | 0.9 | Second review: `link_rate_of_spread` (harmonic-mean link rates), `draw_crossing_thresholds` (per-link thresholds, common random numbers) | done |
 
-### Phase 1 - Simulator core (1.1-1.9 complete, see the third review in section 14; 1.10-1.12 open, from the fourth)
+### Phase 1 - Simulator core (complete: 1.1-1.9, see the third review in section 14; 1.10-1.14, added by the fourth review, see the fifth)
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
@@ -664,8 +676,8 @@ on; "Acceptance" is what the PR's tests must show.
 | 1.8 | `cli.py` | 0.5, 1.3, 1.5, 1.6 | `run SCENARIO --seed --out DIR` (writes `grid.npz`, `events.csv`, `summary.json`, `provenance.json`, `final.png`); `ensemble SCENARIO --n --out`; `plot DIR` | `CliRunner` tests for each command on `flat_no_wind` |
 | 1.9 | `tests/test_properties.py`, `tests/golden/`, `pyproject.toml` (add `hypothesis` to the test group, raise `fail_under` to 85) | 1.3 | Hypothesis tests for the invariants in section 8; golden arrival-time arrays for `flat_no_wind`, `steady_wind`, `river_barrier` at a fixed seed with a documented regeneration command | Property tests pass; changing the kernel makes a golden test fail |
 | 1.10 | `sim.py`, `sim_fast.py`, `configs/holdover.yaml` | 1.3, 1.7 | Dormant sources (section 2.3). A BURNING cell that has a FUEL neighbour on an unblocked link whose rate is zero now (zero rate in either cell under the current weather or retardant) stays BURNING as a dormant source after its flaming clock runs out: link progress is kept, `intensity` is 0, and it spreads again when the rate returns. It becomes BURNED once it has been dormant for longer than its holdover time, a `CitedValue` keyed by fuel model with a default (same schema as the residence times). Links blocked by barrier geometry do not count. Both engines. The run still ends when no cell is BURNING | On `flat_no_wind`, a hook that sets retardant to 1 everywhere from 1200 s to 1800 s gives the unstalled run's arrival times shifted by 600 s for every cell first reached after 1200 s (as built: the run ends at 1380 s with 195 of 4,087 cells burned); a stall longer than the holdover ends the fire; a weather series with zero rate overnight resumes the next morning; both engines agree; golden runs unchanged |
-| 1.11 | `sim.py`, `sim_fast.py`, `ensemble.py`, `cli.py` | 1.3, 1.6, 1.8 | Edge detection (section 2). `RunResult.provenance["reached_edge_s"]` is the earliest arrival time at a cell within `stencil.max_offset` cells of the grid edge, or None, with an `"edge"` event; `EnsembleResult` records it per run; `summary.json` and the CLI output carry it and warn when it is set | `flat_no_wind` run for 7200 s reports the time it reached the edge; the shipped 5400 s run reports None; arrival times bit-identical to before |
-| 1.12 | `sim.py`, `sim_fast.py`, `spread/base.py` (optional field, signed off) | 1.3, 1.7 | Front-normal intensity (section 2.2). `SpreadOutput` gains an optional `heat_per_area` (`(H, W)`, kJ/m^2, default None). When a cell ignites, the engine estimates the front-normal rate `R_n = 1 / abs(grad T)` from a least-squares plane through the arrival times of the cell and its already-burned stencil neighbours (falling back to the igniting link's rate when fewer than two non-collinear neighbours have burned) and sets `grid.intensity = min(heat_per_area * R_n, head intensity)`; with `heat_per_area` None the intensity is the rule's head value scaled by `R_n / max_k ros`, capped at the head value. Initial ignition cells get the head value. A helper returns flame length from intensity (Byram 1959) for WP 4.3 | Elliptical test rule with a constant `heat_per_area`, length-to-breadth 1.5 and 3, head on an axis and at 22.5 degrees: mean intensity over head, flank (widest point) and back cells against `I_head`, `I_head sqrt((1 - e) / (1 + e))` and `I_head (1 - e) / (1 + e)`, within tolerances set from the measurement and stated in the docstrings; a round fire has `I_head` everywhere within the same tolerance; arrival times bit-identical to before |
+| 1.11 | `sim.py`, `sim_fast.py`, `ensemble.py`, `cli.py` | 1.3, 1.6, 1.8 | Edge detection (section 2). `RunResult.provenance["reached_edge_s"]` is the earliest arrival time at a cell within `stencil.max_offset` cells of the grid edge, or None, with an `"edge"` event; `EnsembleResult` records it per run; `summary.json` and the CLI output carry it and warn when it is set | `flat_no_wind` run for 7500 s reports the time it reached the edge (7,403 s); the shipped 5400 s run reports None; arrival times bit-identical to before. (Restated in the fifth review: this row asked for 7200 s, by which time the fire has not reached the edge band with the current defaults) |
+| 1.12 | `sim.py`, `sim_fast.py`, `spread/base.py` (optional field, signed off) | 1.3, 1.7 | Front-normal intensity (section 2.2). `SpreadOutput` gains an optional `heat_per_area` (`(H, W)`, kJ/m^2, default None). When a cell ignites, the engine estimates the front-normal rate `R_n = 1 / abs(grad T)` from a least-squares plane through the arrival times of the cell and its already-burned stencil neighbours (falling back to the igniting link's rate when fewer than two non-collinear neighbours have burned) and sets `grid.intensity = min(heat_per_area * R_n, head intensity)`; with `heat_per_area` None the intensity is the rule's head value scaled by `R_n / max_k ros`, capped at the head value. Initial ignition cells get the head value. A helper returns flame length from intensity (Byram 1959) for WP 4.3 | Elliptical test rule with a constant `heat_per_area`, length-to-breadth 1.5 and 3, head on an axis and at 22.5 degrees: mean intensity over head, flank (widest point) and back cells against `I_head`, `I_head sqrt((1 - e) / (1 + e))` and `I_head (1 - e) / (1 + e)`, within tolerances set from the measurement and stated in the docstrings; a round fire has `I_head` everywhere within the same tolerance; arrival times bit-identical to before. (As built: 3 % on a round fire, 20 % at a ratio of 1.5; the ratio-3 flank and off-axis head are a strict expected failure until WP 2.1d, see the fifth review) |
 | 1.13 | `types.py`, `grid.py` (both frozen, signed off), `sim.py`, `sim_fast.py`, `data/synthetic.py`, `configs/urban.yaml` | 1.3, 1.7, 1.10 | Burnable urban cells (section 2.6). `LandUse.URBAN.burnable` becomes True and `Grid.burnable_mask` follows; an urban cell carries the surrogate fuel model named in `configs/urban.yaml`. After the spread rule runs, the engine multiplies the rates of urban cells by `ros_factor` (below 1) and their residence time by `residence_factor` (above 1), so every rule is scaled the same way; all three are `CitedValue`s marked as team assumptions. `with_town` writes the surrogate fuel model into its town cells. Roads and water are unchanged | Fire crosses a town on `with_town` and every town cell it reaches is BURNED; the front takes `1 / ros_factor` times as long to cross a strip of urban cells as the same strip of the surrogate fuel, within the tolerance of physics test (g); urban cells flame `residence_factor` times as long; with `ros_factor` 0 the town holds as before; golden runs without urban cells unchanged, the others regenerated and explained in the PR |
 | 1.14 | `config.py` (optional field, signed off), `sim.py` | 0.5, 1.3 | Wall clock. `ScenarioConfig.start_time_utc` (timezone-aware datetime, default None) is the instant of simulated time 0; `ScenarioConfig.time_at(t_s)` returns the datetime of a simulated time, or None without a start; the start is written to `provenance`. Consumers: WP 2.4 aligns the hourly weather series to it, WP 2.7 converts overpass times to simulated seconds with it, WP 4.2 takes aircraft daylight from it and the grid's location (WP 2.3 writes `centroid_lon` and `centroid_lat` to `Grid.metadata`) | A scenario without the field loads and runs bit-identically; a datetime without a timezone is rejected; `time_at(3600)` is one hour after the start; the start appears in `provenance.json` |
 
@@ -680,8 +692,8 @@ threshold changed there and in the test together, never loosened silently.
 | 2.1a | `spread/rothermel.py`, `configs/fuel_models.csv` | 0.4 | Native Rothermel (1972) surface spread with Albini (1976) revisions, vectorized over the grid: reaction intensity, propagating flux, wind and slope factors, moisture damping, live fuel extinction moisture, dynamic herbaceous transfer for the Scott & Burgan dynamic models. Fuel parameters for all 40 models (loads, SAV ratios, depth, extinction moisture, heat content) in the CSV with the source cited. Outputs head ros (m/s), Byram intensity (kW/m), flame length (m, Byram 1959), heat per unit area, and residence time `t_r = 384 / sigma` min (Anderson 1969; Andrews 2018), which replaces the placeholder values in `configs/residence_time.yaml`. Evaluated once per unique (fuel model, moisture, wind, slope) combination and mapped back to cells | Head ros, intensity and flame length for at least GR1, GR4, SH2, SH5, TU1, TL3 at three moisture/wind/slope cases within 2 % of published BehavePlus values recorded in the test with their source; zero ros at extinction moisture; agrees with `pyrothermel` within 2 % where installed (`pytest.importorskip`) |
 | 2.1b | `spread/ellipse.py` | 2.1a | Midflame wind: the 10 m wind divided by 1.15 to give the 20-ft wind (Turner and Lawson 1978; the factor in `configs/` with its citation), then times the wind adjustment factor (sheltered and unsheltered, Andrews 2012); vector combination of wind and slope into direction of maximum spread and effective wind; length-to-breadth and directional rates from the formulas in section 2.2 (U capped at a documented value); `RothermelRule` registered as `"rothermel"` returning `(K, H, W)` rates times `(1 - retardant)` | A 10 m wind of 11.5 m/s gives the midflame wind of a 20-ft wind of 10 m/s; upslope with no wind spreads uphill; cross-slope wind gives a direction between wind and slope; back rate equals `R_head (1 - e) / (1 + e)`; physics tests 1.4 pass with this rule |
 | 2.1c | `spread/moisture.py` | 0.3 | One-hour dead fuel moisture from temperature and relative humidity by an equilibrium moisture content model (source cited), applied hourly; documented offsets for 10-h | Reproduces the source's tabulated values; moisture rises overnight and falls in the afternoon for a synthetic diurnal series |
-| 2.1d | `spread/ellipse.py`, `scripts/lattice_study.py`, `docs/lattice_study.md`, `tests/test_physics.py` | 2.1b, 1.4 | Elongated fires on the lattice (section 2.4). (1) Lattice-fitted rates: for a given length-to-breadth ratio and head bearing, per-direction rates chosen to minimize the largest radial error between the lattice polygon (convex hull of the rate-scaled stencil directions) and the analytic ellipse, replacing rates sampled from the ellipse; selected by a rule parameter whose default the study sets. (2) The lattice study repeated with them, at head bearings 0, 13.3 (midway between adjacent 16-neighbour directions), 22.5 and 45 degrees. (3) A cap `lb_max` at the largest ratio for which head and flank stay within 10 % at every bearing, applied in the ellipse rule; `provenance` counts the cell-hours in which it applied and the CLI warns | Head and flank within 10 % of the analytic ellipse at every tested bearing for every ratio up to `lb_max`, in `tests/test_physics.py`; the strict expected-failure record updated; if the fitted rates gain less than the study's stated margin over sampled rates, the doc says so and only the cap ships; with a constant-rate rule, results bit-identical to before |
-| 2.2 | `data/landfire.py` | 0.3 | Fetch LANDFIRE fuel model (FBFM40), canopy cover, height, base height and bulk density for a lat/lon bbox and a **named LANDFIRE version** via the LANDFIRE Product Service; write GeoTIFFs under `data/cache/<bbox-hash>/`; map non-burnable codes (91-99) to `LandUse` | Request builder unit-tested with mocked HTTP; refuses a version newer than the fire date; live test marked `network` |
+| 2.1d | `spread/ellipse.py`, `scripts/lattice_study.py`, `docs/lattice_study.md`, `tests/test_physics.py` | 2.1b, 1.4 | Elongated fires on the lattice (section 2.4). (1) Lattice-fitted rates: for a given length-to-breadth ratio and head bearing, per-direction rates chosen to minimize the largest radial error between the lattice polygon (convex hull of the rate-scaled stencil directions) and the analytic ellipse, replacing rates sampled from the ellipse; selected by a rule parameter whose default the study sets. (2) The lattice study repeated with them, at head bearings 0, 13.3 (midway between adjacent 16-neighbour directions), 22.5 and 45 degrees. (3) A cap `lb_max` at the largest ratio for which head and flank stay within 10 % at every bearing, applied in the ellipse rule; `provenance` counts the cell-hours in which it applied and the CLI warns | Head and flank within 10 % of the analytic ellipse at every tested bearing for every ratio up to `lb_max`, in `tests/test_physics.py`; the strict expected-failure record updated; if the fitted rates gain less than the study's stated margin over sampled rates, the doc says so and only the cap ships; with a constant-rate rule, results bit-identical to before; the intensity bounds of `tests/test_intensity.py` re-measured with the fitted rates and its ratio-3 expected failure removed or restated (WP 1.12) |
+| 2.2 | `data/landfire.py` | 0.3 | Fetch LANDFIRE fuel model (FBFM40), canopy cover, height, base height and bulk density for a lat/lon bbox and a **named LANDFIRE version** via the LANDFIRE Product Service; write GeoTIFFs under `data/cache/<bbox-hash>/`; map non-burnable codes (91-99) to `LandUse`; urban cells get the surrogate fuel model of `configs/urban.yaml` (WP 1.13), without which they cannot burn | Request builder unit-tested with mocked HTTP; refuses a version newer than the fire date; live test marked `network` |
 | 2.3 | `data/terrain.py` | 0.3 | 3DEP DEM via `py3dep` for the bbox; reproject/resample onto the LANDFIRE grid with rasterio; slope (rise/run) and aspect (downhill bearing) from `np.gradient`; CRS, transform and the grid centroid (`centroid_lon`, `centroid_lat`, degrees) written to `Grid.metadata` | Slope and aspect of `synthetic.slope_ramp` elevation recovered to 1e-3 / 0.5 deg |
 | 2.4 | `data/weather.py` | 0.3, 2.1c | Hourly wind, temperature and humidity for the bbox centroid and date range from an hourly analysis where available, else gridMET daily disaggregated with a documented diurnal profile; 100-h moisture from gridMET (`fm100`; gridMET has no 1-h or 10-h moisture, and 1000-h is not used); 10-h from the 1-h value by the offset of WP 2.1c; live fuel moisture from the National Fuel Moisture Database with a seasonal default; output is a `WeatherConfig` with one point per hour | Mocked datasets convert to a valid `WeatherConfig`; disaggregated daily data preserves the daily mean; live test marked `network` |
 | 2.5 | `data/osm.py` | 0.3 | `osmnx` roads, water, buildings for the bbox; apply the barrier rule of section 3 (wide features become unburnable cells; narrow ones become breaks, their width in metres stored in a new optional `Grid` layer `break_width_m`, signed off); `asset_value = buildings per cell * usd_per_building` from `costs.yaml` | Known polygon rasterizes to the expected cells; a 6 m road creates no unburnable cell and a line of cells with `break_width_m = 6` |
@@ -768,6 +780,9 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       cap of WP 2.1d (a Santa Ana fire may sit above it for most of its growth); how many
       VIIRS overpasses saw the fire growing; that an MTBS perimeter and a LANDFIRE version
       older than the fire exist.
+- [ ] Refresh `scripts/bench_baseline.json` from a CI run now that WPs 1.10-1.13 are in the
+      engines (their measured cost is in `docs/performance.md`); the CI benchmark check stays
+      non-blocking until then.
 - [ ] Minimum set of values still to be sourced, each with a flagged placeholder so no work
       package is blocked: holdover times per fuel model (WP 1.10; placeholder 12 h for every
       fuel, enough to carry a fire through one night); the urban surrogate (WP 1.13;
@@ -913,6 +928,31 @@ Smaller findings of the same review, each checked against a source where it rest
 | Urban cells could not burn, so only the rim of a town could be lost | Urban cells burn by a scaled surrogate (section 2.6, WP 1.13) |
 | Section 2.4 chose dt with `max_stable_dt`; the summary presented a nearly deterministic model as a stochastic one | Both passages rewritten |
 | `KernelCorrectionTable.value_for` returns 1.0 for a shape not in the table; retardant decay defeats the spread-rule cache | Accepted as they are |
+
+### Fifth review: WPs 1.10-1.14 as built
+
+The five work packages the fourth review added were implemented one per branch, in the order
+1.14, 1.10, 1.11, 1.12, 1.13, each with its acceptance tests on both engines. The golden
+arrival-time arrays did not move in any of them. What the work turned up:
+
+| Finding | Outcome |
+| --- | --- |
+| WP 1.11's acceptance run does not reach the edge. With the defaults set after the lattice study, `flat_no_wind` first burns a cell with a link leaving the grid at 7,403 s (the band starts 49 cells out: 7,350 s at 0.2 m/s); at 7200 s the front is 47 cells out | Acceptance restated at 7500 s; a test pins that the 7200 s run reports None |
+| Front-normal intensity (WP 1.12) is exact on the polygon the lattice burns (within 1 % without kernel noise, on every side of the polygon), and so inherits its shape error against the ellipse: at a ratio of 3 the flank is 27-45 % too hot and a head between two stencil directions reads 0.4 of the head value | Bounds set from the measurement; the ratio-3 target is a strict expected failure; WP 2.1d re-measures (`docs/lattice_study.md`, section 6) |
+| With `ros_factor` 0, urban cells would have been zero-rate fuel, and after WP 1.10 the cells around a town would have waited as dormant sources for the whole holdover time | With `ros_factor` 0 urban cells are made UNBURNABLE at the start of the run, exactly the behaviour before WP 1.13 |
+| A rule whose rate is zero everywhere now keeps its ignition cell BURNING, dormant, for the holdover time (12 h placeholder), where the run used to end at once | Accepted: it follows from section 2.3. The engine cannot tell a rate that is zero for good from one that is zero for now |
+| The dormant clock counts whole steps, from the end of the first step that leaves a cell dormant, and restarts when the cell spreads again | Accepted: holdover times are hours, steps are seconds |
+| Unguarded, the additions slowed the NumPy engine by 18-28 % on the reference run | A stalled-link scan only for cells that have a zero-rate link at all, and no plane fit where the rule reports no intensity: back to the old speed for such rules; 5-8 % (NumPy) and 2 % (Numba) for a rule with intensity (`docs/performance.md`) |
+| The intensity a cell had when the front crossed it was lost once the cell stopped flaming | `RunResult.front_intensity`, for WP 2.9 and for analysis |
+| The urban parameters are read by the simulator and by the data generators, which must not import the simulator | New module `wildfire_sim.urban` (added to the module map) |
+| Byram's flame-length constants had no home in `configs/` | `configs/flame_length.yaml`, the coefficient derived from Byram's units in the file |
+| The CI job for the Numba engine ran only `tests/test_sim_fast.py`, so the Numba halves of the new tests would never run in CI | The job now runs the new test files too |
+| An urban cell with `fuel_model` 0 cannot burn | WP 2.2 writes the surrogate fuel model into urban cells (row updated) |
+
+Left for later, unchanged from the third review: `SpreadConfig` defaults to the constant rule
+with no `ros`; `SpreadOutput.validate` does not check intensity or flame length. The viz
+legend still describes urban land use as non-burnable in two docstrings (`viz.py` was not in
+any of these work packages).
 
 ## 15. Sources
 
