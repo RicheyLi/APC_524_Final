@@ -19,7 +19,7 @@ only :meth:`advance`, the hot per-step update, with one ``@numba.njit`` kernel
    in this step (the NumPy engine finds the same shortest-path fixed point by label
    correction);
 4. ignition of the cells reached (state, arrival time, flaming clock) and their progress;
-5. burn-out (flaming clocks, live-link test, ``max_source_age_s``).
+5. burn-out (flaming clocks, live and stalled links, the dormant clock, ``max_source_age_s``).
 
 Every arithmetic expression is the NumPy engine's, element by element, so results agree to
 floating-point rounding; only the order in which the cascade visits cells differs. Events are
@@ -37,7 +37,7 @@ from typing import Any
 import numpy as np
 
 from wildfire_sim.grid import Grid, Weather
-from wildfire_sim.sim import ResidenceTimeTable, _FireEngine
+from wildfire_sim.sim import HoldoverTable, ResidenceTimeTable, _FireEngine
 from wildfire_sim.spread.base import SpreadRule
 from wildfire_sim.types import CellState, FloatArray, IntArray, Stencil
 
@@ -114,6 +114,9 @@ def _step_py(
     timer: FloatArray,
     timer_init: FloatArray,
     out_intensity: FloatArray,
+    blocked: np.ndarray,
+    dormant_since: FloatArray,
+    holdover: FloatArray,
     dr: IntArray,
     dc: IntArray,
     h: int,
@@ -143,6 +146,11 @@ def _step_py(
         timer_init: ``(n,)`` float64 flaming time given at ignition, s (``dx / ros_head`` +
             residence time).
         out_intensity: ``(n,)`` float64 fireline intensity of the rule output, kW/m.
+        blocked: ``(n, K)`` bool, True where the link is blocked by barrier geometry (its rate
+            is then 0 for good, so it never makes a cell dormant).
+        dormant_since: ``(n,)`` float64 time, s, at which each cell became a dormant source;
+            NaN while it is not dormant. Updated in place.
+        holdover: ``(n,)`` float64 holdover time of each cell's fuel, s.
         dr, dc: ``(K,)`` int64 stencil offsets, rows and columns.
         h, w: Grid shape.
         t, t_end: Step start and end, s.
@@ -278,6 +286,7 @@ def _step_py(
         a = arrival[s]
         timer[s] = max(timer[s] - (t_end - max(t, a)), 0.0)
         source = False
+        stalled = False
         r = s // w
         c = s - r * w
         for k in range(n_dirs):
@@ -285,12 +294,25 @@ def _step_py(
             tc = c + dc[k]
             if tr < 0 or tr >= h or tc < 0 or tc >= w:
                 continue
-            if rate[s, k] > 0 and state[tr * w + tc] == _FUEL:
+            if state[tr * w + tc] != _FUEL:
+                continue
+            if rate[s, k] > 0:
                 source = True
                 break
-        source = source and (t_end - a) < max_age
+            if not blocked[s, k]:
+                stalled = True
+        young = (t_end - a) < max_age
+        source = source and young
         flaming = timer[s] > 0
-        if source or flaming:
+        # dormant: a stalled link (rate 0 now, not blocked) may come back; wait up to the holdover
+        dormant = stalled and young and not source and not flaming
+        if dormant:
+            if np.isnan(dormant_since[s]):
+                dormant_since[s] = t_end
+            dormant = not (t_end - dormant_since[s]) >= holdover[s]
+        else:
+            dormant_since[s] = np.nan
+        if source or flaming or dormant:
             burn_timer[s] = timer[s]
             intensity[s] = out_intensity[s] if flaming else 0.0
             out[n_out] = s
@@ -372,8 +394,11 @@ class NumbaFireEngine(_FireEngine):
         residence: ResidenceTimeTable,
         max_source_age_s: float | None,
         record_events: bool,
+        holdover: HoldoverTable,
     ) -> None:
-        super().__init__(grid, rule, stencil, thresholds, correction, residence, max_source_age_s, record_events)
+        super().__init__(
+            grid, rule, stencil, thresholds, correction, residence, max_source_age_s, record_events, holdover
+        )
         self._step = load_kernels()["step"]
         n = self.h * self.w
         self.burning = np.empty(0, dtype=np.int64)
@@ -381,6 +406,7 @@ class NumbaFireEngine(_FireEngine):
         self.thresholds = np.ascontiguousarray(self.thresholds.T)
         self.progress = np.zeros((n, self.k), dtype=np.float64)
         self._rate_nk = np.zeros((n, self.k), dtype=np.float64)
+        self._blocked_nk = np.zeros((n, self.k), dtype=np.bool_)
         self._dr = np.ascontiguousarray(stencil.offsets[:, 0], dtype=np.int64)
         self._dc = np.ascontiguousarray(stencil.offsets[:, 1], dtype=np.int64)
         self._max_age = np.inf if max_source_age_s is None else float(max_source_age_s)
@@ -406,6 +432,8 @@ class NumbaFireEngine(_FireEngine):
         self._timer_init = np.ascontiguousarray((crossing + self.residence.lookup(grid.fuel_model)).reshape(-1))
         self._out_intensity = np.ascontiguousarray(out.intensity, dtype=np.float64).reshape(-1)
         self._rate_nk = np.ascontiguousarray(self.rate.T)
+        self._blocked_nk = np.ascontiguousarray(self.blocked.reshape(self.k, -1).T)
+        self.holdover_s = np.ascontiguousarray(self.holdover_s, dtype=np.float64)
 
     def advance(self, t: float, t_end: float) -> None:
         """Spread over the step ``[t, t_end)`` with the compiled kernel (see :func:`_step_py`)."""
@@ -422,6 +450,9 @@ class NumbaFireEngine(_FireEngine):
             self.timer,
             self._timer_init,
             self._out_intensity,
+            self._blocked_nk,
+            self.dormant_since,
+            self.holdover_s,
             self._dr,
             self._dc,
             self.h,

@@ -161,7 +161,7 @@ def test_kernel_correction_table_rejects_duplicates() -> None:
 
 def test_kernel_correction_divides_link_rates(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """A correction of 2 halves the front speed (deterministic limit)."""
-    for name in ("residence_time.yaml",):
+    for name in ("residence_time.yaml", "holdover.yaml"):
         (tmp_path / name).write_text((REPO_ROOT / "configs" / name).read_text(encoding="utf-8"), encoding="utf-8")
     (tmp_path / "kernel_correction.yaml").write_text(
         f"entries:\n  - {{stencil: 8, arrival_shape: {DETERMINISTIC}, value: 2.0, source: test}}\n", encoding="utf-8"

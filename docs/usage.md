@@ -40,7 +40,7 @@ The command prints a summary table. The run directory contains:
 | `arrival_time.npy` | `(H, W)` float64, time each cell ignited, s since the start; NaN = never burned. |
 | `events.csv` | One row per ignition, in time order: `t_s,kind,row,col`; `kind` is `ignition` (initial) or `spread`. |
 | `summary.json` | Scenario name, seed, burned cells, burned area (m^2 and ha), simulated time (s), steps executed, time of last ignition (s), wall-clock time (s), count of cells in each final state. |
-| `provenance.json` | Resolved config, seed, `start_time_utc`, git commit, Python/numpy/scipy/package versions, spread rule, stencil, kernel correction, residence times, steps executed. |
+| `provenance.json` | Resolved config, seed, `start_time_utc`, git commit, Python/numpy/scipy/package versions, spread rule, stencil, kernel correction, residence and holdover times, steps executed. |
 | `scenario.yaml` | The resolved scenario with the seed used; `wildfire-sim run DIR/scenario.yaml` reproduces the run. |
 | `final.png` | Map of the final cell states. |
 | `arrival.png` | Map of arrival time with isochrones. |

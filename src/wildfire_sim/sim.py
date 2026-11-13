@@ -12,8 +12,17 @@ The model is described in docs/plan.md section 2. In short:
   rest of the step spreading (a *cascade* of rounds), so a fast fire is not capped at one cell
   per step.
 * A cell stays BURNING while it is a *source* (some link into a FUEL neighbour can still
-  complete) or still *flaming* (``burn_timer > 0``, set at ignition to the crossing time plus
-  the fuel's residence time); then it becomes BURNED for good.
+  complete), still *flaming* (``burn_timer > 0``, set at ignition to the crossing time plus
+  the fuel's residence time) or *dormant* (below); then it becomes BURNED for good.
+* **Dormant sources** (WP 1.10, docs/plan.md section 2.3). A link whose rate is zero *now*
+  (extinction moisture overnight, a full-strength retardant drop) is *stalled*, not dead: the
+  rate can come back. A cell that is neither a source nor flaming but has a stalled link into
+  a FUEL neighbour stays BURNING as a dormant source. It keeps its link progress, has zero
+  ``intensity``, and spreads again from where it stopped when the rate returns. Once it has
+  been dormant without a break for its fuel's holdover time (``configs/holdover.yaml``) it
+  becomes BURNED. A link blocked by barrier geometry is not stalled, since that cannot end.
+  The dormant clock is counted in whole steps, from the end of the first step that leaves the
+  cell dormant, and restarts whenever the cell is a source again.
 
 Steps 5-7 of the loop touch only the burning cells (index arrays), never the whole grid; the
 spread rule's output and everything derived from it is cached until the weather changes or a
@@ -75,12 +84,12 @@ _UNBURNABLE = int(CellState.UNBURNABLE)
 # ----------------------------------------------------------------------------- parameter tables
 
 
-class ResidenceTimeTable(BaseModel):
-    """Flame residence time per fuel model (``configs/residence_time.yaml``).
+class _FuelModelTable(BaseModel):
+    """A duration, s, per fuel model with a default: the schema of the per-fuel parameter tables.
 
     Attributes:
-        default: Residence time, s, for fuel models without an entry.
-        by_fuel_model: Fuel model number (as in ``Grid.fuel_model``) -> residence time, s.
+        default: Value, s, for fuel models without an entry.
+        by_fuel_model: Fuel model number (as in ``Grid.fuel_model``) -> value, s.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -88,20 +97,43 @@ class ResidenceTimeTable(BaseModel):
     default: CitedValue
     by_fuel_model: dict[int, CitedValue] = Field(default_factory=dict)
 
-    @model_validator(mode="after")
-    def _positive(self) -> ResidenceTimeTable:
-        for key, cited in [("default", self.default), *self.by_fuel_model.items()]:
-            if not (cited.value > 0 and np.isfinite(cited.value)):
-                raise ValueError(f"residence time for {key!r} must be finite and > 0 s, got {cited.value}")
-        return self
+    def _cited(self) -> list[tuple[str | int, CitedValue]]:
+        return [("default", self.default), *self.by_fuel_model.items()]
 
     def lookup(self, fuel_model: IntArray) -> FloatArray:
-        """Residence time, s, for each entry of ``fuel_model`` (any shape; output has the same shape)."""
+        """Value, s, for each entry of ``fuel_model`` (any shape; output has the same shape)."""
         fm = np.asarray(fuel_model)
         out = np.full(fm.shape, self.default.value, dtype=np.float64)
         for key, cited in self.by_fuel_model.items():
             out[fm == key] = cited.value
         return out
+
+
+class ResidenceTimeTable(_FuelModelTable):
+    """Flame residence time per fuel model, s (``configs/residence_time.yaml``); every value > 0."""
+
+    @model_validator(mode="after")
+    def _positive(self) -> ResidenceTimeTable:
+        for key, cited in self._cited():
+            if not (cited.value > 0 and np.isfinite(cited.value)):
+                raise ValueError(f"residence time for {key!r} must be finite and > 0 s, got {cited.value}")
+        return self
+
+
+class HoldoverTable(_FuelModelTable):
+    """Holdover time per fuel model, s (``configs/holdover.yaml``): how long a dormant source lasts.
+
+    A BURNING cell whose only remaining links into FUEL neighbours have a zero rate (see the
+    module docstring) becomes BURNED once it has been dormant for this long. Every value is
+    finite and >= 0; 0 switches dormancy off for that fuel (the cell burns out at once).
+    """
+
+    @model_validator(mode="after")
+    def _non_negative(self) -> HoldoverTable:
+        for key, cited in self._cited():
+            if not (cited.value >= 0 and np.isfinite(cited.value)):
+                raise ValueError(f"holdover time for {key!r} must be finite and >= 0 s, got {cited.value}")
+        return self
 
 
 class KernelCorrectionEntry(BaseModel):
@@ -147,6 +179,11 @@ class KernelCorrectionTable(BaseModel):
 def load_residence_times(path: str | Path | None = None) -> ResidenceTimeTable:
     """Load the residence-time table; default ``configs_dir() / "residence_time.yaml"``."""
     return load_yaml(configs_dir() / "residence_time.yaml" if path is None else path, ResidenceTimeTable)
+
+
+def load_holdover_times(path: str | Path | None = None) -> HoldoverTable:
+    """Load the holdover-time table; default ``configs_dir() / "holdover.yaml"``."""
+    return load_yaml(configs_dir() / "holdover.yaml" if path is None else path, HoldoverTable)
 
 
 def load_kernel_corrections(path: str | Path | None = None) -> KernelCorrectionTable:
@@ -283,6 +320,7 @@ class _FireEngine:
         residence: ResidenceTimeTable,
         max_source_age_s: float | None,
         record_events: bool,
+        holdover: HoldoverTable,
     ) -> None:
         self.grid = grid
         self.rule = rule
@@ -293,6 +331,7 @@ class _FireEngine:
         self.link_length_m = grid.dx * np.asarray(stencil.distances, dtype=np.float64)  # (K,)
         self.correction = correction
         self.residence = residence
+        self.holdover = holdover
         self.max_age = max_source_age_s
         self.record_events = record_events
 
@@ -301,6 +340,8 @@ class _FireEngine:
         self.progress = np.zeros((self.k, n), dtype=np.float64)
         self.arrival = np.full(n, np.nan, dtype=np.float64)
         self.timer = np.zeros(n, dtype=np.float64)  # remaining flaming time, s
+        self.dormant_since = np.full(n, np.nan, dtype=np.float64)  # s; NaN while not dormant
+        self.holdover_s = np.zeros(n, dtype=np.float64)  # holdover time of each cell's fuel, s
         self.burning = np.empty(0, dtype=np.intp)  # flat indices of BURNING cells
         self._tentative = np.full(n, np.inf, dtype=np.float64)  # scratch for _cascade, kept all-inf
         self.events: list[tuple[float, str, int, int]] = []
@@ -327,6 +368,7 @@ class _FireEngine:
         link = link_rate_of_spread(out.ros, self.stencil) / self.correction  # (K, H, W), m/s
         link[self.blocked] = 0.0
         self.rate = (link / self.link_length_m[:, None, None]).reshape(self.k, -1)
+        self.holdover_s = self.holdover.lookup(self.grid.fuel_model).reshape(-1)
         self.out = out
         self.weather = weather
 
@@ -432,12 +474,26 @@ class _FireEngine:
         best[lit] = np.inf
         return lit, lit_t
 
-    def _has_live_link(self, src: IntArray) -> BoolArray:
-        """Whether each source still has an unblocked link with rate > 0 into a FUEL neighbour."""
+    def _link_status(self, src: IntArray) -> tuple[BoolArray, BoolArray]:
+        """For each cell of ``src``: has it a *live* link, and has it a *stalled* link?
+
+        Both kinds of link lead to a FUEL neighbour inside the grid. A live link has a rate
+        > 0 and can still complete. A stalled link has a rate of exactly 0 without being
+        blocked by barrier geometry: one of the cells it crosses cannot spread under the
+        current weather or retardant, which can change.
+        """
         live = np.zeros(src.shape, dtype=bool)
-        for k in range(self.k):
-            live |= self._targets(src, k)[0]
-        return live
+        stalled = np.zeros(src.shape, dtype=bool)
+        rows, cols = np.divmod(src, self.w)
+        blocked = self.blocked.reshape(self.k, -1)
+        for k, (dr, dc) in enumerate(self.offsets):
+            tr, tc = rows + dr, cols + dc
+            fuel = (tr >= 0) & (tr < self.h) & (tc >= 0) & (tc < self.w)
+            fuel[fuel] = self.grid.state[tr[fuel], tc[fuel]] == _FUEL
+            moving = self.rate[k, src] > 0
+            live |= fuel & moving
+            stalled |= fuel & ~moving & ~blocked[k, src]
+        return live, stalled
 
     def advance(self, t: float, t_end: float) -> None:
         """Spread over the step ``[t, t_end)``: crossings, cascade, progress, burn-out."""
@@ -465,16 +521,25 @@ class _FireEngine:
         self.events.extend(step_events)
 
     def _burn_out(self, t: float, t_end: float) -> None:
-        """Count down flaming clocks; BURNING cells that are neither source nor flaming become BURNED."""
+        """Count down flaming clocks; BURNING cells that are not source, flaming or dormant become BURNED."""
         assert self.out is not None
         src = self.burning
         arrival = self.arrival[src]
         self.timer[src] = np.maximum(self.timer[src] - (t_end - np.maximum(t, arrival)), 0.0)
-        source = self._has_live_link(src)
+        source, stalled = self._link_status(src)
         if self.max_age is not None:
-            source &= (t_end - arrival) < self.max_age
+            young = (t_end - arrival) < self.max_age
+            source &= young
+            stalled &= young
         flaming = self.timer[src] > 0
-        keep = source | flaming
+        # Dormant: nothing left to do now, but a stalled link may come back. The clock starts
+        # at the end of the first step that leaves the cell dormant and stops when it spreads.
+        dormant = stalled & ~source & ~flaming
+        since = np.where(dormant, self.dormant_since[src], np.nan)
+        since[dormant & np.isnan(since)] = t_end
+        self.dormant_since[src] = since
+        dormant &= ~((t_end - since) >= self.holdover_s[src])  # NaN compares False
+        keep = source | flaming | dormant
 
         grid = self.grid
         rows, cols = np.divmod(src, self.w)
@@ -498,10 +563,12 @@ def model_provenance(config: ScenarioConfig, rule_name: str | None = None) -> di
     when the numba engine is selected), ``engine`` (``config.engine``), ``rule`` (class name of
     the spread rule; the configured registry name when ``rule_name`` is None), ``stencil``,
     ``arrival_shape``, ``kernel_correction`` and its ``kernel_correction_source`` for that
-    stencil and shape, and ``residence_time_s`` (the whole table, seconds).
+    stencil and shape, ``residence_time_s`` and ``holdover_s`` (the whole tables, seconds).
     :func:`run` adds the per-run entries. Used by ensembles, which have no single run to ask.
     """
-    return _model_provenance(config, rule_name, load_kernel_corrections(), load_residence_times())
+    return _model_provenance(
+        config, rule_name, load_kernel_corrections(), load_residence_times(), load_holdover_times()
+    )
 
 
 def _model_provenance(
@@ -509,6 +576,7 @@ def _model_provenance(
     rule_name: str | None,
     corrections: KernelCorrectionTable,
     residence: ResidenceTimeTable,
+    holdover: HoldoverTable,
 ) -> dict[str, Any]:
     """:func:`model_provenance` from tables already loaded (a run loads each YAML file once)."""
     entry = corrections.entry_for(config.stencil, config.spread.arrival_shape)
@@ -530,6 +598,7 @@ def _model_provenance(
         "kernel_correction": corrections.value_for(config.stencil, config.spread.arrival_shape),
         "kernel_correction_source": None if entry is None else entry.source,
         "residence_time_s": residence.model_dump(mode="json"),
+        "holdover_s": holdover.model_dump(mode="json"),
     }
 
 
@@ -579,6 +648,10 @@ def run(
     ``config.n_steps`` steps, or earlier once the initial ignition has happened and no cell is
     BURNING. An ignition time at or after ``n_steps * dt_s`` never happens.
 
+    A fire whose rate of spread falls to zero for a while (weather, retardant) does not end:
+    its edge cells wait as dormant sources for up to their fuel's holdover time and resume when
+    the rate returns (see the module docstring). Such a run keeps stepping through the stall.
+
     Args:
         config: Scenario. Uses ``grid``, ``weather``, ``spread``, ``ignition``, ``dt_s`` (s),
             ``duration_s`` (s), ``stencil``, ``seed`` and ``engine`` (``"numpy"``, the reference,
@@ -625,8 +698,9 @@ def run(
     corrections = load_kernel_corrections()
     correction = corrections.value_for(config.stencil, shape_k)
     residence = load_residence_times()
+    holdover = load_holdover_times()
 
-    engine = engine_cls(g, rule, stencil, thresholds, correction, residence, max_source_age_s, record_events)
+    engine = engine_cls(g, rule, stencil, thresholds, correction, residence, max_source_age_s, record_events, holdover)
     series = config.weather.to_series()
     dt = config.dt_s
     t_ign = config.ignition.time_s
@@ -653,7 +727,7 @@ def run(
         "config": config.model_dump(mode="json"),
         "seed": seed,
         "start_time_utc": None if config.start_time_utc is None else config.start_time_utc.isoformat(),
-        **_model_provenance(config, type(rule).__name__, corrections, residence),
+        **_model_provenance(config, type(rule).__name__, corrections, residence, holdover),
         "grid_from": "config" if grid is None else "argument",
         "max_source_age_s": max_source_age_s,
         "n_hooks": len(hooks),
@@ -684,11 +758,13 @@ def _ignite_initial(engine: _FireEngine, cells: list[tuple[int, int]], t_ign: fl
 
 
 __all__ = [
+    "HoldoverTable",
     "KernelCorrectionEntry",
     "KernelCorrectionTable",
     "ResidenceTimeTable",
     "RunResult",
     "StepHook",
+    "load_holdover_times",
     "load_kernel_corrections",
     "load_residence_times",
     "model_provenance",
