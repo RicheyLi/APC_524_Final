@@ -33,12 +33,16 @@ def test_rule_satisfies_protocol() -> None:
 def test_non_burnable_cells_are_zero(small_grid: Grid, calm_weather: Weather) -> None:
     grid = small_grid
     grid.land_use[1, 1] = int(LandUse.WATER)
-    grid.land_use[2, 2] = int(LandUse.URBAN)
+    grid.land_use[2, 2] = int(LandUse.ROAD)
     grid.fireline[3, 3] = True
     grid.fuel_model[4, 4] = 0
+    grid.land_use[5, 5] = int(LandUse.URBAN)  # urban without a fuel model
+    grid.fuel_model[5, 5] = 0
+    grid.land_use[6, 6] = int(LandUse.URBAN)  # urban with fuel burns (WP 1.13); the simulator scales it
     out = ConstantRule(ros=0.3).rate_of_spread(grid, calm_weather, STENCIL_8)
-    for r, c in [(1, 1), (2, 2), (3, 3), (4, 4)]:
+    for r, c in [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)]:
         assert np.all(out.ros[:, r, c] == 0.0)
+    assert np.all(out.ros[:, 6, 6] == 0.3)
     burnable = grid.burnable_mask()
     assert np.all(out.ros[:, burnable] == 0.3)
     assert np.all(out.ros[:, ~burnable] == 0.0)

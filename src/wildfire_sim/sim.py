@@ -35,6 +35,13 @@ revised downward by a later round before the step commits). Hence, for a given s
 times do not depend on ``dt`` beyond floating-point rounding as long as the rates are constant
 over each step.
 
+**Urban cells** (WP 1.13, docs/plan.md section 2.6, :mod:`wildfire_sim.urban`). Urban cells
+burn like wildland cells, scaled: after the spread rule has run, the rate of spread of every
+urban cell is multiplied by ``ros_factor`` in all directions, and its residence time by
+``residence_factor`` (``configs/urban.yaml``). A link between a wildland and an urban cell gets
+the harmonic mean of the two, like any other link. With ``ros_factor = 0`` urban cells are
+made UNBURNABLE at the start of the run and the town holds.
+
 **Front-normal intensity** (WP 1.12, docs/plan.md section 2.2). A spread rule reports the
 fireline intensity of a head fire, but Byram's intensity is heat per unit area times the rate
 at which the front advances *normal to itself*, so flanks and the back are far cooler. When a
@@ -63,6 +70,7 @@ hooks act at step starts; the spread rule is evaluated once per step, so a rule 
 
 from __future__ import annotations
 
+import dataclasses
 import functools
 import importlib.metadata
 import platform
@@ -84,6 +92,7 @@ from wildfire_sim.grid import Grid, Weather
 from wildfire_sim.spread import make_spread_rule
 from wildfire_sim.spread.base import SpreadOutput, SpreadRule, draw_crossing_thresholds, link_rate_of_spread
 from wildfire_sim.types import BoolArray, CellState, FloatArray, IntArray, Stencil, StencilSize, get_stencil
+from wildfire_sim.urban import UrbanModel, load_urban_model, residence_scale, ros_scale, urban_mask
 
 StepHook = Callable[[Grid, float, float, np.random.Generator], bool]
 """Called once per step, before spread, as ``hook(grid, t_s, dt_s, suppression_rng)``.
@@ -548,6 +557,7 @@ class _FireEngine:
         max_source_age_s: float | None,
         record_events: bool,
         holdover: HoldoverTable,
+        urban: UrbanModel,
     ) -> None:
         self.grid = grid
         self.rule = rule
@@ -560,6 +570,9 @@ class _FireEngine:
         self.correction = correction
         self.residence = residence
         self.holdover = holdover
+        self.urban = urban
+        self.has_urban = False  # any urban cell on the grid (set by refresh)
+        self.residence_scale = np.ones(self.h * self.w, dtype=np.float64)  # urban residence factor, else 1
         self.max_age = max_source_age_s
         self.record_events = record_events
 
@@ -618,6 +631,10 @@ class _FireEngine:
             return
         out = self.rule.rate_of_spread(self.grid, weather, self.stencil)
         out.validate(self.stencil, self.grid.shape)
+        self.has_urban = bool(urban_mask(self.grid).any())
+        if self.has_urban:  # scale urban cells after the rule, so every rule is scaled the same way
+            out = dataclasses.replace(out, ros=out.ros * ros_scale(self.grid, self.urban)[None])
+            self.residence_scale = residence_scale(self.grid, self.urban).reshape(-1)
         link = link_rate_of_spread(out.ros, self.stencil) / self.correction  # (K, H, W), m/s
         link[self.blocked] = 0.0
         self.rate = (link / self.link_length_m[:, None, None]).reshape(self.k, -1)
@@ -654,7 +671,10 @@ class _FireEngine:
         grid.arrival_time[rows, cols] = times
         ros_head = self.out.ros[:, rows, cols].max(axis=0)
         crossing = np.divide(grid.dx, ros_head, out=np.zeros_like(ros_head, dtype=np.float64), where=ros_head > 0)
-        self.timer[idx] = crossing + self.residence.lookup(grid.fuel_model[rows, cols])
+        residence = self.residence.lookup(grid.fuel_model[rows, cols])
+        if self.has_urban:
+            residence = residence * self.residence_scale[idx]
+        self.timer[idx] = crossing + residence
         self.front_intensity[idx] = self._front_intensity(idx, link_speed)
         if self.record_events:
             step_events.extend(
@@ -877,11 +897,17 @@ def model_provenance(config: ScenarioConfig, rule_name: str | None = None) -> di
     when the numba engine is selected), ``engine`` (``config.engine``), ``rule`` (class name of
     the spread rule; the configured registry name when ``rule_name`` is None), ``stencil``,
     ``arrival_shape``, ``kernel_correction`` and its ``kernel_correction_source`` for that
-    stencil and shape, ``residence_time_s`` and ``holdover_s`` (the whole tables, seconds).
+    stencil and shape, ``residence_time_s`` and ``holdover_s`` (the whole tables, seconds) and
+    ``urban`` (the urban-cell parameters).
     :func:`run` adds the per-run entries. Used by ensembles, which have no single run to ask.
     """
     return _model_provenance(
-        config, rule_name, load_kernel_corrections(), load_residence_times(), load_holdover_times()
+        config,
+        rule_name,
+        load_kernel_corrections(),
+        load_residence_times(),
+        load_holdover_times(),
+        load_urban_model(),
     )
 
 
@@ -891,6 +917,7 @@ def _model_provenance(
     corrections: KernelCorrectionTable,
     residence: ResidenceTimeTable,
     holdover: HoldoverTable,
+    urban: UrbanModel,
 ) -> dict[str, Any]:
     """:func:`model_provenance` from tables already loaded (a run loads each YAML file once)."""
     entry = corrections.entry_for(config.stencil, config.spread.arrival_shape)
@@ -913,6 +940,7 @@ def _model_provenance(
         "kernel_correction_source": None if entry is None else entry.source,
         "residence_time_s": residence.model_dump(mode="json"),
         "holdover_s": holdover.model_dump(mode="json"),
+        "urban": urban.model_dump(mode="json"),
     }
 
 
@@ -997,9 +1025,12 @@ def run(
     if rule is None:
         rule = make_spread_rule(config.spread.rule, **config.spread.params)
 
+    urban = load_urban_model()
     g = build_grid(config.grid) if grid is None else grid.copy()
     g.validate()
     g.apply_unburnable()
+    if not urban.burnable:  # ros_factor 0: the town holds, as before urban cells could burn
+        g.state[urban_mask(g) & (g.state == _FUEL)] = _UNBURNABLE
     if np.any((g.state == _BURNING) | (g.state == _BURNED)):
         raise ValueError("the starting grid must not contain BURNING or BURNED cells")
     ignition_cells = _ignition_cells(config.ignition, g)
@@ -1014,7 +1045,9 @@ def run(
     residence = load_residence_times()
     holdover = load_holdover_times()
 
-    engine = engine_cls(g, rule, stencil, thresholds, correction, residence, max_source_age_s, record_events, holdover)
+    engine = engine_cls(
+        g, rule, stencil, thresholds, correction, residence, max_source_age_s, record_events, holdover, urban
+    )
     series = config.weather.to_series()
     dt = config.dt_s
     t_ign = config.ignition.time_s
@@ -1044,7 +1077,7 @@ def run(
         "config": config.model_dump(mode="json"),
         "seed": seed,
         "start_time_utc": None if config.start_time_utc is None else config.start_time_utc.isoformat(),
-        **_model_provenance(config, type(rule).__name__, corrections, residence, holdover),
+        **_model_provenance(config, type(rule).__name__, corrections, residence, holdover, urban),
         "grid_from": "config" if grid is None else "argument",
         "max_source_age_s": max_source_age_s,
         "n_hooks": len(hooks),

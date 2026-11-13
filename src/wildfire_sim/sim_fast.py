@@ -44,6 +44,7 @@ from wildfire_sim.grid import Grid, Weather
 from wildfire_sim.sim import HoldoverTable, ResidenceTimeTable, _FireEngine
 from wildfire_sim.spread.base import SpreadRule
 from wildfire_sim.types import CellState, FloatArray, IntArray, Stencil
+from wildfire_sim.urban import UrbanModel
 
 INSTALL_HINT = (
     "engine 'numba' needs the optional numba package: install the 'fast' extra with "
@@ -486,9 +487,10 @@ class NumbaFireEngine(_FireEngine):
         max_source_age_s: float | None,
         record_events: bool,
         holdover: HoldoverTable,
+        urban: UrbanModel,
     ) -> None:
         super().__init__(
-            grid, rule, stencil, thresholds, correction, residence, max_source_age_s, record_events, holdover
+            grid, rule, stencil, thresholds, correction, residence, max_source_age_s, record_events, holdover, urban
         )
         self._step = load_kernels()["step"]
         n = self.h * self.w
@@ -523,7 +525,10 @@ class NumbaFireEngine(_FireEngine):
         # The NumPy engine's ignite() formula, evaluated for every cell at once.
         ros_head = out.ros.max(axis=0)
         crossing = np.divide(grid.dx, ros_head, out=np.zeros_like(ros_head, dtype=np.float64), where=ros_head > 0)
-        self._timer_init = np.ascontiguousarray((crossing + self.residence.lookup(grid.fuel_model)).reshape(-1))
+        residence = self.residence.lookup(grid.fuel_model).reshape(-1)
+        if self.has_urban:  # urban cells flame longer (their rates are already scaled in ``out``)
+            residence = residence * self.residence_scale
+        self._timer_init = np.ascontiguousarray(crossing.reshape(-1) + residence)
         self._out_intensity = self.head_intensity
         self._heat = np.zeros(self.h * self.w, dtype=np.float64) if self.heat is None else self.heat
         self._rate_nk = np.ascontiguousarray(self.rate.T)

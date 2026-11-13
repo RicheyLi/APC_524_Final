@@ -161,8 +161,8 @@ def test_kernel_correction_table_rejects_duplicates() -> None:
 
 def test_kernel_correction_divides_link_rates(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """A correction of 2 halves the front speed (deterministic limit)."""
-    for name in ("residence_time.yaml", "holdover.yaml"):
-        (tmp_path / name).write_text((REPO_ROOT / "configs" / name).read_text(encoding="utf-8"), encoding="utf-8")
+    for path in (REPO_ROOT / "configs").glob("*.yaml"):  # every table the simulator reads
+        (tmp_path / path.name).write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
     (tmp_path / "kernel_correction.yaml").write_text(
         f"entries:\n  - {{stencil: 8, arrival_shape: {DETERMINISTIC}, value: 2.0, source: test}}\n", encoding="utf-8"
     )
@@ -181,13 +181,12 @@ def test_residence_table_rejects_nonpositive() -> None:
 # ----------------------------------------------------------------------------- barriers and invariants
 
 
-def test_water_and_urban_never_burn() -> None:
-    for generator, params in (("with_river", {"col": 12, "width": 2}), ("with_town", {"size": 5})):
-        cfg = make_config(generator=generator, grid_params=params, cells=[(3, 3)], duration=7200)
-        result = run(cfg)
-        lu = result.grid.land_use
-        assert not result.burned_mask[lu != int(LandUse.WILDLAND)].any()
-        assert result.burned_mask.sum() > 10
+def test_water_never_burns() -> None:
+    """Water cells never burn. (Urban cells do since WP 1.13: see tests/test_urban.py.)"""
+    cfg = make_config(generator="with_river", grid_params={"col": 12, "width": 2}, cells=[(3, 3)], duration=7200)
+    result = run(cfg)
+    assert not result.burned_mask[result.grid.land_use == int(LandUse.WATER)].any()
+    assert result.burned_mask.sum() > 10
 
 
 @pytest.mark.parametrize("stencil", [8, 16])

@@ -112,6 +112,7 @@ _SHARED_PROVENANCE_KEYS = (
     "kernel_correction_source",
     "residence_time_s",
     "holdover_s",
+    "urban",
 )
 
 
