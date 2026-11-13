@@ -1,0 +1,22 @@
+# Holdover time per fuel model, s: how long a burning cell whose spread has stalled can wait
+# as a dormant source before it goes out (docs/plan.md section 2.3, WP 1.10). Read by
+# wildfire_sim.sim (HoldoverTable).
+#
+# A link is stalled when its rate of spread is zero now but could come back: fine dead fuel
+# above its moisture of extinction on a humid night, or a full-strength retardant drop that
+# has not faded yet. Real fires hold over through such periods (smouldering in heavier fuel)
+# and resume when conditions return. A cell that has been dormant for longer than its holdover
+# time becomes BURNED. A value of 0 switches dormancy off for that fuel.
+#
+# EVERY VALUE BELOW IS A PLACEHOLDER. Sourcing holdover times per fuel model is an open
+# decision (docs/plan.md section 13): 12 h for every fuel, enough to carry a fire through one
+# night. The value is one of the inputs of the sensitivity analysis (WP 3.2).
+#
+# Keys of by_fuel_model are fuel model numbers as stored in Grid.fuel_model (Anderson 13 models
+# 1-13, Scott & Burgan 40 models 101-204). Cells whose model is not listed use the default.
+default:
+  value: 43200.0
+  units: s
+  source: "PLACEHOLDER - open decision in docs/plan.md section 13; 12 h for every fuel, enough to carry a fire through one night"
+  note: "team assumption, not a measurement; in the sensitivity analysis (WP 3.2)"
+by_fuel_model: {}
