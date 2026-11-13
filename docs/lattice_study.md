@@ -263,6 +263,57 @@ and the slow-strip delay at those defaults. Recommendations 3 and 4 are an open 
   (0.2 m/s, 48 cells nominal) reached the edge of the 101 × 101 grid. At 5400 s the farthest
   burned cell over 20 seeds is 38 cells from the centre.
 
+## 6. Front-normal intensity on the lattice (WP 1.12)
+
+The simulator gives each cell the fireline intensity of the front that crossed it: heat per
+unit area times the front-normal rate `R_n = 1 / |grad T|`, with the gradient of the arrival
+time taken from a least-squares plane through the cell and its stencil neighbours that burned
+no later (`wildfire_sim.sim.front_normal_rate`), capped at the rule's head intensity. On the
+analytic ellipse the flank burns at `sqrt((1 - e) / (1 + e))` of the head intensity and the
+back at `(1 - e) / (1 + e)`.
+
+**The estimator is exact on what the lattice burns.** With constant rates the burn is the
+polygon of section 2, and each of its sides advances at a fixed normal speed. Without kernel
+noise the measured intensity along the middle of every side at least 10 degrees wide equals
+`heat x (normal speed of that side)` within 1 % (length-to-breadth 1.5 and 3, head on an axis
+and at 22.5 degrees; `test_noise_free_intensity_is_the_normal_speed_of_each_polygon_side`). On
+an exact straight front it returns the speed to rounding, and on an exact circular front it is
+within 4 % per cell from 10 cells out and unbiased on average.
+
+**Against the analytic ellipse it inherits the polygon's shape error.** Mean simulated over
+analytic intensity, default kernel (16 neighbours, shape 200), seeds 0-4, cells within one cell
+of the ray from the ignition to the head, to the two widest points and to the back:
+
+| LB | Head bearing | Head | Flank | Back |
+| --- | --- | --- | --- | --- |
+| 1 | any | 0.98 - 0.99 | 0.98 - 0.99 | 0.98 - 0.99 |
+| 1.5 | on an axis | 0.96 - 0.98 | 0.97 - 1.08 | 1.00 - 1.06 |
+| 1.5 | 22.5 degrees | 0.88 - 0.98 | 1.02 - 1.17 | 1.00 - 1.09 |
+| 3 | on an axis | 0.77 - 0.98 | 1.27 - 1.37 | 1.05 - 1.08 |
+| 3 | 22.5 degrees | 0.38 - 0.41 | 1.41 - 1.45 | 1.04 - 1.11 |
+
+- A round fire has the head intensity everywhere within 3 %. The 1-2 % shortfall is the cap,
+  which trims the upward half of the noise, plus the curvature of the front.
+- At a ratio of 1.5 every part is within 20 %, and the back within 10 %.
+- At a ratio of 3 the flank is 27-45 % too hot: the polygon's flank is one long side from the
+  head corner to the next stencil direction, and it advances faster than the ellipse's flank
+  (0.236 against 0.172 of the head rate when the head is on an axis).
+- At a ratio of 3 with the head between two stencil directions, the cells on the head bearing
+  read 0.4 of the head intensity. The polygon's head is a corner on the nearest stencil
+  direction (26.6 degrees), where cells do read 0.9 on average, and the side between that
+  corner and the next direction, which the 22.5 degree ray crosses, advances at 0.32 of the
+  head rate. Only 3 % of the cells of that fire burn above 0.9 of the head intensity.
+
+The last two are the lattice limit of section 3, not a fault of the estimator, and they matter:
+breaching and the crew safety limit read this intensity. They are recorded as a strict expected
+failure (`test_plan_target_at_lb_3`) and are for WP 2.1d to remove with lattice-fitted rates and
+the length-to-breadth cap; the bounds in `tests/test_intensity.py` should be tightened then.
+Until that is merged, intensities of fires with a ratio above about 1.5 are too low near the
+head and too high on the flank.
+
+The estimate costs 5-8 % of a run on the NumPy engine and about 2 % on the Numba engine, and
+nothing for a rule that reports no intensity.
+
 ## Test thresholds
 
 Each physics test's docstring states its threshold and the evidence; the measured values
@@ -280,3 +331,4 @@ Each physics test's docstring states its threshold and the evidence; the measure
 | (f) uncorrected, shape 1 | > 2 | 4.9-5.1 (8), 11.4-12.2 (16) | kept |
 | (g) slow strip delay | within 10 % | -2.5 % (8), -9.3 % (16) after the knight-link fix (was -18 %); exact to 0.1 % without kernel noise | kept |
 | (h) wind shift, dt vs dt / 2 | same mean arrival | -0.41 % (10 disjoint seeds each); same seed identical | 2 % |
+| WP 1.12 intensity, head / flank / back against the ellipse | tolerances set from the measurement | see section 6 | per-case bounds 0.03 beyond the measured range; 20 % on every part at LB 1.5; 3 % for a round fire; LB 3 target recorded as a strict expected failure |

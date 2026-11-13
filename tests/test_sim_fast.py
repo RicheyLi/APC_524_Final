@@ -80,6 +80,7 @@ def assert_same_run(ref: RunResult, fast: RunResult) -> None:
     np.testing.assert_array_equal(ref.burned_mask, fast.burned_mask)
     np.testing.assert_allclose(fast.arrival_time, ref.arrival_time, rtol=ARRIVAL_RTOL, atol=0.0, equal_nan=True)
     np.testing.assert_array_equal(ref.grid.state, fast.grid.state)
+    np.testing.assert_allclose(fast.front_intensity, ref.front_intensity, rtol=1e-9, atol=0.0, equal_nan=True)
     for layer in ("burn_timer", "intensity", "arrival_time"):
         np.testing.assert_allclose(
             getattr(fast.grid, layer),

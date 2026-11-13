@@ -191,6 +191,23 @@ it couples two independent engines. The calibration is not perfect across CPU ge
 the committed baseline should be refreshed from the CI job's uploaded `bench.json` artifact
 after the first run on GitHub's runners, and whenever a change is meant to alter speed.
 
+## Cost of the Phase 1 additions (WPs 1.10-1.12)
+
+Measured on the reference workload by alternating runs of the code before and after (the
+machine's timing drifts by 10-20 % between separate invocations, so only interleaved runs are
+compared; minimum of 3 runs each, 3-4 rounds):
+
+| What | NumPy engine | Numba engine |
+| --- | --- | --- |
+| Dormant sources and edge detection, rule without intensity (the benchmark's constant rule) | within noise | about +5 % |
+| Front-normal intensity, rule that reports intensity (uniform 0.2 m/s, 8 / 16 neighbours) | +8 % / +5 % | +2 % / +2 % |
+
+Two guards keep the ordinary case cheap: a burned-out cell is checked for stalled links only if
+it has a zero-rate link at all (`_FireEngine.may_stall`, recomputed with the link rates), and
+the plane fit is skipped where the rule's head intensity is zero. Without them the NumPy
+engine was 18-28 % slower on this workload. The CI baseline (`scripts/bench_baseline.json`)
+was not regenerated here; it should be refreshed from a CI run once these are merged.
+
 ## Cost of ensembles and of the strategy search
 
 This replaces the order-of-magnitude table of the plan's section 6 (10 km area, 12-hour fire,

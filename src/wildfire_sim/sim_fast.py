@@ -18,7 +18,8 @@ only :meth:`advance`, the hot per-step update, with one ``@numba.njit`` kernel
 3. the in-step cascade, as a Dijkstra search with an indexed binary heap over the cells reached
    in this step (the NumPy engine finds the same shortest-path fixed point by label
    correction);
-4. ignition of the cells reached (state, arrival time, flaming clock) and their progress;
+4. ignition of the cells reached (state, arrival time, flaming clock), their progress and their
+   front-normal fireline intensity (the plane fit of :func:`wildfire_sim.sim.front_normal_rate`);
 5. burn-out (flaming clocks, live and stalled links, the dormant clock, ``max_source_age_s``).
 
 Every arithmetic expression is the NumPy engine's, element by element, so results agree to
@@ -120,6 +121,12 @@ def _step_py(
     blocked: np.ndarray,
     dormant_since: FloatArray,
     holdover: FloatArray,
+    front_intensity: FloatArray,
+    ros_head: FloatArray,
+    heat: FloatArray,
+    has_heat: bool,
+    speed_scale: FloatArray,
+    dx: float,
     dr: IntArray,
     dc: IntArray,
     h: int,
@@ -128,6 +135,7 @@ def _step_py(
     t_end: float,
     max_age: float,
     best: FloatArray,
+    best_v: FloatArray,
     heap: IntArray,
     pos: IntArray,
     touched: IntArray,
@@ -148,18 +156,28 @@ def _step_py(
         timer: ``(n,)`` float64 remaining flaming time, s; updated in place.
         timer_init: ``(n,)`` float64 flaming time given at ignition, s (``dx / ros_head`` +
             residence time).
-        out_intensity: ``(n,)`` float64 fireline intensity of the rule output, kW/m.
+        out_intensity: ``(n,)`` float64 head fireline intensity of the rule output, kW/m.
         blocked: ``(n, K)`` bool, True where the link is blocked by barrier geometry (its rate
             is then 0 for good, so it never makes a cell dormant).
         dormant_since: ``(n,)`` float64 time, s, at which each cell became a dormant source;
             NaN while it is not dormant. Updated in place.
         holdover: ``(n,)`` float64 holdover time of each cell's fuel, s.
+        front_intensity: ``(n,)`` float64 fireline intensity fixed when a cell ignites, kW/m
+            (NaN = never ignited); updated in place.
+        ros_head: ``(n,)`` float64 largest directional rate of spread of the rule output, m/s.
+        heat: ``(n,)`` float64 heat per unit area of the rule output, kJ/m^2 (read only when
+            ``has_heat``).
+        has_heat: Whether the rule gave ``heat_per_area``.
+        speed_scale: ``(K,)`` float64 link length times front-speed correction, m: ``rate *
+            speed_scale`` is the link's rate of spread, m/s.
+        dx: Cell size, m.
         dr, dc: ``(K,)`` int64 stencil offsets, rows and columns.
         h, w: Grid shape.
         t, t_end: Step start and end, s.
         max_age: ``max_source_age_s``, s; ``inf`` for no limit.
-        best, heap, pos, touched: ``(n,)`` scratch; ``best`` must be all ``inf`` and ``pos``
-            all ``-1`` on entry, and are left so.
+        best, best_v, heap, pos, touched: ``(n,)`` scratch; ``best`` must be all ``inf`` and
+            ``pos`` all ``-1`` on entry, and are left so. ``best_v`` holds the rate, m/s, of the
+            link behind each ``best`` entry.
 
     Returns:
         ``(burning, lit, lit_t)``: int64 cells BURNING after the step; int64 cells ignited in
@@ -204,11 +222,14 @@ def _step_py(
             need = max(thresholds[s, k] - progress[s, k], 0.0)
             if rt * tau >= need:
                 ct = min(start + need / rt, start + tau)
+                if ct == best[j] and rt * speed_scale[k] > best_v[j]:
+                    best_v[j] = rt * speed_scale[k]  # same time by a faster link
                 if ct < best[j]:
                     if best[j] == inf:
                         touched[n_touched] = j
                         n_touched += 1
                     best[j] = ct
+                    best_v[j] = rt * speed_scale[k]
                     if pos[j] < 0:
                         heap[size] = j
                         pos[j] = size
@@ -247,11 +268,14 @@ def _step_py(
             need = thresholds[u, k]
             if rt * tau >= need:
                 ct = min(start + need / rt, start + tau)
+                if ct == best[j] and rt * speed_scale[k] > best_v[j]:
+                    best_v[j] = rt * speed_scale[k]
                 if ct < best[j]:
                     if best[j] == inf:
                         touched[n_touched] = j
                         n_touched += 1
                     best[j] = ct
+                    best_v[j] = rt * speed_scale[k]
                     if pos[j] == -1:
                         heap[size] = j
                         pos[j] = size
@@ -280,6 +304,70 @@ def _step_py(
         tau = max(min(t_end, tj + max_age) - start, 0.0)
         for k in range(n_dirs):
             progress[j, k] = rate[j, k] * tau
+
+    # 4b. front-normal intensity of the new cells: a least-squares plane through the arrival
+    # times of each cell and its neighbours that burned no later (the formulas of sim._plane_fit_rate)
+    for i in range(n_touched):
+        j = lit[i]
+        if out_intensity[j] == 0.0:  # a rule without intensity: the cap is 0
+            front_intensity[j] = 0.0
+            continue
+        t0 = arrival[j]
+        r = j // w
+        c = j - r * w
+        n_pts = 1.0
+        sx = 0.0
+        sy = 0.0
+        st = 0.0
+        sxx = 0.0
+        sxy = 0.0
+        syy = 0.0
+        sxt = 0.0
+        syt = 0.0
+        for k in range(n_dirs):
+            tr = r + dr[k]
+            tc = c + dc[k]
+            if tr < 0 or tr >= h or tc < 0 or tc >= w:
+                continue
+            tn = arrival[tr * w + tc]
+            if not tn <= t0:  # later, or NaN: not burned yet
+                continue
+            tau = tn - t0
+            x = dc[k] * dx
+            y = dr[k] * dx
+            n_pts += 1.0
+            sx += x
+            sy += y
+            st += tau
+            sxx += x * x
+            sxy += x * y
+            syy += y * y
+            sxt += x * tau
+            syt += y * tau
+        cxx = sxx - sx * sx / n_pts
+        cxy = sxy - sx * sy / n_pts
+        cyy = syy - sy * sy / n_pts
+        cxt = sxt - sx * st / n_pts
+        cyt = syt - sy * st / n_pts
+        det = cxx * cyy - cxy * cxy
+        head = out_intensity[j]
+        if n_pts >= 3.0 and det > 1e-9 * (cxx + cyy) ** 2:
+            gx = (cxt * cyy - cyt * cxy) / det
+            gy = (cyt * cxx - cxt * cxy) / det
+            slowness = np.sqrt(gx * gx + gy * gy)
+            normal_rate = 1.0 / slowness if slowness > 0 else inf
+        else:
+            normal_rate = best_v[j]  # the igniting link's rate
+        if normal_rate == inf:
+            front_intensity[j] = head
+        else:
+            if has_heat:
+                raw = heat[j] * normal_rate
+            elif ros_head[j] > 0:
+                raw = head * (normal_rate / ros_head[j])
+            else:
+                raw = head
+            front_intensity[j] = min(raw, head)
 
     # 5. burn-out over the old sources, then the new cells (the NumPy engine's order)
     out = np.empty(n_src + n_touched, dtype=np.int64)
@@ -317,7 +405,7 @@ def _step_py(
             dormant_since[s] = np.nan
         if source or flaming or dormant:
             burn_timer[s] = timer[s]
-            intensity[s] = out_intensity[s] if flaming else 0.0
+            intensity[s] = front_intensity[s] if flaming else 0.0
             out[n_out] = s
             n_out += 1
         else:
@@ -416,6 +504,9 @@ class NumbaFireEngine(_FireEngine):
         self._timer_init = np.zeros(n, dtype=np.float64)
         self._out_intensity = np.zeros(n, dtype=np.float64)
         self._best = np.full(n, np.inf, dtype=np.float64)
+        self._best_v = np.zeros(n, dtype=np.float64)
+        self._heat = np.zeros(n, dtype=np.float64)
+        self._speed_scale = np.ascontiguousarray(self.link_speed_scale, dtype=np.float64)
         self._heap = np.empty(n, dtype=np.int64)
         self._pos = np.full(n, -1, dtype=np.int64)
         self._touched = np.empty(n, dtype=np.int64)
@@ -433,7 +524,8 @@ class NumbaFireEngine(_FireEngine):
         ros_head = out.ros.max(axis=0)
         crossing = np.divide(grid.dx, ros_head, out=np.zeros_like(ros_head, dtype=np.float64), where=ros_head > 0)
         self._timer_init = np.ascontiguousarray((crossing + self.residence.lookup(grid.fuel_model)).reshape(-1))
-        self._out_intensity = np.ascontiguousarray(out.intensity, dtype=np.float64).reshape(-1)
+        self._out_intensity = self.head_intensity
+        self._heat = np.zeros(self.h * self.w, dtype=np.float64) if self.heat is None else self.heat
         self._rate_nk = np.ascontiguousarray(self.rate.T)
         self._blocked_nk = np.ascontiguousarray(self.blocked.reshape(self.k, -1).T)
         self.holdover_s = np.ascontiguousarray(self.holdover_s, dtype=np.float64)
@@ -456,6 +548,12 @@ class NumbaFireEngine(_FireEngine):
             self._blocked_nk,
             self.dormant_since,
             self.holdover_s,
+            self.front_intensity,
+            self.ros_head,
+            self._heat,
+            self.heat is not None,
+            self._speed_scale,
+            float(grid.dx),
             self._dr,
             self._dc,
             self.h,
@@ -464,6 +562,7 @@ class NumbaFireEngine(_FireEngine):
             float(t_end),
             self._max_age,
             self._best,
+            self._best_v,
             self._heap,
             self._pos,
             self._touched,

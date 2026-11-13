@@ -195,8 +195,10 @@ def jitter_ignition(
 class ScaledRateRule:
     """Spread-rule wrapper multiplying the inner rule's ``ros`` by a constant.
 
-    ``intensity`` and ``flame_length`` are passed through unchanged. ``name`` is the inner
-    rule's name.
+    ``intensity`` and ``flame_length`` are passed through unchanged and ``heat_per_area`` is
+    dropped, so the simulator scales the head intensity by ``R_n / max_k ros`` (WP 1.12). Both
+    rates carry the multiplier, which cancels: a run's intensities do not depend on it.
+    ``name`` is the inner rule's name.
 
     Args:
         inner: The rule to wrap.
@@ -212,9 +214,11 @@ class ScaledRateRule:
         self.name = inner.name
 
     def rate_of_spread(self, grid: Grid, weather: Weather, stencil: Stencil) -> SpreadOutput:
-        """Inner output with ``ros`` (``(K, H, W)``, m/s) scaled by :attr:`multiplier`."""
+        """Inner output with ``ros`` (``(K, H, W)``, m/s) scaled by :attr:`multiplier`; no ``heat_per_area``."""
         out = self.inner.rate_of_spread(grid, weather, stencil)
-        return SpreadOutput(ros=out.ros * self.multiplier, intensity=out.intensity, flame_length=out.flame_length)
+        return SpreadOutput(
+            ros=out.ros * self.multiplier, intensity=out.intensity, flame_length=out.flame_length, heat_per_area=None
+        )
 
 
 def perturb_config(
