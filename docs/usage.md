@@ -86,6 +86,22 @@ The ensemble directory contains:
 | `burn_probability.png` | Map of burn probability. |
 | `burned_area.png` | Histogram of burned area (ha) and the running mean against the number of runs. |
 
+## When the fire reaches the edge of the grid
+
+The model cannot say what would have burned beyond its grid, so a fire that reaches the edge
+is only a lower bound from then on. Every run records the time at which fire first reached a
+cell within `stencil.max_offset` cells of the grid edge (one cell for 8 neighbours, two for 16:
+the cells with a link that leaves the grid):
+
+- `provenance.json` and `summary.json` of a run hold `reached_edge_s` (`null` if the fire
+  stayed inside), and `events.csv` has one `edge` row;
+- an ensemble's `summary.json` holds `n_reached_edge` and `first_reached_edge_s`, and
+  `runs.csv` and `ensemble.npz` hold `reached_edge_s` per run;
+- `wildfire-sim run` and `wildfire-sim ensemble` print a warning when it happened.
+
+If you see the warning, enlarge the grid or shorten the run. Do not average such runs with
+the others without saying so.
+
 ## Redraw figures
 
 `plot` regenerates the figures of a run or ensemble directory from its data files alone,

@@ -25,6 +25,9 @@ Every arithmetic expression is the NumPy engine's, element by element, so result
 floating-point rounding; only the order in which the cascade visits cells differs. Events are
 built in Python from the cells the kernel reports, exactly as the NumPy engine builds them.
 
+Edge detection (WP 1.11) needs nothing here: :func:`wildfire_sim.sim.run` derives
+``reached_edge_s`` and the ``"edge"`` event from the arrival times, for both engines alike.
+
 The kernel draws no random numbers. Compiled code is cached on disk (``cache=True``) next to
 this file or in ``NUMBA_CACHE_DIR``; when no cache location is writable it compiles in memory.
 """

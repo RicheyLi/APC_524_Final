@@ -127,6 +127,11 @@ def _report(title: str, rows: list[tuple[str, str]], out: Path) -> None:
     console.print(f"[green]Wrote[/green] {escape(str(out))}", soft_wrap=True)
 
 
+def _warn(message: str) -> None:
+    """Print one yellow warning line."""
+    console.print(f"[yellow]Warning:[/yellow] {escape(message)}", soft_wrap=True)
+
+
 _FORCE_HELP = "Overwrite the outputs in a non-empty output directory (other files are kept)."
 
 
@@ -150,6 +155,8 @@ def run(
     Data: grid.npz, arrival_time.npy (s; NaN = never burned), events.csv, summary.json (areas in m^2 and ha).
 
     Records: provenance.json, scenario.yaml. Figures: final.png, arrival.png and, with --gif, fire.gif.
+
+    Warns when the fire reached the edge of its grid: the model cannot spread beyond it, so the result is a lower bound.
     """
     cfg = _load(scenario)
     seed = cfg.seed if seed is None else seed
@@ -165,16 +172,23 @@ def run(
 
     counts = summary["final_state_counts"]
     last = summary["last_ignition_s"]
+    edge = summary["reached_edge_s"]
     rows = [
         ("seed", str(seed)),
         ("burned cells", f"{summary['burned_cells']:,}"),
         ("burned area", f"{summary['burned_area_ha']:,.2f} ha ({summary['burned_area_m2']:,.0f} m^2)"),
         ("simulated time", f"{summary['simulated_time_s']:g} s ({summary['steps']} steps)"),
         ("last ignition", "-" if last is None else f"{last:,.0f} s"),
+        ("reached grid edge", "no" if edge is None else f"at {edge:,.0f} s"),
         ("still burning", f"{counts['BURNING']:,} cells"),
         ("wall clock", f"{summary['wall_clock_s']:.2f} s"),
     ]
     _report(f"Run: {cfg.name}", rows, out)
+    if edge is not None:
+        _warn(
+            f"the fire reached the edge of the grid at {edge:,.0f} s. The model cannot spread beyond the grid, "
+            "so the burned area and everything after that time are lower bounds; use a larger grid."
+        )
 
 
 # ----------------------------------------------------------------------------- ensemble
@@ -200,6 +214,8 @@ def ensemble(
     Records: provenance.json, scenario.yaml. Figures: burn_probability.png, burned_area.png.
 
     Results are identical for any number of --workers.
+
+    Warns when any run reached the edge of its grid: such runs are lower bounds, and so are the statistics.
     """
     cfg = _load(scenario)
     ens = cfg.ensemble.model_copy(
@@ -234,9 +250,17 @@ def ensemble(
             f"{summary['min_burned_area_m2'] / io.M2_PER_HA:,.2f} / "
             f"{summary['max_burned_area_m2'] / io.M2_PER_HA:,.2f} ha",
         ),
+        ("runs reaching grid edge", f"{summary['n_reached_edge']} of {summary['n']}"),
         ("wall clock", f"{summary['wall_clock_s']:.2f} s ({workers} worker(s))"),
     ]
     _report(f"Ensemble: {cfg.name}", rows, out)
+    if summary["n_reached_edge"]:
+        _warn(
+            f"{summary['n_reached_edge']} of {summary['n']} runs reached the edge of the grid (the first at "
+            f"{summary['first_reached_edge_s']:,.0f} s). Those runs are lower bounds, so the burned-area "
+            "statistics and burn probabilities understate the fire; use a larger grid. "
+            "runs.csv lists reached_edge_s per run."
+        )
 
 
 # ----------------------------------------------------------------------------- plot
