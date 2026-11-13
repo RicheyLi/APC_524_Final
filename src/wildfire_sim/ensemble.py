@@ -3,7 +3,8 @@
 See docs/plan.md section 6. An ensemble of ``n`` runs of a :class:`ScenarioConfig` gives a
 burn-probability map, per-run arrival times and burned areas, and the statistics helpers
 :func:`running_mean`, :func:`mean_ci` and :func:`runs_for_precision` that decide how many runs
-are enough.
+are enough. Each run also reports whether and when it reached the edge of its grid
+(``EnsembleResult.reached_edge_s``, WP 1.11); such runs are lower bounds on their fires.
 
 **Seeds.** ``children = SeedSequence(base_seed).spawn(n_runs)``; run ``i`` uses the integer seed
 ``int(children[i].generate_state(1, dtype=np.uint64)[0] >> 1)`` (a 63-bit non-negative integer)
@@ -87,6 +88,10 @@ class EnsembleResult:
             for each ignition cell ``k`` (0 when there is no jitter or it fell back to the
             original cell). All neutral (1 or 0) when perturbation is off.
         elapsed_s: Wall-clock time of the whole ensemble, s.
+        reached_edge_s: ``(n,)`` float64, the time, s, at which each run first reached the edge
+            band of the grid (``RunResult.provenance["reached_edge_s"]``); NaN for a run that
+            stayed inside. A run with a finite value is a lower bound on its fire: its burned
+            area, and every statistic that includes it, understates what would have burned.
     """
 
     burn_probability: FloatArray
@@ -95,6 +100,12 @@ class EnsembleResult:
     seeds: tuple[int, ...]
     perturbations: tuple[dict[str, float], ...]
     elapsed_s: float
+    reached_edge_s: FloatArray
+
+    @property
+    def n_reached_edge(self) -> int:
+        """Number of runs that reached the edge band of the grid."""
+        return int(np.count_nonzero(np.isfinite(self.reached_edge_s)))
 
 
 # ----------------------------------------------------------------------------- seeds and draws
@@ -250,7 +261,7 @@ def _resolved_ignition_cells(config: ScenarioConfig, shape: tuple[int, int]) -> 
 # ----------------------------------------------------------------------------- one run
 
 
-_RunOutput = tuple[np.ndarray, float, int, dict[str, float]]
+_RunOutput = tuple[np.ndarray, float, int, dict[str, float], float]
 
 
 def _run_member(config_data: dict[str, Any], seed: int) -> _RunOutput:
@@ -261,7 +272,8 @@ def _run_member(config_data: dict[str, Any], seed: int) -> _RunOutput:
         seed: Run seed.
 
     Returns:
-        ``(arrival (H, W) float32 s, burned area m^2, seed, perturbation dict)``.
+        ``(arrival (H, W) float32 s, burned area m^2, seed, perturbation dict, time the run
+        reached the grid edge in s or NaN)``.
     """
     config = ScenarioConfig.model_validate(config_data)
     ens = config.ensemble
@@ -293,7 +305,8 @@ def _run_member(config_data: dict[str, Any], seed: int) -> _RunOutput:
     result = sim.run(run_config, seed=seed, rule=rule, grid=grid, record_events=False)
     arrival = result.arrival_time.astype(np.float32)
     area = float(np.count_nonzero(result.burned_mask)) * result.grid.dx * result.grid.dx
-    return arrival, area, seed, perturbation
+    edge = result.provenance["reached_edge_s"]
+    return arrival, area, seed, perturbation, float("nan") if edge is None else float(edge)
 
 
 def _run_member_star(args: tuple[dict[str, Any], int]) -> _RunOutput:
@@ -359,6 +372,7 @@ def run_ensemble(
         seeds=tuple(o[2] for o in outputs),
         perturbations=tuple(o[3] for o in outputs),
         elapsed_s=time.perf_counter() - start,
+        reached_edge_s=np.array([o[4] for o in outputs], dtype=np.float64),
     )
 
 

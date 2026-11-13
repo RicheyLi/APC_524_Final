@@ -35,6 +35,13 @@ revised downward by a later round before the step commits). Hence, for a given s
 times do not depend on ``dt`` beyond floating-point rounding as long as the rates are constant
 over each step.
 
+**Reaching the grid edge** (WP 1.11, docs/plan.md section 2). The model cannot say what
+would have burned beyond the grid, so a fire that reaches the edge is a lower bound from then
+on. A cell within ``stencil.max_offset`` cells of the grid edge has a link that leaves the grid;
+the earliest arrival time at such a cell is recorded as ``provenance["reached_edge_s"]``
+(None if the fire stayed inside) together with an ``"edge"`` event (:func:`first_edge_arrival`).
+The run itself is not changed or stopped.
+
 What does depend on ``dt``: weather is piecewise constant and looked up at the start of each
 step (a breakpoint that is not a multiple of ``dt`` takes effect at the next step start);
 hooks act at step starts; the spread rule is evaluated once per step, so a rule that reads
@@ -204,12 +211,17 @@ class RunResult:
         arrival_time: ``(H, W)`` float64, seconds since run start at which each cell ignited
             (interpolated inside the step); NaN exactly where the cell never ignited.
         burned_mask: ``(H, W)`` bool, True where the cell ignited at any time.
-        events: ``(t_s, kind, row, col)`` per ignition, in time order; ``kind`` is
-            ``"ignition"`` (initial ignition) or ``"spread"``. Empty if events were not recorded.
+        events: ``(t_s, kind, row, col)`` in time order. One per ignition, with ``kind``
+            ``"ignition"`` (initial ignition) or ``"spread"``, plus at most one ``"edge"`` event
+            directly after the ignition of the first cell to burn within ``stencil.max_offset``
+            cells of the grid edge. Empty if events were not recorded.
         elapsed_s: Wall-clock time of the run, s.
         provenance: JSON-serializable record of what produced the result (resolved config,
             seed, ``start_time_utc`` (ISO 8601 wall-clock instant of simulated time 0, or None),
-            git commit, package versions, kernel settings, steps executed, final time).
+            git commit, package versions, kernel settings, steps executed, final time) and
+            ``reached_edge_s``: the time, s, at which the fire first reached the edge band of
+            the grid (see :func:`first_edge_arrival`), or None if it never did. A run with a
+            value here is a lower bound on the fire: the model cannot spread beyond the grid.
     """
 
     grid: Grid
@@ -281,6 +293,61 @@ def _ignition_cells(ignition: IgnitionConfig, grid: Grid) -> list[tuple[int, int
             state = CellState(int(grid.state[r, c])).name
             raise ValueError(f"ignition cell ({r}, {c}) is not burnable fuel (state {state})")
     return unique
+
+
+def edge_band_mask(shape: tuple[int, int], width: int) -> BoolArray:
+    """Cells within ``width`` cells of the grid edge.
+
+    Args:
+        shape: ``(H, W)``.
+        width: Band width, cells (>= 0). ``stencil.max_offset`` gives the cells that have at
+            least one stencil link leaving the grid.
+
+    Returns:
+        ``(H, W)`` bool, True in the outermost ``width`` rows and columns (everywhere when the
+        grid is no larger than ``2 * width`` in either direction).
+    """
+    if width < 0:
+        raise ValueError(f"width must be >= 0 cells, got {width}")
+    h, w = shape
+    band = np.ones((h, w), dtype=bool)
+    if h > 2 * width and w > 2 * width:
+        band[width : h - width, width : w - width] = False
+    return band
+
+
+def first_edge_arrival(arrival_time: FloatArray, stencil: Stencil) -> tuple[float, int, int] | None:
+    """When and where the fire first reached the edge band of the grid.
+
+    The edge band is the cells within ``stencil.max_offset`` cells of the grid edge
+    (:func:`edge_band_mask`): the cells from which a stencil link points outside the grid, where
+    the model loses fire it cannot follow.
+
+    Args:
+        arrival_time: ``(H, W)`` arrival times, s; NaN where the cell never burned.
+        stencil: The stencil the run used.
+
+    Returns:
+        ``(t_s, row, col)`` of the earliest arrival in the band (ties go to the lowest row, then
+        column), or None if no cell of the band burned.
+    """
+    arrival = np.asarray(arrival_time, dtype=np.float64)
+    band = edge_band_mask((int(arrival.shape[0]), int(arrival.shape[1])), stencil.max_offset)
+    times = np.where(band & ~np.isnan(arrival), arrival, np.inf)
+    flat = int(np.argmin(times))  # first minimum in row-major order
+    row, col = divmod(flat, arrival.shape[1])
+    t = float(times[row, col])
+    return None if np.isinf(t) else (t, row, col)
+
+
+def _insert_edge_event(events: list[tuple[float, str, int, int]], edge: tuple[float, int, int]) -> None:
+    """Add the ``"edge"`` event directly after the ignition event of the edge cell (in place)."""
+    t, row, col = edge
+    for i, (_, _, r, c) in enumerate(events):
+        if r == row and c == col:
+            events.insert(i + 1, (t, "edge", row, col))
+            return
+    raise AssertionError(f"no ignition event for edge cell ({row}, {col})")  # pragma: no cover
 
 
 @functools.cache
@@ -722,6 +789,9 @@ def run(
             break
 
     arrival = engine.arrival.reshape(g.shape)
+    edge = first_edge_arrival(arrival, stencil)
+    if edge is not None and record_events:
+        _insert_edge_event(engine.events, edge)
     elapsed = time.perf_counter() - wall_start
     provenance: dict[str, Any] = {
         "config": config.model_dump(mode="json"),
@@ -733,6 +803,7 @@ def run(
         "n_hooks": len(hooks),
         "n_steps": steps_done,
         "final_time_s": steps_done * dt,
+        "reached_edge_s": None if edge is None else edge[0],
     }
     return RunResult(
         grid=g,
@@ -764,6 +835,8 @@ __all__ = [
     "ResidenceTimeTable",
     "RunResult",
     "StepHook",
+    "edge_band_mask",
+    "first_edge_arrival",
     "load_holdover_times",
     "load_kernel_corrections",
     "load_residence_times",
