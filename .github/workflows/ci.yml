@@ -61,11 +61,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.12", "3.13"]
-        experimental: [false]
-        include:
-          - python-version: "3.14"
-            experimental: true
-    continue-on-error: ${{ matrix.experimental }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -92,6 +87,24 @@ jobs:
           name: coverage-${{ matrix.python-version }}
           path: .coverage.*
           include-hidden-files: true
+
+  # Python 3.14 is allowed to fail and is slower on the runners, so it is a job of its own:
+  # nothing waits for it, and "All checks pass" does not depend on it.
+  test-experimental:
+    name: Test (Python 3.14, experimental)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Run tests
+        run: uv run --python=3.14 pytest -n auto
 
   coverage:
     name: Coverage
