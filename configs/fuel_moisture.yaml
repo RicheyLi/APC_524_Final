@@ -1,0 +1,35 @@
+# Dead fuel moisture from temperature and relative humidity (docs/plan.md section 2.2, WP 2.1c).
+# Read by wildfire_sim.spread.moisture (FuelMoistureParams).
+#
+# The equilibrium moisture content (EMC) comes from Simard's (1968) regression equations, as
+# printed in Cohen & Deeming (1985), eqs. 1a-1c (coded in wildfire_sim.spread.moisture). The 1-h
+# and 10-h moisture are multiples of the EMC at the fuel-atmosphere interface, the rule of the
+# 1978 National Fire-Danger Rating System when no fuel moisture sticks are used. The interface
+# conditions are the instrument-height temperature and humidity corrected for sunshine by the
+# state-of-weather (cloudiness) code.
+one_hour_factor:
+  value: 1.03
+  units: dimensionless
+  source: "Cohen & Deeming (1985), The National Fire-Danger Rating System: basic equations, USDA For. Serv. Gen. Tech. Rep. PSW-82, p. 3: MC1 = 1.03 * EMCPRM when fuel moisture sticks are not used"
+ten_hour_factor:
+  value: 1.28
+  units: dimensionless
+  source: "Cohen & Deeming (1985), PSW-82, p. 4: MC10 = 1.28 * EMCPRM when fuel sticks are not used, with the same EMCPRM as MC1"
+  note: "so the 10-h moisture is 1.28 / 1.03 = 1.243 times the 1-h moisture"
+# Corrections to the instrument-height (4.5 ft) temperature and relative humidity for the air in
+# contact with the fuel, by state-of-weather code (Byram & Jemison 1943, as tabulated in Cohen &
+# Deeming 1985, p. 3). The temperature correction is added (deg F), the humidity correction
+# multiplies. 0 clear, 1 scattered clouds, 2 broken clouds, 3 overcast.
+state_of_weather:
+  0:
+    temperature_add_f: {value: 25.0, units: "deg F", source: "Cohen & Deeming (1985), PSW-82, p. 3"}
+    humidity_factor: {value: 0.75, units: dimensionless, source: "Cohen & Deeming (1985), PSW-82, p. 3"}
+  1:
+    temperature_add_f: {value: 19.0, units: "deg F", source: "Cohen & Deeming (1985), PSW-82, p. 3"}
+    humidity_factor: {value: 0.83, units: dimensionless, source: "Cohen & Deeming (1985), PSW-82, p. 3"}
+  2:
+    temperature_add_f: {value: 12.0, units: "deg F", source: "Cohen & Deeming (1985), PSW-82, p. 3"}
+    humidity_factor: {value: 0.92, units: dimensionless, source: "Cohen & Deeming (1985), PSW-82, p. 3"}
+  3:
+    temperature_add_f: {value: 5.0, units: "deg F", source: "Cohen & Deeming (1985), PSW-82, p. 3"}
+    humidity_factor: {value: 1.00, units: dimensionless, source: "Cohen & Deeming (1985), PSW-82, p. 3"}
