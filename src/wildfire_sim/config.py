@@ -10,11 +10,13 @@ fine; renaming or removing fields is not.
 
 from __future__ import annotations
 
+import os
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from wildfire_sim.grid import Weather, WeatherSeries
 from wildfire_sim.types import StencilSize
@@ -108,6 +110,18 @@ class WeatherConfig(_Strict):
 class SpreadConfig(_Strict):
     rule: Annotated[str, Field(min_length=1, description="registered spread rule name")] = "constant"
     params: dict[str, Any] = Field(default_factory=dict, description="keyword arguments for the rule")
+    arrival_shape: Annotated[
+        float,
+        Field(
+            ge=1,
+            description=(
+                "gamma shape k of the cell-to-cell crossing time, passed to "
+                "spread.base.draw_crossing_thresholds. 200 (default) is nearly deterministic, so the "
+                "front-speed correction is close to 1 and elongated fires keep their shape; 1 is "
+                "memoryless (front runs several times too fast)"
+            ),
+        ),
+    ] = 200.0
 
 
 class IgnitionConfig(_Strict):
@@ -134,7 +148,7 @@ class ResourceConfig(_Strict):
     count: Annotated[int, Field(ge=0)] = 0
     dispatch_delay_s: Annotated[float, Field(ge=0)] = 0.0
     work_rate: Annotated[float, Field(ge=0, description="m/h of line, or L per drop")] = 0.0
-    hourly_cost_usd: Annotated[float, Field(ge=0)] = 0.0
+    hourly_cost_usd: Annotated[float, Field(ge=0, description="0 = use the CostConfig rate for this type")] = 0.0
     max_flame_length_m: Annotated[float, Field(ge=0, description="NWCG safety limit; 0 = unlimited")] = 0.0
     source: str = ""
 
@@ -147,15 +161,77 @@ class SuppressionConfig(_Strict):
 
 
 class CostConfig(_Strict):
-    """Unit costs for the objective in docs/revised_plan.md (Strategy search). All cited."""
+    """Unit costs for the objective in docs/plan.md (Strategy search). All cited.
+
+    One hourly rate per :class:`ResourceConfig` type. A resource whose own
+    ``hourly_cost_usd`` is 0 is charged at the rate given here.
+    """
 
     crew_usd_per_h: CitedValue
     dozer_usd_per_h: CitedValue
+    engine_usd_per_h: CitedValue
     aircraft_usd_per_h: CitedValue
     water_usd_per_l: CitedValue
     retardant_usd_per_l: CitedValue
     usd_per_building: CitedValue
     usd_per_ha_wildland: CitedValue
+
+
+# ----------------------------------------------------------------------------- ensemble
+
+
+class EnsembleConfig(_Strict):
+    """Monte Carlo ensemble settings (WP 1.6, docs/plan.md section 6).
+
+    Each run of an ensemble draws one value of every factor below and applies it to the whole
+    run (every point of the weather series), so a run is "a bit windier", not noisy in time.
+    The defaults perturb nothing, so a scenario without an ``ensemble`` section behaves as
+    before. How the draws are made is documented in :mod:`wildfire_sim.ensemble`.
+    """
+
+    wind_speed_sigma_frac: Annotated[
+        float,
+        Field(ge=0, description="sigma of ln(factor) for a log-normal wind-speed factor (median 1), dimensionless"),
+    ] = 0.0
+    wind_direction_sigma_deg: Annotated[
+        float,
+        Field(ge=0, description="standard deviation of a normal offset added to wind direction, degrees"),
+    ] = 0.0
+    moisture_sigma_frac: Annotated[
+        float,
+        Field(
+            ge=0,
+            description="sigma of ln(factor) for a log-normal factor (median 1) on all dead and live fuel "
+            "moistures together, dimensionless",
+        ),
+    ] = 0.0
+    ros_multiplier_sigma_frac: Annotated[
+        float,
+        Field(
+            ge=0, description="sigma of ln(factor) for a log-normal rate-of-spread multiplier (median 1), dimensionless"
+        ),
+    ] = 0.0
+    ignition_jitter_cells: Annotated[
+        int,
+        Field(
+            ge=0,
+            description="each ignition cell moves by a uniform integer offset in [-j, j] cells in row and column; "
+            "kept inside the grid and on burnable fuel",
+        ),
+    ] = 0
+    n_runs: Annotated[int, Field(ge=1, description="default number of runs, for the CLI")] = 50
+    base_seed: Annotated[int, Field(ge=0, description="default base seed of the ensemble, for the CLI")] = 0
+
+    @property
+    def perturbs(self) -> bool:
+        """True if any input perturbation is switched on."""
+        return (
+            self.wind_speed_sigma_frac > 0
+            or self.wind_direction_sigma_deg > 0
+            or self.moisture_sigma_frac > 0
+            or self.ros_multiplier_sigma_frac > 0
+            or self.ignition_jitter_cells > 0
+        )
 
 
 # ----------------------------------------------------------------------------- scenario
@@ -173,8 +249,31 @@ class ScenarioConfig(_Strict):
     suppression: SuppressionConfig = Field(default_factory=SuppressionConfig)
     dt_s: Annotated[float, Field(gt=0, description="time step, s")] = 30.0
     duration_s: Annotated[float, Field(gt=0, description="simulated length of the run, s")] = 3600.0
-    stencil: StencilSize = 8
+    stencil: StencilSize = 16
     seed: Annotated[int, Field(ge=0, description="default seed; the CLI/ensemble may override")] = 0
+    ensemble: EnsembleConfig = Field(default_factory=EnsembleConfig)
+    engine: Literal["numpy", "numba"] = Field(
+        default="numpy",
+        description=(
+            "per-step fire engine: 'numpy' (reference, always available) or 'numba' (compiled, same "
+            "results to floating-point rounding; needs the 'fast' extra: uv sync --extra fast)"
+        ),
+    )
+    start_time_utc: AwareDatetime | None = Field(
+        default=None,
+        description=(
+            "wall-clock instant of simulated time 0 (WP 1.14): an ISO 8601 datetime with a UTC offset, "
+            "for example 2016-08-13T23:00:00Z; stored in UTC. None (default) leaves the run without a "
+            "calendar date. It does not change the simulation; it lets weather series, satellite "
+            "overpasses and aircraft daylight be aligned with simulated seconds"
+        ),
+    )
+
+    @field_validator("start_time_utc")
+    @classmethod
+    def _start_in_utc(cls, value: datetime | None) -> datetime | None:
+        # AwareDatetime has already rejected a datetime without a timezone.
+        return None if value is None else value.astimezone(UTC)
 
     @model_validator(mode="after")
     def _check_times(self) -> ScenarioConfig:
@@ -184,18 +283,80 @@ class ScenarioConfig(_Strict):
             raise ValueError("ignition.time_s must be <= duration_s")
         return self
 
+    @model_validator(mode="after")
+    def _check_ignition_inside_grid(self) -> ScenarioConfig:
+        # Only synthetic grids declare their shape here; cached grids are checked by the simulator.
+        if isinstance(self.grid, SyntheticGridConfig):
+            h, w = self.grid.shape
+            for row, col in self.ignition.cells:
+                if row >= h or col >= w:
+                    raise ValueError(f"ignition cell ({row}, {col}) is outside the grid of shape ({h}, {w})")
+        return self
+
+    def time_at(self, t_s: float) -> datetime | None:
+        """Wall-clock time of simulated time ``t_s``.
+
+        Args:
+            t_s: Simulated time, s since the start of the run (may be fractional or negative).
+
+        Returns:
+            ``start_time_utc + t_s`` seconds as a timezone-aware UTC datetime, or None when the
+            scenario has no ``start_time_utc``.
+        """
+        if self.start_time_utc is None:
+            return None
+        return self.start_time_utc + timedelta(seconds=float(t_s))
+
     @property
     def n_steps(self) -> int:
-        return int(self.duration_s // self.dt_s)
+        """Number of whole time steps in the run: ``floor(duration_s / dt_s)``.
+
+        Tolerates floating-point rounding, so ``duration_s = 3600`` with ``dt_s = 0.1`` gives
+        36000 steps, not 35999.
+        """
+        ratio = self.duration_s / self.dt_s
+        nearest = round(ratio)
+        if abs(ratio - nearest) <= 1e-9 * max(1.0, abs(ratio)):
+            return int(nearest)
+        return int(ratio)
 
 
 # ----------------------------------------------------------------------------- loading
 
 
+def configs_dir() -> Path:
+    """Directory holding the cited parameter tables (``alexandridis.yaml``, ``costs.yaml``, ...).
+
+    The environment variable ``WILDFIRE_SIM_CONFIGS`` overrides the default, which is the
+    ``configs/`` directory of the repository checkout this package is installed from.
+
+    Raises:
+        FileNotFoundError: The directory does not exist.
+    """
+    override = os.environ.get("WILDFIRE_SIM_CONFIGS")
+    path = Path(override) if override else Path(__file__).resolve().parents[2] / "configs"
+    if not path.is_dir():
+        raise FileNotFoundError(
+            f"configs directory {path} not found; run from a repository checkout or set WILDFIRE_SIM_CONFIGS"
+        )
+    return path
+
+
 def load_yaml[T: BaseModel](path: str | Path, model: type[T]) -> T:
-    """Parse ``path`` as YAML and validate it as ``model``."""
+    """Parse ``path`` as YAML and validate it as ``model``.
+
+    Relative paths inside the file (for example ``grid.path``) are left as written and resolve
+    against the current working directory, so run commands from the repository root.
+
+    Raises:
+        ValueError: The file is not valid YAML, is not a mapping, or fails validation
+            (``pydantic.ValidationError`` is a ``ValueError``).
+    """
     with Path(path).open(encoding="utf-8") as fh:
-        raw = yaml.safe_load(fh)
+        try:
+            raw = yaml.safe_load(fh)
+        except yaml.YAMLError as exc:
+            raise ValueError(f"{path}: not valid YAML: {exc}") from exc
     if raw is None:
         raw = {}
     if not isinstance(raw, dict):

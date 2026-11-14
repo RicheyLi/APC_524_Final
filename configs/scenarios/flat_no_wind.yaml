@@ -19,6 +19,8 @@ spread:
 ignition:
   center: true
 dt_s: 30.0
-duration_s: 7200.0
-stencil: 8
+# 1.5 h: the corrected front reaches about 36 cells (1080 m) from the centre, well inside the
+# 50-cell half-width. 7200 s let it reach the grid edge (WP 1.4).
+duration_s: 5400.0
+stencil: 16
 seed: 0

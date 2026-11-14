@@ -51,7 +51,7 @@ geo = [
   "py3dep>=0.17",
   "requests>=2.32",
 ]
-# Rothermel rate-of-spread library (WP 2.1).
+# Reference Rothermel library, used only to cross-check the native implementation (WP 2.1).
 rothermel = [
   "pyrothermel",
 ]
@@ -74,7 +74,9 @@ lint = [
 ]
 test = [
     "coverage",
+    "hypothesis>=6.170.15",
     "pytest",
+    "pytest-xdist>=3.8.0",
 ]
 typecheck = [
     "ty",
@@ -123,7 +125,7 @@ source = ["src/", "tests/"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-fail_under = 50
+fail_under = 85
 exclude_also = [
     "if TYPE_CHECKING:",
     "if typing.TYPE_CHECKING:",

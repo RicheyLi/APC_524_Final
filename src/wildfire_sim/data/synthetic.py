@@ -10,6 +10,7 @@ import numpy as np
 
 from wildfire_sim.grid import Grid
 from wildfire_sim.types import LandUse
+from wildfire_sim.urban import load_urban_model
 
 
 def flat_uniform(shape: tuple[int, int] = (101, 101), dx: float = 30.0, fuel_model: int = 1) -> Grid:
@@ -102,16 +103,24 @@ def with_town(
     center: tuple[int, int] | None = None,
     size: int = 7,
     value_per_cell: float = 500_000.0,
+    urban_fuel_model: int | None = None,
 ) -> Grid:
     """Flat uniform fuel with a square urban block of ``size`` cells carrying asset value.
 
-    Urban cells are unburnable but their ``asset_value`` counts as lost if fire reaches an
-    adjacent cell (the loss rule itself is defined in WP 2.8 ``metrics``).
+    Urban cells burn (docs/plan.md section 2.6): each carries a surrogate fuel model, and the
+    simulator slows its spread and lengthens its flaming with the factors of
+    ``configs/urban.yaml``. An urban cell's ``asset_value`` is lost when the cell burns (the
+    loss rule itself is defined in WP 2.8 ``metrics``).
 
     Args:
+        shape: ``(H, W)``.
+        dx: Cell size, m.
+        fuel_model: Fuel model number of the wildland cells.
         center: ``(row, col)`` of the block centre; defaults to the grid centre.
         size: Side length in cells.
         value_per_cell: USD per urban cell.
+        urban_fuel_model: Fuel model number written into the urban cells (>= 1); None uses the
+            surrogate fuel model of ``configs/urban.yaml``.
     """
     if size < 1:
         raise ValueError("size must be >= 1")
@@ -122,8 +131,11 @@ def with_town(
     c0, c1 = max(c - half, 0), min(c - half + size, shape[1])
     if r0 >= r1 or c0 >= c1:
         raise ValueError("town lies outside the grid")
+    surrogate = load_urban_model().surrogate_fuel_model if urban_fuel_model is None else int(urban_fuel_model)
+    if surrogate < 1:
+        raise ValueError("urban_fuel_model must be >= 1")
     grid.land_use[r0:r1, c0:c1] = int(LandUse.URBAN)
-    grid.fuel_model[r0:r1, c0:c1] = 0
+    grid.fuel_model[r0:r1, c0:c1] = surrogate
     grid.asset_value[r0:r1, c0:c1] = value_per_cell
     grid.metadata["source"] = "synthetic:with_town"
     grid.apply_unburnable()

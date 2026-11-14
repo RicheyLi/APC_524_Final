@@ -29,7 +29,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Ruff format check
         run: uv run ruff format --check .
@@ -47,7 +47,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Type check with ty
         run: uv run ty check .
@@ -71,7 +71,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Run tests with coverage
         run: uv run --python=${{ matrix.python-version }} coverage run -m pytest
@@ -82,7 +82,7 @@ jobs:
 
       - name: Upload coverage data
         if: ${{ !matrix.experimental }}
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-${{ matrix.python-version }}
           path: .coverage.*
@@ -99,10 +99,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: Download coverage data
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: coverage-*
           merge-multiple: true
@@ -117,13 +117,51 @@ jobs:
           uv run coverage report | tee -a $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
+  fast-engine:
+    name: Numba engine parity and benchmark
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Engine parity tests (numba vs numpy)
+        run: >-
+          uv run --python=3.12 --extra fast pytest -q
+          tests/test_sim_fast.py tests/test_dormant.py tests/test_edge.py
+          tests/test_intensity.py tests/test_urban.py
+
+      # Fails on a slowdown of more than 20 % in run time normalised by a calibration loop
+      # timed in the same process (machine-independent; see scripts/bench.py and docs/performance.md).
+      # Not blocking yet: the committed baseline was measured on a laptop, and the calibration
+      # is not exact across CPU generations. Make it blocking once the baseline has been
+      # refreshed from this job's bench.json artifact.
+      - name: Benchmark check against the committed baseline
+        continue-on-error: true
+        run: >-
+          uv run --python=3.12 --extra fast python scripts/bench.py
+          --workloads reference --repeats 5 --json bench.json
+          --check scripts/bench_baseline.json --tolerance 0.2
+
+      - name: Upload benchmark numbers
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bench
+          path: bench.json
+          if-no-files-found: ignore
+
   all-checks-pass:
     name: All checks pass
     if: always()
-    needs: [lint, type-check, test, coverage]
+    needs: [lint, type-check, test, coverage, fast-engine]
     runs-on: ubuntu-latest
     steps:
       - name: Check job results
-        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           jobs: ${{ toJSON(needs) }}

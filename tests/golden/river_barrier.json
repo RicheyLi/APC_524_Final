@@ -1,0 +1,23 @@
+{
+  "arrival_shape": 200.0,
+  "final_time_s": 3330.0,
+  "git_commit": "17b0b75f4ba2f9e658ce199f39301dba7267fdf9",
+  "kernel_correction": 1.042,
+  "kernel_correction_source": "scripts/kernel_front_speed.py: area-equivalent-radius front speed / R, constant rule R = 0.2 m/s, dx = 30 m, no wind, flat uniform fuel, reference radius 40 cells, 20 seeds, standard error 0.0003",
+  "n_burned": 775,
+  "n_steps": 111,
+  "rule": "ConstantRule",
+  "scenario": "tests/golden/river_barrier.yaml",
+  "seed": 524,
+  "shape": [
+    31,
+    41
+  ],
+  "stencil": 16,
+  "versions": {
+    "numpy": "2.5.4",
+    "python": "3.12.16",
+    "scipy": "1.18.1",
+    "wildfire_sim": "0.1.0"
+  }
+}

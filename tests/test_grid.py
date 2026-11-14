@@ -130,3 +130,28 @@ def test_weather_series_lookup() -> None:
         WeatherSeries(times_s=(10.0,), values=(a,))
     with pytest.raises(ValueError):
         WeatherSeries(times_s=(0.0, 0.0), values=(a, b))
+
+
+@pytest.mark.parametrize("layer", ["elevation", "slope", "asset_value", "retardant", "canopy_cover", "aspect"])
+def test_validate_rejects_non_finite_layers(small_grid: Grid, layer: str) -> None:
+    getattr(small_grid, layer)[0, 0] = np.nan
+    with pytest.raises(ValueError, match=layer):
+        small_grid.validate()
+
+
+def test_validate_rejects_negative_asset_value(small_grid: Grid) -> None:
+    small_grid.asset_value[0, 0] = -1.0
+    with pytest.raises(ValueError, match="asset_value"):
+        small_grid.validate()
+
+
+def test_apply_unburnable_leaves_burning_and_burned_cells_alone(small_grid: Grid) -> None:
+    """A fireline or land-use edit under a cell that has already caught fire must not erase that fact."""
+    small_grid.state[3, 3] = int(CellState.BURNING)
+    small_grid.state[4, 4] = int(CellState.BURNED)
+    small_grid.fireline[3:6, 3:6] = True
+    small_grid.apply_unburnable()
+    assert small_grid.state[3, 3] == CellState.BURNING
+    assert small_grid.state[4, 4] == CellState.BURNED
+    assert small_grid.state[5, 5] == CellState.UNBURNABLE
+    assert small_grid.burned_area_m2() == 2 * 30.0 * 30.0

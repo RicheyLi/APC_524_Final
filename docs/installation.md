@@ -14,7 +14,7 @@ Optional extras:
 | --- | --- | --- |
 | `fast` | numba | compiled front-only update kernel |
 | `geo` | rasterio, xarray, geopandas, osmnx, py3dep | real-world data pipeline (LANDFIRE, 3DEP, gridMET, OSM) |
-| `rothermel` | pyrothermel | Rothermel spread rule |
+| `rothermel` | pyrothermel | optional cross-check of the built-in Rothermel spread rule |
 | `opt` | optuna | policy optimization and calibration |
 | `all` | everything above | |
 

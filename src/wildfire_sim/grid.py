@@ -48,7 +48,8 @@ class Grid:
 
     Attributes:
         dx: Cell size in metres (30 m for LANDFIRE).
-        fuel_model: Scott & Burgan (2005) fuel model number (1-204); 0 = non-burnable. ``int16``.
+        fuel_model: Scott & Burgan (2005) fuel model number (1-204); 0 = non-burnable. An urban
+            cell carries the surrogate fuel model of ``configs/urban.yaml``. ``int16``.
         canopy_cover: Canopy cover fraction in [0, 1]. ``float32``.
         elevation: Elevation above sea level, m. ``float32``.
         slope: Rise/run fraction (tan of slope angle), >= 0. ``float32``.
@@ -127,6 +128,11 @@ class Grid:
                 raise ValueError(f"layer {name!r} has dtype {arr.dtype}, expected {np.dtype(dtype)}")
         if self.dx <= 0:
             raise ValueError("dx must be positive")
+        for name in ("canopy_cover", "elevation", "slope", "aspect", "asset_value", "retardant"):
+            if not np.all(np.isfinite(getattr(self, name))):
+                raise ValueError(f"layer {name!r} must be finite everywhere")
+        if np.any(self.asset_value < 0):
+            raise ValueError("asset_value must be >= 0")
         if not (np.all(self.canopy_cover >= 0) and np.all(self.canopy_cover <= 1)):
             raise ValueError("canopy_cover must lie in [0, 1]")
         if np.any(self.slope < 0):
@@ -145,17 +151,23 @@ class Grid:
     # ------------------------------------------------------------------ derived masks
 
     def burnable_mask(self) -> BoolArray:
-        """Cells that can ever carry fire: wildland, burnable fuel model, no fireline."""
-        wildland = self.land_use == int(LandUse.WILDLAND)
+        """Cells that can ever carry fire: wildland or urban, burnable fuel model, no fireline.
+
+        Follows :attr:`wildfire_sim.types.LandUse.burnable`. An urban cell without a fuel model
+        (``fuel_model`` 0) is not burnable.
+        """
+        codes = [int(lu) for lu in LandUse if lu.burnable]
+        can_burn = np.isin(self.land_use, codes)
         has_fuel = self.fuel_model > 0
-        return wildland & has_fuel & ~self.fireline
+        return can_burn & has_fuel & ~self.fireline
 
     def apply_unburnable(self) -> None:
-        """Set ``state`` to UNBURNABLE wherever :meth:`burnable_mask` is False.
+        """Set ``state`` to UNBURNABLE wherever :meth:`burnable_mask` is False and the cell is FUEL.
 
-        Idempotent. Call after editing static layers or adding a fireline.
+        Idempotent. Call after editing static layers or adding a fireline. Cells that are
+        already BURNING or BURNED keep their state: a line built under a fire does not unburn it.
         """
-        self.state[~self.burnable_mask()] = int(CellState.UNBURNABLE)
+        self.state[~self.burnable_mask() & (self.state == int(CellState.FUEL))] = int(CellState.UNBURNABLE)
 
     def burning_mask(self) -> BoolArray:
         return self.state == int(CellState.BURNING)

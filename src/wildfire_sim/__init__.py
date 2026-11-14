@@ -1,6 +1,6 @@
 """wildfire-sim: a cellular-automaton wildfire spread and suppression model.
 
-See ``docs/plan.md`` for the module map and ``docs/revised_plan.md`` for the model design.
+See ``docs/plan.md`` for the model design, the module map and the work packages.
 """
 
 from wildfire_sim.grid import Grid, Weather, WeatherSeries
