@@ -1,46 +1,231 @@
 # Flame residence time per fuel model, s: how long a cell keeps flaming after the front has
 # crossed it (docs/plan.md section 2.3). Read by wildfire_sim.sim (ResidenceTimeTable).
 #
-# EVERY VALUE BELOW IS A PLACEHOLDER. Choosing the residence times and their source is an open
-# decision (docs/plan.md section 13). Candidate: Anderson (1969), t_r = 384 / sigma minutes,
-# with sigma the characteristic surface-area-to-volume ratio in 1/ft.
+# t_r = 384 / sigma minutes (Anderson 1969; Andrews 2018, RMRS-GTR-371), with sigma the
+# characteristic surface-area-to-volume ratio of the fuel bed in 1/ft, computed from the fuel
+# models in configs/fuel_models.csv (WP 2.1a). For a dynamic fuel model sigma depends on how
+# much herbaceous load has cured, so the table is evaluated at the default moisture of
+# wildfire_sim.grid.Weather (Scott & Burgan's D2L2 scenario: 1-h 6 %, 10-h 7 %, 100-h 8 %, live
+# herbaceous 60 %, live woody 90 %). The Rothermel rule reports the moisture-dependent value
+# itself (FuelBed.residence_time). tests/test_spread_rothermel.py checks that this file matches
+# residence_times() to 0.05 s; regenerate it from that function if the fuel models change.
 #
 # Keys of by_fuel_model are fuel model numbers as stored in Grid.fuel_model (Anderson 13 models
 # 1-13, Scott & Burgan 40 models 101-204). Cells whose model is not listed use the default.
 default:
-  value: 60.0
+  value: 15.0
   units: s
-  source: "PLACEHOLDER - open decision in docs/plan.md section 13; candidate Anderson (1969) t_r = 384 / sigma min"
+  source: "Team choice: 15 s, near the median of the listed fuel models (6.6-20.1 s); applies only to fuel model numbers not in configs/fuel_models.csv"
 by_fuel_model:
-  1:   # Anderson FM1, short grass
-    value: 10.0
+  1:   # Anderson FM1, Short grass
+    value: 6.6
     units: s
-    source: "PLACEHOLDER - open decision in docs/plan.md section 13; candidate Anderson (1969) t_r = 384 / sigma min"
-  2:   # Anderson FM2, timber (grass and understory)
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  2:   # Anderson FM2, Timber grass and understory
+    value: 8.3
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  3:   # Anderson FM3, Tall grass
+    value: 15.4
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  4:   # Anderson FM4, Chaparral
+    value: 13.2
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  5:   # Anderson FM5, Brush
+    value: 13.7
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  6:   # Anderson FM6, Dormant brush, hardwood slash
+    value: 14.7
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  7:   # Anderson FM7, Southern rough
+    value: 14.8
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  8:   # Anderson FM8, Short needle litter
+    value: 12.2
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  9:   # Anderson FM9, Long needle or hardwood litter
+    value: 9.3
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  10:  # Anderson FM10, Timber litter & understory
+    value: 13.1
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  11:  # Anderson FM11, Light logging slash
+    value: 19.5
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  12:  # Anderson FM12, Medium logging slash
+    value: 20.1
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  13:  # Anderson FM13, Heavy logging slash
+    value: 19.9
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  101: # Scott & Burgan GR1, Short, sparse, dry climate grass
+    value: 11.2
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  102: # Scott & Burgan GR2, Low load, dry climate grass
+    value: 12.7
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  103: # Scott & Burgan GR3, Low load, very coarse, humid climate grass
+    value: 17.9
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  104: # Scott & Burgan GR4, Moderate load, dry climate grass
+    value: 12.6
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  105: # Scott & Burgan GR5, Low load, humid climate grass
+    value: 14.1
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  106: # Scott & Burgan GR6, Moderate load, humid climate grass
+    value: 11.5
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  107: # Scott & Burgan GR7, High load, dry climate grass
+    value: 12.6
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  108: # Scott & Burgan GR8, High load, very coarse, humid climate grass
+    value: 17.7
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  109: # Scott & Burgan GR9, Very high load, humid climate grass
+    value: 14.3
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  121: # Scott & Burgan GS1, Low load, dry climate grass-shrub
+    value: 12.6
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  122: # Scott & Burgan GS2, Moderate load, dry climate grass-shrub
+    value: 12.6
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  123: # Scott & Burgan GS3, Moderate load, humid climate grass-shrub
+    value: 14.3
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  124: # Scott & Burgan GS4, High load, humid climate grass-shrub
+    value: 14.1
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  141: # Scott & Burgan SH1, Low load, dry climate shrub
+    value: 13.8
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  142: # Scott & Burgan SH2, Moderate load, dry climate shrub
+    value: 13.8
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  143: # Scott & Burgan SH3, Moderate load, humid climate shrub
+    value: 16.8
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  144: # Scott & Burgan SH4, Low load, humid climate timber-shrub
+    value: 13.7
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  145: # Scott & Burgan SH5, High load, dry climate shrub
+    value: 18.4
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  146: # Scott & Burgan SH6, Low load, humid climate shrub
+    value: 20.1
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  147: # Scott & Burgan SH7, Very high load, dry climate shrub
+    value: 18.7
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  148: # Scott & Burgan SH8, High load, humid climate shrub
+    value: 16.6
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  149: # Scott & Burgan SH9, Very high load, humid climate shrub
+    value: 16.7
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  161: # Scott & Burgan TU1, Light load, dry climate timber-grass-shrub
+    value: 14.3
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  162: # Scott & Burgan TU2, Moderate load, humid climate timber-shrub
+    value: 13.0
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  163: # Scott & Burgan TU3, Moderate load, humid climate timber-grass-shrub
+    value: 14.3
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  164: # Scott & Burgan TU4, Dwarf conifer understory
+    value: 10.4
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  165: # Scott & Burgan TU5, Very high load, dry climate timber-shrub
+    value: 18.8
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  181: # Scott & Burgan TL1, Low load, compact conifer litter
+    value: 13.4
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  182: # Scott & Burgan TL2, Low load broadleaf litter
+    value: 12.8
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  183: # Scott & Burgan TL3, Moderate load conifer litter
     value: 15.0
     units: s
-    source: "PLACEHOLDER - open decision in docs/plan.md section 13; candidate Anderson (1969) t_r = 384 / sigma min"
-  3:   # Anderson FM3, tall grass
-    value: 15.0
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  184: # Scott & Burgan TL4, Small downed logs
+    value: 14.7
     units: s
-    source: "PLACEHOLDER - open decision in docs/plan.md section 13; candidate Anderson (1969) t_r = 384 / sigma min"
-  101: # Scott & Burgan GR1, short sparse dry climate grass
-    value: 10.0
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  185: # Scott & Burgan TL5, High load conifer litter
+    value: 13.4
     units: s
-    source: "PLACEHOLDER - open decision in docs/plan.md section 13; candidate Anderson (1969) t_r = 384 / sigma min"
-  102: # Scott & Burgan GR2, low load dry climate grass
-    value: 10.0
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  186: # Scott & Burgan TL6, High load broadleaf litter
+    value: 11.9
     units: s
-    source: "PLACEHOLDER - open decision in docs/plan.md section 13; candidate Anderson (1969) t_r = 384 / sigma min"
-  145: # Scott & Burgan SH5, high load dry climate shrub
-    value: 60.0
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  187: # Scott & Burgan TL7, Large downed logs
+    value: 18.7
     units: s
-    source: "PLACEHOLDER - open decision in docs/plan.md section 13; candidate Anderson (1969) t_r = 384 / sigma min"
-  165: # Scott & Burgan TU5, very high load dry climate timber-shrub
-    value: 180.0
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  188: # Scott & Burgan TL8, Long-needle litter
+    value: 13.0
     units: s
-    source: "PLACEHOLDER - open decision in docs/plan.md section 13; candidate Anderson (1969) t_r = 384 / sigma min"
-  183: # Scott & Burgan TL3, moderate load conifer litter
-    value: 120.0
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  189: # Scott & Burgan TL9, Very high load broadleaf litter
+    value: 13.3
     units: s
-    source: "PLACEHOLDER - open decision in docs/plan.md section 13; candidate Anderson (1969) t_r = 384 / sigma min"
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  201: # Scott & Burgan SB1, Low load activity fuel
+    value: 13.9
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  202: # Scott & Burgan SB2, Moderate load activity or low load blowdown
+    value: 12.2
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  203: # Scott & Burgan SB3, High load activity fuel or moderate load blowdown
+    value: 11.9
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
+  204: # Scott & Burgan SB4, High load blowdown
+    value: 12.1
+    units: s
+    source: "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)"
