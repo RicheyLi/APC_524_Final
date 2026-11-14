@@ -199,12 +199,14 @@ def test_stall_shorter_than_the_holdover_survives(engine: str, monkeypatch: pyte
 def test_zero_holdover_ends_the_fire_when_the_flames_go_out(engine: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """Holdover 0 is the behaviour before WP 1.10: the run ends once the last cell stops flaming.
 
-    A grass cell flames for 150 s (30 m at 0.2 m/s) + 10 s residence, so the fire is out by
-    1200 + 160 s, rounded up to a 30 s step: 1380 s, the time recorded in docs/plan.md section 2.3.
+    The last cell lit before the stall ignites at 1190.02 s and flames for 150 s (30 m at
+    0.2 m/s) + 6.6 s residence (FM1, Anderson 1969), so the fire is out by 1346.6 s, the end of
+    the 30 s step at 1350 s. (With the 10 s placeholder residence time of WP 1.10 it was 1380 s,
+    the time recorded in docs/plan.md.)
     """
     use_holdover(monkeypatch, 0.0)
     stalled = run(flat_no_wind(engine, 6000.0), hooks=[retardant_stall((STALL_START, STALL_END))])
-    assert stalled.provenance["final_time_s"] == 1380.0
+    assert stalled.provenance["final_time_s"] == 1350.0
     assert not np.any(stalled.grid.state == _BURNING)
     assert np.nanmax(stalled.arrival_time) <= STALL_START
 
@@ -262,7 +264,7 @@ def test_a_rule_that_never_spreads_holds_the_ignition_cell_until_the_holdover(
     assert short.grid.state[50, 50] == _BURNING and short.grid.intensity[50, 50] == 0.0
     full = run(cfg)
     assert full.burned_mask.sum() == 1 and full.grid.state[50, 50] == _BURNED
-    # flames for the 10 s residence time (first step), dormant from 30 s, out 900 s later
+    # flames for the 6.6 s residence time (first step), dormant from 30 s, out 900 s later
     assert full.provenance["final_time_s"] == 930.0
 
 

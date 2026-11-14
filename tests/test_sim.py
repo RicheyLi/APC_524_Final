@@ -132,10 +132,11 @@ def _burned_cols(result: RunResult) -> np.ndarray:
 def test_shipped_residence_times_validate() -> None:
     table = load_residence_times()
     assert isinstance(table, ResidenceTimeTable)
-    assert table.default.value == 60.0
-    assert "PLACEHOLDER" in table.default.source
-    assert table.by_fuel_model, "ship at least a few per-fuel-model entries"
-    assert all("PLACEHOLDER" in v.source for v in table.by_fuel_model.values())
+    assert table.default.value == 15.0
+    assert all("PLACEHOLDER" not in v.source for v in [table.default, *table.by_fuel_model.values()])
+    # every fuel model of configs/fuel_models.csv, from Anderson (1969) t_r = 384 / sigma (WP 2.1a)
+    assert len(table.by_fuel_model) == 53
+    assert all(v.source.startswith("Anderson (1969)") for v in table.by_fuel_model.values())
     fm = next(iter(table.by_fuel_model))
     times = table.lookup(np.array([fm, 9999], dtype=np.int16))
     assert times.tolist() == [table.by_fuel_model[fm].value, table.default.value]

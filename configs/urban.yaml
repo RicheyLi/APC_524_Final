@@ -24,5 +24,5 @@ ros_factor:
 residence_factor:
   value: 30.0
   units: dimensionless
-  source: "PLACEHOLDER - team assumption (docs/plan.md sections 2.6 and 13): an urban cell flames 30 times as long as the surrogate fuel (TL3 placeholder 120 s -> 1 h)"
+  source: "PLACEHOLDER - team assumption (docs/plan.md sections 2.6 and 13): an urban cell flames 30 times as long as the surrogate fuel (TL3 residence time 15.0 s, Anderson 1969, -> 7.5 min; it was 1 h while the TL3 value was a 120 s placeholder)"
   note: ">= 1; multiplies the residence time of the urban cell's fuel model"

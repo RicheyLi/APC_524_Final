@@ -8,7 +8,8 @@ Available rules (implemented in later work packages):
 
 * ``constant`` - fixed rate in every direction; Drossel-Schwabl-style baseline (WP 1.1)
 * ``alexandridis`` - vegetation/density/wind/slope factors, Alexandridis et al. 2008 (WP 1.2)
-* ``rothermel`` - Rothermel surface fire via ``pyrothermel`` + elliptical spread (WP 2.1)
+* ``rothermel`` - native Rothermel (1972) surface fire (WP 2.1a, :mod:`wildfire_sim.spread.rothermel`)
+  with elliptical directional rates (WP 2.1b); ``pyrothermel`` is only a test cross-check
 """
 
 from __future__ import annotations

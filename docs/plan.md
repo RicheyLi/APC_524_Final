@@ -172,8 +172,12 @@ rate per stencil direction for every cell, plus head intensity and flame length.
   point for Rothermel.
 - *Rothermel rule*: the surface fire spread model (Rothermel 1972 with the Albini 1976
   revisions) for the Scott & Burgan 40 fuel models, implemented in vectorized NumPy and
-  checked against the `pyrothermel` library and published BehavePlus values. This is the
-  model the validation and the strategy search run on.
+  checked against the BehavePlus fire behaviour engine (the `behave` library, run through
+  `pyrothermel`). This is the model the validation and the strategy search run on. As built
+  (WP 2.1a) it agrees with that engine to 0.02 % for all 53 fuel models. The reference values
+  in the test were produced by running the engine, not copied from a printed BehavePlus table;
+  `pyrothermel`'s metric preset overstates intensity 2.33-fold (heat content in kJ/kg read as
+  Btu/lb), so the comparison uses its US preset.
 
 For Rothermel the directional rates follow an ellipse:
 
@@ -296,7 +300,9 @@ multiplied by a factor below 1 so fire takes longer to cross into and through it
 flames for longer than the surrogate fuel's residence time. The surrogate model and both
 factors live in `configs/urban.yaml`. They are team assumptions, not measurements: this is a
 stand-in for structure-to-structure spread, not a model of it, and the factors are part of the
-sensitivity analysis (WP 3.2). An urban cell is lost when it burns, like any other cell with
+sensitivity analysis (WP 3.2). Since WP 2.1a the surrogate's residence time is cited (TL3,
+15 s, Anderson 1969) instead of a 120 s placeholder, so with `residence_factor` 30 an urban
+cell flames for 7.5 min, not the hour the factor was chosen to give (section 13). An urban cell is lost when it burns, like any other cell with
 an asset value. Before this change urban cells could not burn and counted as lost only when a
 neighbour burned, so fire could never run through a town and only its rim could be lost.
 Water and wide roads stay unburnable.
@@ -571,8 +577,9 @@ Undated; each is a set of conditions that are either met or not.
 YAML file and a seed; the engine meets the performance target recorded in
 `docs/performance.md`; a fire survives a period of zero spread rate, reports reaching the
 edge of its grid, has front-normal intensity and can burn through a town (WPs 1.10-1.13).
-Status: met for the constant and Alexandridis rules; the Rothermel rule (WPs 2.1a-b) is the
-one condition still open.
+Status: met for the constant and Alexandridis rules; the Rothermel rule is the one condition
+still open: its fire behaviour core is built (WP 2.1a), its directional rates and registration
+as a rule are not (WP 2.1b).
 
 **M2 - model is validated.** Calibrated on fire A; run on fire B without retuning; overlap and
 arrival-time errors reported for both, with the sensitivity analysis. No reported run reaches
@@ -687,10 +694,18 @@ threshold changed there and in the test together, never loosened silently.
 
 ### Phase 2 - Rothermel and real data
 
+Status: 2.1a complete (branch `wp-2.1a-rothermel`; its four interpretation decisions accepted by the team, section 13): `spread/rothermel.py` computes head rate,
+intensity, flame length, heat per unit area and residence time per cell, and exposes the wind
+and slope factors separately (`surface_fire`, `head_fire`, `FuelBed`) for WP 2.1b to combine
+as vectors. `configs/fuel_models.csv` holds the 40 Scott & Burgan and the 13 Anderson models.
+`configs/residence_time.yaml` now holds Anderson's (1969) values for all 53 models. Arrival
+times are unchanged (golden runs pass); cells stop flaming sooner. Rothermel's wind limit is an
+option, off by default (section 13). The remaining WPs have not started.
+
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
-| 2.1a | `spread/rothermel.py`, `configs/fuel_models.csv` | 0.4 | Native Rothermel (1972) surface spread with Albini (1976) revisions, vectorized over the grid: reaction intensity, propagating flux, wind and slope factors, moisture damping, live fuel extinction moisture, dynamic herbaceous transfer for the Scott & Burgan dynamic models. Fuel parameters for all 40 models (loads, SAV ratios, depth, extinction moisture, heat content) in the CSV with the source cited. Outputs head ros (m/s), Byram intensity (kW/m), flame length (m, Byram 1959), heat per unit area, and residence time `t_r = 384 / sigma` min (Anderson 1969; Andrews 2018), which replaces the placeholder values in `configs/residence_time.yaml`. Evaluated once per unique (fuel model, moisture, wind, slope) combination and mapped back to cells | Head ros, intensity and flame length for at least GR1, GR4, SH2, SH5, TU1, TL3 at three moisture/wind/slope cases within 2 % of published BehavePlus values recorded in the test with their source; zero ros at extinction moisture; agrees with `pyrothermel` within 2 % where installed (`pytest.importorskip`) |
-| 2.1b | `spread/ellipse.py` | 2.1a | Midflame wind: the 10 m wind divided by 1.15 to give the 20-ft wind (Turner and Lawson 1978; the factor in `configs/` with its citation), then times the wind adjustment factor (sheltered and unsheltered, Andrews 2012); vector combination of wind and slope into direction of maximum spread and effective wind; length-to-breadth and directional rates from the formulas in section 2.2 (U capped at a documented value); `RothermelRule` registered as `"rothermel"` returning `(K, H, W)` rates times `(1 - retardant)` | A 10 m wind of 11.5 m/s gives the midflame wind of a 20-ft wind of 10 m/s; upslope with no wind spreads uphill; cross-slope wind gives a direction between wind and slope; back rate equals `R_head (1 - e) / (1 + e)`; physics tests 1.4 pass with this rule |
+| 2.1a | `spread/rothermel.py`, `configs/fuel_models.csv` | 0.4 | Native Rothermel (1972) surface spread with Albini (1976) revisions, vectorized over the grid: reaction intensity, propagating flux, wind and slope factors, moisture damping, live fuel extinction moisture, dynamic herbaceous transfer for the Scott & Burgan dynamic models. Fuel parameters for all 40 models (loads, SAV ratios, depth, extinction moisture, heat content) in the CSV with the source cited. Outputs head ros (m/s), Byram intensity (kW/m), flame length (m, Byram 1959), heat per unit area, and residence time `t_r = 384 / sigma` min (Anderson 1969; Andrews 2018), which replaces the placeholder values in `configs/residence_time.yaml`. The fuel-bed part is evaluated once per fuel model present (moisture is uniform over the grid) and mapped back to cells; the wind and slope factors, which vary almost cell by cell, are computed per cell | Head ros, intensity and flame length for at least GR1, GR4, SH2, SH5, TU1, TL3 at three moisture/wind/slope cases within 2 % of BehavePlus values recorded in the test with their source (values produced by running the BehavePlus engine, `behave` via `pyrothermel`, are accepted as that source); zero ros at extinction moisture; agrees with `pyrothermel` within 2 % where installed (`pytest.importorskip`) |
+| 2.1b | `spread/ellipse.py`, `spread/rothermel.py` | 2.1a | Midflame wind: the 10 m wind divided by 1.15 to give the 20-ft wind (Turner and Lawson 1978; the factor in `configs/` with its citation), then times the wind adjustment factor (sheltered and unsheltered, Andrews 2012); vector combination of wind and slope into direction of maximum spread and effective wind; length-to-breadth and directional rates from the formulas in section 2.2 (U capped at a documented value); `RothermelRule` registered as `"rothermel"` in `spread/rothermel.py` (the registry finds a rule named `x` only in `spread/x.py`), with the ellipse helpers in `spread/ellipse.py`, returning `(K, H, W)` rates times `(1 - retardant)` | A 10 m wind of 11.5 m/s gives the midflame wind of a 20-ft wind of 10 m/s; upslope with no wind spreads uphill; cross-slope wind gives a direction between wind and slope; back rate equals `R_head (1 - e) / (1 + e)`; physics tests 1.4 pass with this rule |
 | 2.1c | `spread/moisture.py` | 0.3 | One-hour dead fuel moisture from temperature and relative humidity by an equilibrium moisture content model (source cited), applied hourly; documented offsets for 10-h | Reproduces the source's tabulated values; moisture rises overnight and falls in the afternoon for a synthetic diurnal series |
 | 2.1d | `spread/ellipse.py`, `scripts/lattice_study.py`, `docs/lattice_study.md`, `tests/test_physics.py` | 2.1b, 1.4 | Elongated fires on the lattice (section 2.4). (1) Lattice-fitted rates: for a given length-to-breadth ratio and head bearing, per-direction rates chosen to minimize the largest radial error between the lattice polygon (convex hull of the rate-scaled stencil directions) and the analytic ellipse, replacing rates sampled from the ellipse; selected by a rule parameter whose default the study sets. (2) The lattice study repeated with them, at head bearings 0, 13.3 (midway between adjacent 16-neighbour directions), 22.5 and 45 degrees. (3) A cap `lb_max` at the largest ratio for which head and flank stay within 10 % at every bearing, applied in the ellipse rule; `provenance` counts the cell-hours in which it applied and the CLI warns | Head and flank within 10 % of the analytic ellipse at every tested bearing for every ratio up to `lb_max`, in `tests/test_physics.py`; the strict expected-failure record updated; if the fitted rates gain less than the study's stated margin over sampled rates, the doc says so and only the cap ships; with a constant-rate rule, results bit-identical to before; the intensity bounds of `tests/test_intensity.py` re-measured with the fitted rates and its ratio-3 expected failure removed or restated (WP 1.12) |
 | 2.2 | `data/landfire.py` | 0.3 | Fetch LANDFIRE fuel model (FBFM40), canopy cover, height, base height and bulk density for a lat/lon bbox and a **named LANDFIRE version** via the LANDFIRE Product Service; write GeoTIFFs under `data/cache/<bbox-hash>/`; map non-burnable codes (91-99) to `LandUse`; urban cells get the surrogate fuel model of `configs/urban.yaml` (WP 1.13), without which they cannot burn | Request builder unit-tested with mocked HTTP; refuses a version newer than the fire date; live test marked `network` |
@@ -786,7 +801,9 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
 - [ ] Minimum set of values still to be sourced, each with a flagged placeholder so no work
       package is blocked: holdover times per fuel model (WP 1.10; placeholder 12 h for every
       fuel, enough to carry a fire through one night); the urban surrogate (WP 1.13;
-      placeholders: fuel model TL3, `ros_factor` 0.5, `residence_factor` 30); the minimum
+      placeholders: fuel model TL3, `ros_factor` 0.5, `residence_factor` 30; the factor was
+      chosen to make a town flame for about an hour on a 120 s TL3 placeholder, and with the
+      cited 15 s it gives 7.5 min); the minimum
       intensity of the breach model (WP 2.9; placeholder 0.18 MW/m). All five are in the
       sensitivity analysis (WP 3.2).
 - [ ] Whether the HRRR archive has the analysis hours for both fires' dates (WP 2.4). The
@@ -794,6 +811,13 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       in 2014 and has gaps. If either fire is not covered, both use disaggregated gridMET.
 - [ ] Cost figures with sources: hourly rates and mobilization costs per resource type; water
       and retardant per litre. Left as placeholders until WP 4.6.
+- [ ] **Rothermel's wind limit** (WP 2.1b). The original limit caps the effective midflame
+      wind at `0.9 I_R` (ft/min, `I_R` in Btu/ft^2/min; Rothermel 1972). Andrews et al. (2013)
+      found it too restrictive. The BehavePlus engine (`behave`) applies it by default, and it
+      binds in ordinary conditions: GR1 at moderate moisture, with a 3 m/s midflame wind up a
+      0.6 slope, spreads at 0.025 m/s with the limit and 0.090 m/s without. WP 2.1a ships it as
+      an option (`wind_limit_on`, off); the `"rothermel"` rule must choose, and the choice
+      enters the sensitivity analysis (WP 3.2).
 
 Resolved: study region and fire A (Chimney Fire); ignition kernel; default stencil 16 and
 `arrival_shape` 200 (after the lattice study); Rothermel implemented
@@ -828,8 +852,22 @@ Decided after the fourth review:
 - **A building is worth 400,000 USD,** a team assumption stated in the README.
 - **Residence time:** Anderson (1969), `t_r = 384 / sigma` minutes with `sigma` the
   characteristic surface-area-to-volume ratio in 1/ft, as given in Andrews (2018, section
-  4.2). WP 2.1a computes it from the fuel-model table and replaces the placeholder values in
-  `configs/residence_time.yaml`.
+  4.2). Done in WP 2.1a. For a dynamic fuel model `sigma` depends on how much grass has
+  cured, so the table is evaluated at the default `Weather` moisture (Scott & Burgan's D2L2:
+  6/7/8 % dead, 60 % live herbaceous, 90 % live woody), for all 53 models, 6.6-20.1 s; fuel
+  models not in the table get 15 s, near the median. Both choices accepted by the team. The
+  Rothermel rule also reports the moisture-dependent value.
+- **WP 2.1a acceptance, as interpreted and accepted by the team:**
+  - Reference values produced by running the BehavePlus engine (the `behave` library through
+    `pyrothermel`) count as "BehavePlus values with their source"; no printed table is needed.
+  - "Evaluated once per unique combination" is met by evaluating the fuel bed once per fuel
+    model and the wind and slope factors per cell: the results are identical (tested) and the
+    cost is lower, since wind and slope differ almost cell by cell.
+  - The tests of other modules that pinned the placeholder residence times
+    (`tests/test_dormant.py`, `tests/test_sim.py`, `tests/test_urban.py`), the note in
+    `configs/urban.yaml`, the `spread/__init__.py` docstring and this plan change in the WP 2.1a
+    pull request, an exception to the one-WP-owns-its-files rule of `CONTRIBUTING.md`:
+    replacing the residence times is part of the WP and would fail CI without them.
 - **Hourly weather:** one source for both fires; HRRR analysis hours if the archive covers
   both, disaggregated gridMET for both otherwise.
 - **Module owners:** all three team members own every module.
@@ -962,6 +1000,13 @@ any of these work packages).
 - [CA wildfire simulator applied to the 2016 Chimney Fire (arXiv 2507.00761)](https://arxiv.org/pdf/2507.00761)
 - [pyretechnics: Python fire behavior equations](https://ost.ecosyste.ms/projects/351112)
 - [pyrothermel: Python bindings for Rothermel models](https://pypi.org/project/pyrothermel/)
+- [behave: the BehavePlus fire behaviour library](https://github.com/firelab/behave)
+- Rothermel 1972, a mathematical model for predicting fire spread in wildland fuels (USDA For. Serv. Res. Pap. INT-115)
+- Albini 1976, estimating wildfire behavior and effects (USDA For. Serv. Gen. Tech. Rep. INT-30)
+- Anderson 1969, heat transfer and fire spread (USDA For. Serv. Res. Pap. INT-69)
+- Scott & Burgan 2005, standard fire behavior fuel models (USDA For. Serv. Gen. Tech. Rep. RMRS-GTR-153)
+- Andrews 2018, the Rothermel surface fire spread model and associated developments (USDA For. Serv. Gen. Tech. Rep. RMRS-GTR-371)
+- Andrews, Cruz & Rothermel 2013, examination of the wind speed limit function in the Rothermel model (Int. J. Wildland Fire 22: 959-969)
 - [Andrews 2012, wind adjustment factor and midflame wind speed (RMRS-GTR-266)](https://www.fs.usda.gov/rm/pubs/rmrs_gtr266.pdf)
 - [gridMET variables (Earth Engine catalog)](https://developers.google.com/earth-engine/datasets/catalog/IDAHO_EPSCOR_GRIDMET)
 - [Russo et al. 2014, CA risk assessment on Spetses, with the 2008 parameter table (Chem. Eng. Trans. 36)](https://www.aidic.it/cet/14/36/043.pdf)

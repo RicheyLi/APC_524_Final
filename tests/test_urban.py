@@ -25,7 +25,7 @@ from wildfire_sim import sim
 from wildfire_sim.config import ScenarioConfig
 from wildfire_sim.data.synthetic import flat_uniform, with_town
 from wildfire_sim.grid import Grid, Weather
-from wildfire_sim.sim import load_residence_times, run
+from wildfire_sim.sim import ResidenceTimeTable, run
 from wildfire_sim.spread import make_spread_rule
 from wildfire_sim.spread.base import SpreadOutput
 from wildfire_sim.types import CellState, LandUse, Stencil, get_stencil
@@ -65,6 +65,17 @@ def use_urban(monkeypatch: pytest.MonkeyPatch, **kwargs: float) -> None:
     """Make every run use the given urban factors instead of ``configs/urban.yaml``."""
     model = urban_model(**kwargs)
     monkeypatch.setattr(sim, "load_urban_model", lambda path=None: model)
+
+
+def use_residence(monkeypatch: pytest.MonkeyPatch, seconds: float) -> None:
+    """Make every run use one residence time, s, for all fuels instead of ``configs/residence_time.yaml``.
+
+    The tests of the residence factor were built around a town that flames for an hour (30 x a
+    120 s residence time). The cited TL3 value (15 s, Anderson 1969) makes an urban cell flame
+    for 7.5 min, so these tests pin the value they need: they test the mechanism, not the data.
+    """
+    table = ResidenceTimeTable.model_validate({"default": {"value": seconds, "units": "s", "source": "test"}})
+    monkeypatch.setattr(sim, "load_residence_times", lambda path=None: table)
 
 
 def strip_grid(urban: bool, shape: tuple[int, int] = (21, 60)) -> Grid:
@@ -314,15 +325,17 @@ def test_rule_output_is_not_modified() -> None:
 # ----------------------------------------------------------------------------- acceptance: flaming time
 
 
-def test_urban_cells_flame_residence_factor_times_as_long(engine: str) -> None:
+def test_urban_cells_flame_residence_factor_times_as_long(engine: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """WP 1.13 acceptance: flaming time = crossing time + ``residence_factor`` x the fuel's residence time.
 
-    For an urban cell of the surrogate fuel: ``dx / (0.5 R) = 300 s`` to cross plus ``30 x`` the
-    residence time of TL3 (placeholder 120 s) = 3900 s; for the same fuel as wildland,
-    ``150 + 120 = 270 s``. Checked on cells still flaming at the end of the run, where
+    With a residence time of 120 s (pinned, :func:`use_residence`), an urban cell of the surrogate
+    fuel takes ``dx / (0.5 R) = 300 s`` to cross plus ``30 x 120 s`` = 3900 s; the same fuel as
+    wildland ``150 + 120 = 270 s``. Checked on cells still flaming at the end of the run, where
     ``burn_timer + (T - arrival)`` is the flaming time given at ignition (float32 layer: 1e-5).
     """
-    residence = float(load_residence_times().lookup(np.array([SURROGATE]))[0])
+    use_residence(monkeypatch, 120.0)
+    residence = float(sim.load_residence_times().lookup(np.array([SURROGATE]))[0])
+    assert residence == 120.0
     cfg = strip_config(engine, duration=5400.0, shape=(9, 60))
     result = run(cfg, grid=strip_grid(True, (9, 60)))
     town = urban_mask(result.grid)
@@ -335,9 +348,11 @@ def test_urban_cells_flame_residence_factor_times_as_long(engine: str) -> None:
     assert (30.0 * residence) / residence == 30.0
 
 
-def test_urban_cells_outlast_the_wildland_around_them(engine: str) -> None:
+def test_urban_cells_outlast_the_wildland_around_them(engine: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """At 6000 s the whole town is still flaming (it lit between 2250 s and 4200 s and flames for
-    3900 s) and the grass the fire came through has long burned out."""
+    3900 s with the pinned 120 s residence time) and the grass the fire came through has long
+    burned out."""
+    use_residence(monkeypatch, 120.0)
     result = run(town_config(engine, duration=6000.0))
     town = urban_mask(result.grid)
     burning = result.grid.state == _BURNING
