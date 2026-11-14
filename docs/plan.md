@@ -224,11 +224,17 @@ cross-check.
 
 **Where temperature and humidity enter.** They set dead fuel moisture, which feeds Rothermel.
 One-hour fuel moisture is computed each hour from temperature and relative humidity with an
-equilibrium moisture content model (Fosberg and Deeming 1971 tables or Simard 1968), so the
-daily cycle of burning conditions is represented. gridMET provides 100-hour and 1000-hour
-moisture only (`fm100`, `fm1000`), so hundred-hour moisture comes from gridMET and ten-hour
-moisture is derived from the one-hour value by a cited offset (WP 2.1c). Thousand-hour
-moisture is not used: `Weather` has no field for it.
+equilibrium moisture content model, so the daily cycle of burning conditions is represented.
+As built (WP 2.1c) the model is Simard's (1968) regression, in the form of the 1978 National
+Fire-Danger Rating System (Cohen & Deeming 1985): it reproduces the Wood Handbook's
+equilibrium moisture table within 1.0 percentage point from 30 to 110 deg F. The air at the
+fuel is corrected for sunshine by a cloudiness code, and the 1-h and 10-h moisture are 1.03
+and 1.28 times its equilibrium moisture, so the 10-h value is 1.243 times the 1-h value.
+gridMET provides 100-hour and 1000-hour moisture only (`fm100`, `fm1000`), so hundred-hour
+moisture comes from gridMET. Thousand-hour moisture is not used: `Weather` has no field for
+it. Both computed moistures are equilibrium values without a time lag: right for 1-h fuels,
+but applied every hour it swings the 10-h moisture through the whole daily cycle, which a
+10-hour time lag would damp (section 13).
 
 **Limitations stated up front.** Surface fire only until the crown-fire extension (WP 6.2).
 Wind is uniform over the grid; terrain-channelled wind is out of scope.
@@ -712,8 +718,12 @@ option, off by default (section 13).
 engine it agrees to better than 1e-7 in head rate, head direction and the rate in eight
 directions (10 m wind, open and sheltered fuel, wind across and against the slope). The
 length-to-breadth ratio is capped at 8 as in BehavePlus. Canopy height and crown ratio, needed
-only for sheltered fuel, are uniform placeholders until real layers exist (section 13). The
-remaining WPs have not started.
+only for sheltered fuel, are uniform placeholders until real layers exist (section 13).
+
+2.1c built (branch `wp-2.1c-fuel-moisture`): `spread/moisture.py` computes 1-h and 10-h dead
+fuel moisture from temperature, relative humidity and an optional cloudiness code, per hour
+(`apply_hourly` on a `WeatherSeries`), with its parameters in `configs/fuel_moisture.yaml`.
+The remaining WPs have not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
@@ -839,6 +849,13 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       height and base height (crown ratio = (height - base) / height); carrying them per cell
       needs optional `Grid` layers, a change to a frozen module that needs sign-off, or the
       placeholders stay.
+- [ ] **Inputs and time lag of the hourly fuel moisture** (WP 2.1c, for WP 2.4). (1) The
+      sunshine correction needs a cloudiness code (0 clear to 3 overcast) for each daylight
+      hour; WP 2.4 must take it from the hourly source's cloud cover or pass none, which treats
+      every hour as shaded and makes the fuel moister by day. (2) The 10-h moisture is the
+      NFDRS equilibrium rule (1.28 EMC) applied every hour, so it has no 10-hour lag; a lag
+      (`m(t + dt) = m_eq + (m(t) - m_eq) exp(-dt / 10 h)`, Fosberg and Deeming 1971) would be
+      more faithful but is not in the plan.
 
 Resolved: study region and fire A (Chimney Fire); ignition kernel; default stencil 16 and
 `arrival_shape` 200 (after the lattice study); Rothermel implemented
@@ -1022,6 +1039,9 @@ any of these work packages).
 - [pyretechnics: Python fire behavior equations](https://ost.ecosyste.ms/projects/351112)
 - [pyrothermel: Python bindings for Rothermel models](https://pypi.org/project/pyrothermel/)
 - [behave: the BehavePlus fire behaviour library](https://github.com/firelab/behave)
+- [Cohen & Deeming 1985, the National Fire-Danger Rating System: basic equations (PSW-GTR-82)](https://www.fs.usda.gov/psw/publications/documents/psw_gtr082/psw_gtr082.pdf)
+- [Glass & Zelinka 2010, moisture relations and physical properties of wood, Wood Handbook chapter 4 (FPL-GTR-190)](https://research.fs.usda.gov/treesearch/37428)
+- Simard 1968, the moisture content of forest fuels I (Forest Fire Research Institute, Ottawa, FF-X-14)
 - Rothermel 1972, a mathematical model for predicting fire spread in wildland fuels (USDA For. Serv. Res. Pap. INT-115)
 - Albini 1976, estimating wildfire behavior and effects (USDA For. Serv. Gen. Tech. Rep. INT-30)
 - Anderson 1969, heat transfer and fire spread (USDA For. Serv. Res. Pap. INT-69)
