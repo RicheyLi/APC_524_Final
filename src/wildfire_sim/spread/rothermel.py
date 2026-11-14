@@ -1,10 +1,11 @@
 """Rothermel (1972) surface fire spread with the Albini (1976) revisions, vectorized over a grid.
 
 This module computes the head-fire behaviour of a surface fuel bed: rate of spread, reaction
-intensity, heat per unit area, residence time, Byram fireline intensity and flame length. It is
-the physics core of the ``"rothermel"`` spread rule; turning the head rate into directional
-rates on the stencil (the ellipse, the 10 m to midflame wind reduction, the vector combination
-of wind and slope) is WP 2.1b.
+intensity, heat per unit area, residence time, Byram fireline intensity and flame length
+(WP 2.1a), and registers :class:`RothermelRule` as the ``"rothermel"`` spread rule (WP 2.1b),
+which turns the head rate into directional rates on the stencil with the helpers of
+:mod:`wildfire_sim.spread.ellipse` (the 10 m to midflame wind reduction, the vector combination
+of wind and slope, the fire ellipse).
 
 The model, in Rothermel's own units (lb, ft, min, Btu), for a fuel bed with dead (1-h, 10-h,
 100-h, cured herbaceous) and live (herbaceous, woody) particle classes:
@@ -55,11 +56,21 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
+from pydantic import BaseModel, ConfigDict, model_validator
 
-from wildfire_sim.config import configs_dir
-from wildfire_sim.grid import Weather
+from wildfire_sim.config import CitedValue, configs_dir, load_yaml
+from wildfire_sim.grid import Grid, Weather
 from wildfire_sim.sim import FlameLengthModel, flame_length_from_intensity, load_flame_length_model
-from wildfire_sim.types import FloatArray, IntArray
+from wildfire_sim.spread import register
+from wildfire_sim.spread.base import SpreadOutput
+from wildfire_sim.spread.ellipse import (
+    combine_wind_and_slope,
+    directional_rates,
+    length_to_breadth,
+    twenty_foot_wind,
+    wind_adjustment_factor,
+)
+from wildfire_sim.types import FloatArray, IntArray, Stencil
 
 # ----------------------------------------------------------------------------- unit conversions
 
@@ -699,3 +710,212 @@ def residence_times(table: FuelModelTable | None = None, moisture: FuelMoisture 
     moisture = FuelMoisture.from_weather(Weather()) if moisture is None else moisture
     bed = fuel_bed(table, moisture)
     return {int(n): float(t) for n, t in zip(table.numbers, bed.residence_time, strict=True)}
+
+
+# ----------------------------------------------------------------------------- spread rule
+
+
+class RothermelParams(BaseModel):
+    """Schema of ``configs/rothermel.yaml``.
+
+    Attributes:
+        ten_m_to_twenty_ft: Ratio of the 10 m to the 20-ft wind (dimensionless).
+        sheltered_crown_fill: Crown fill fraction above which fuel is sheltered by the canopy.
+        canopy_height: Canopy height, m, for the sheltered wind adjustment factor.
+        crown_ratio: Crown ratio (fraction) for the sheltered wind adjustment factor.
+        lb_max: Largest length-to-breadth ratio of the fire ellipse.
+        apply_wind_limit: Apply Rothermel's wind limit ``0.9 I_R`` (an open decision).
+        wind_limit_note: Why ``apply_wind_limit`` has its value.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    ten_m_to_twenty_ft: CitedValue
+    sheltered_crown_fill: CitedValue
+    canopy_height: CitedValue
+    crown_ratio: CitedValue
+    lb_max: CitedValue
+    apply_wind_limit: bool = False
+    wind_limit_note: str = ""
+
+    @model_validator(mode="after")
+    def _in_range(self) -> RothermelParams:
+        if not self.ten_m_to_twenty_ft.value > 0:
+            raise ValueError("ten_m_to_twenty_ft must be > 0")
+        if not 0 <= self.sheltered_crown_fill.value <= 1:
+            raise ValueError("sheltered_crown_fill must lie in [0, 1]")
+        if not self.canopy_height.value > 0:
+            raise ValueError("canopy_height must be > 0 m")
+        if not 0 <= self.crown_ratio.value <= 1:
+            raise ValueError("crown_ratio must lie in [0, 1]")
+        if not self.lb_max.value >= 1:
+            raise ValueError("lb_max must be >= 1")
+        return self
+
+
+def load_rothermel_params(path: str | Path | None = None) -> RothermelParams:
+    """Load the rule parameters; default ``configs_dir() / "rothermel.yaml"``."""
+    return load_yaml(configs_dir() / "rothermel.yaml" if path is None else path, RothermelParams)
+
+
+@dataclass(frozen=True)
+class RothermelFire:
+    """Everything the ``"rothermel"`` rule computes for a grid (the diagnostic form of its output).
+
+    ``(H, W)`` float64 arrays unless stated; zeros on cells that cannot burn. Values are before
+    the retardant multiplier.
+
+    Attributes:
+        midflame_wind: Midflame wind, m/s.
+        phi_wind: Wind factor (dimensionless).
+        phi_slope: Slope factor (dimensionless).
+        phi_effective: Vector sum of the two, as used (after the wind limit if applied).
+        head_bearing: Bearing of maximum spread, degrees.
+        effective_wind: Effective midflame wind of ``phi_effective``, m/s.
+        length_to_breadth: Length-to-breadth ratio of the fire ellipse (1 on unburnable cells).
+        ros_head: Head rate of spread, m/s.
+        intensity: Head fireline intensity, kW/m.
+        heat_per_area: Heat per unit area, kJ/m^2.
+        wind_limited: Bool, where the wind limit capped ``phi_effective``.
+        burnable: Bool, cells the rule spreads from.
+    """
+
+    midflame_wind: FloatArray
+    phi_wind: FloatArray
+    phi_slope: FloatArray
+    phi_effective: FloatArray
+    head_bearing: FloatArray
+    effective_wind: FloatArray
+    length_to_breadth: FloatArray
+    ros_head: FloatArray
+    intensity: FloatArray
+    heat_per_area: FloatArray
+    wind_limited: np.ndarray
+    burnable: np.ndarray
+
+
+@register("rothermel")
+class RothermelRule:
+    """Rothermel surface fire spread with an elliptical fire shape (docs/plan.md section 2.2).
+
+    For every burnable cell:
+
+    1. Midflame wind: the 10 m wind divided by ``ten_m_to_twenty_ft`` (20-ft wind), times the
+       wind adjustment factor of the cell's fuel bed depth and canopy cover
+       (:func:`~wildfire_sim.spread.ellipse.wind_adjustment_factor`).
+    2. Fuel bed values for the weather's moisture (:func:`fuel_bed`, once per fuel model), the
+       wind factor of the midflame wind and the slope factor of the cell's slope.
+    3. Wind and slope added as vectors (toward ``weather.wind_to_bearing`` and up the slope,
+       ``aspect + 180``): the head bearing and ``phi_e``; the head rate ``R_0 (1 + phi_e)``,
+       with Rothermel's wind limit if ``apply_wind_limit``.
+    4. The ellipse: ``LB`` from the effective wind, capped at ``lb_max``; the rate toward
+       stencil direction ``k`` is ``R_head (1 - e) / (1 - e cos(b_k - head))``.
+    5. Rates, head intensity and flame length times ``(1 - retardant)``.
+
+    The fuel models come from ``configs/fuel_models.csv``; a cell whose fuel model is not in it
+    (non-burnable 91-99, or 0) does not spread, like a cell whose land use cannot burn.
+
+    Args:
+        params_path: Rule parameters; default ``configs_dir() / "rothermel.yaml"``.
+        fuel_models_path: Fuel model table; default ``configs_dir() / "fuel_models.csv"``.
+        apply_wind_limit: Overrides the YAML value when not None.
+        canopy_height: Canopy height, m; overrides the YAML value when not None.
+        crown_ratio: Crown ratio, fraction; overrides the YAML value when not None.
+    """
+
+    name = "rothermel"
+
+    def __init__(
+        self,
+        params_path: str | Path | None = None,
+        fuel_models_path: str | Path | None = None,
+        apply_wind_limit: bool | None = None,
+        canopy_height: float | None = None,
+        crown_ratio: float | None = None,
+    ) -> None:
+        self.params = load_rothermel_params(params_path)
+        self.table = load_fuel_models(fuel_models_path)
+        self.flame = load_flame_length_model()
+        p = self.params
+        self.apply_wind_limit = p.apply_wind_limit if apply_wind_limit is None else bool(apply_wind_limit)
+        self.canopy_height = float(p.canopy_height.value if canopy_height is None else canopy_height)
+        self.crown_ratio = float(p.crown_ratio.value if crown_ratio is None else crown_ratio)
+        if not self.canopy_height > 0:
+            raise ValueError("canopy_height must be > 0 m")
+        if not 0 <= self.crown_ratio <= 1:
+            raise ValueError("crown_ratio must lie in [0, 1]")
+
+    def fire(self, grid: Grid, weather: Weather) -> RothermelFire:
+        """Head fire, direction and ellipse of every cell, before the retardant multiplier.
+
+        Args:
+            grid: Reads ``fuel_model``, ``canopy_cover`` (fraction), ``slope`` (rise/run),
+                ``aspect`` (downhill bearing, degrees) and the burnable mask. Not modified.
+            weather: ``wind_speed`` (10 m, m/s), ``wind_to_bearing`` (degrees) and the fuel
+                moistures.
+        """
+        h, w = grid.shape
+        rows = self.table.index(grid.fuel_model).reshape(-1)
+        burnable = (rows >= 0) & grid.burnable_mask().reshape(-1)
+        present, inverse = np.unique(rows[burnable], return_inverse=True)
+        bed_models = fuel_bed(self.table, FuelMoisture.from_weather(weather), present)
+        bed = FuelBed(**{k: v[inverse] for k, v in bed_models.__dict__.items()})
+        cells = rows[burnable]
+
+        p = self.params
+        waf = wind_adjustment_factor(
+            self.table.depth[cells] * FT,
+            grid.canopy_cover.reshape(-1)[burnable],
+            self.canopy_height,
+            self.crown_ratio,
+            p.sheltered_crown_fill.value,
+        )
+        midflame = twenty_foot_wind(float(weather.wind_speed), p.ten_m_to_twenty_ft.value) * waf
+        phi_w = bed.wind_factor(midflame)
+        phi_s = bed.slope_factor(grid.slope.reshape(-1)[burnable].astype(np.float64))
+        upslope = (grid.aspect.reshape(-1)[burnable].astype(np.float64) + 180.0) % 360.0
+        phi_e, head = combine_wind_and_slope(phi_w, weather.wind_to_bearing, phi_s, upslope)
+        hf = head_fire(bed, phi_e, flame=self.flame, wind_limit_on=self.apply_wind_limit)
+        phi_used = np.where(hf.wind_limited, bed.wind_factor(hf.effective_wind), phi_e)
+        lb = length_to_breadth(hf.effective_wind, p.lb_max.value)
+
+        def full(values: FloatArray, fill: float = 0.0) -> FloatArray:
+            out = np.full(h * w, fill, dtype=np.float64)
+            out[burnable] = values
+            return out.reshape(h, w)
+
+        limited = np.zeros(h * w, dtype=bool)
+        limited[burnable] = hf.wind_limited
+        return RothermelFire(
+            midflame_wind=full(midflame),
+            phi_wind=full(phi_w),
+            phi_slope=full(phi_s),
+            phi_effective=full(phi_used),
+            head_bearing=full(head),
+            effective_wind=full(hf.effective_wind),
+            length_to_breadth=full(lb, 1.0),
+            ros_head=full(hf.ros),
+            intensity=full(hf.intensity),
+            heat_per_area=full(bed.heat_per_area),
+            wind_limited=limited.reshape(h, w),
+            burnable=burnable.reshape(h, w),
+        )
+
+    def rate_of_spread(self, grid: Grid, weather: Weather, stencil: Stencil) -> SpreadOutput:
+        """Directional rate of spread for every cell (see the class docstring).
+
+        Returns:
+            :class:`SpreadOutput`: ``ros`` ``(K, H, W)`` m/s; head ``intensity`` (kW/m) and
+            ``flame_length`` (m); ``heat_per_area`` (kJ/m^2) for the front-normal intensity of
+            WP 1.12. Rates, intensity and flame length include ``(1 - retardant)``.
+        """
+        f = self.fire(grid, weather)
+        keep = 1.0 - np.clip(grid.retardant.astype(np.float64), 0.0, 1.0)
+        ros = directional_rates(f.ros_head * keep, f.head_bearing, f.length_to_breadth, stencil.bearings_deg)
+        intensity = f.intensity * keep
+        return SpreadOutput(
+            ros=ros,
+            intensity=intensity,
+            flame_length=flame_length_from_intensity(intensity, self.flame),
+            heat_per_area=f.heat_per_area,
+        )
