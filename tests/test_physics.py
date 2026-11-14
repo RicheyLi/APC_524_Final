@@ -25,13 +25,15 @@ from typing import Any
 import numpy as np
 import pytest
 from scipy import stats
+from scipy.optimize import brentq
 
 from wildfire_sim.config import ScenarioConfig, load_scenario
 from wildfire_sim.data.synthetic import flat_uniform
 from wildfire_sim.grid import Grid, Weather
 from wildfire_sim.sim import load_kernel_corrections, run
 from wildfire_sim.spread.base import SpreadOutput
-from wildfire_sim.types import FloatArray, Stencil
+from wildfire_sim.spread.rothermel import RothermelRule
+from wildfire_sim.types import FloatArray, Stencil, get_stencil
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIGS = REPO_ROOT / "configs"
@@ -577,3 +579,107 @@ def test_default_kernel_ellipse(lb: float, tolerance: float, head_deg: float) ->
 def test_default_kernel_slow_fuel_strip() -> None:
     """(g) at the shipped defaults: the strip delay is 2250 s within 5 % (measured +0.4 %, 5 seeds)."""
     assert strip_delay(DEFAULT_STENCIL, DEFAULT_SHAPE, range(5)) == pytest.approx(STRIP_PREDICTED_S, rel=0.05)
+
+
+# ----------------------------------------------------------------------------- the Rothermel rule (WP 2.1b)
+
+# FM1 (short grass, the fuel of the flat_uniform generator) at the default Weather moisture.
+ROTHERMEL_PARAMS = {"apply_wind_limit": False}
+
+
+@functools.cache
+def rothermel_head(lb: float) -> tuple[float, float]:
+    """10 m wind (m/s) that gives FM1 an ellipse of ratio ``lb``, and the head rate (m/s) it gives."""
+    rule = RothermelRule(apply_wind_limit=False)
+    g = Grid.empty((1, 1), DX)
+    g.fuel_model[:] = 1
+
+    def fire(u: float) -> Any:
+        return rule.fire(g, Weather(wind_speed=u))
+
+    u = 0.0 if lb == 1.0 else float(brentq(lambda x: fire(x).length_to_breadth[0, 0] - lb, 0.01, 40.0))
+    return u, float(fire(u).ros_head[0, 0])
+
+
+@pytest.mark.parametrize("head_deg", [*ELLIPSE_HEADS, 13.3, 200.0])
+@pytest.mark.parametrize("lb", [1.0, 1.5, 3.0])
+def test_rothermel_rule_on_uniform_ground_is_the_elliptical_rule(lb: float, head_deg: float) -> None:
+    """WP 2.1b acceptance (physics tests 1.4 pass with this rule): on flat uniform fuel and uniform
+    weather the ``"rothermel"`` rule gives every cell exactly :class:`EllipticalRule`'s rates for
+    its head rate, ratio and head bearing, so the ellipse tests above hold for it unchanged. The
+    two runs below check it in the simulator at the shipped defaults."""
+    wind, ros_head = rothermel_head(lb)
+    grid = flat_uniform((5, 6), DX, fuel_model=1)
+    weather = Weather(wind_speed=wind, wind_direction=(head_deg + 180.0) % 360.0)
+    for k in (8, 16):
+        stencil = get_stencil(k)
+        mine = RothermelRule(apply_wind_limit=False).rate_of_spread(grid, weather, stencil).ros
+        theirs = EllipticalRule(ros_head, lb, head_deg).rate_of_spread(grid, weather, stencil).ros
+        np.testing.assert_allclose(mine, theirs, rtol=1e-9)
+
+
+def test_rothermel_no_wind_burn_is_round() -> None:
+    """(a) and (f) with the Rothermel rule at the shipped defaults: FM1, no wind, flat.
+
+    Axis extent / (R_0 T) in [0.97, 1.03] and area radius / (R_0 T) in [0.98, 1.02], the bounds
+    of :func:`test_default_kernel_front_speed_matches_r`. Measured (5 seeds): 0.975 and 0.999,
+    the same as the constant rule, as the rates are the same up to scale.
+    """
+    _, r0 = rothermel_head(1.0)
+    t_s = 40 * DX / r0
+    cfg = scenario(
+        shape=(109, 109),
+        rule="rothermel",
+        params=ROTHERMEL_PARAMS,
+        duration=t_s,
+        stencil=DEFAULT_STENCIL,
+        arrival_shape=DEFAULT_SHAPE,
+    )
+    axis_r, area_r = [], []
+    for seed in range(5):
+        mask = run(cfg, seed=seed, record_events=False).burned_mask
+        assert_inside(mask)
+        axis_r.append(extents(mask)[0] / (r0 * t_s))
+        area_r.append(math.sqrt(mask.sum() / math.pi) * DX / (r0 * t_s))
+    assert 0.97 <= float(np.mean(axis_r)) <= 1.03, np.mean(axis_r)
+    assert 0.98 <= float(np.mean(area_r)) <= 1.02, np.mean(area_r)
+
+
+@pytest.mark.parametrize("head_deg", ELLIPSE_HEADS)
+def test_rothermel_wind_ellipse(head_deg: float) -> None:
+    """(b) with the Rothermel rule at the shipped defaults: a 10 m wind giving FM1 a ratio of 1.5.
+
+    Head and flank within 10 % of the analytic ellipse of the rule's own head rate, the bound of
+    :func:`test_default_kernel_ellipse`. Measured (5 seeds): head -4.5 %, -4.1 %, -4.2 % and
+    flank -4.4 %, -2.6 %, -6.5 % at head bearings 0, 22.5 and 45 deg.
+    """
+    lb = 1.5
+    wind, ros_head = rothermel_head(lb)
+    t_s = ELLIPSE_HEAD_CELLS * DX / ros_head
+    n = 2 * math.ceil(1.35 * ELLIPSE_HEAD_CELLS) + 1
+    c = n // 2
+    cfg = scenario(
+        shape=(n, n),
+        rule="rothermel",
+        params=ROTHERMEL_PARAMS,
+        duration=t_s,
+        stencil=DEFAULT_STENCIL,
+        arrival_shape=DEFAULT_SHAPE,
+        weather=[{"wind_speed": wind, "wind_direction": (head_deg + 180.0) % 360.0}],
+    )
+    phi = math.radians(head_deg)
+    dists = []
+    for seed in range(5):
+        mask = run(cfg, seed=seed, record_events=False).burned_mask
+        assert_inside(mask)
+        rows, cols = np.nonzero(mask)
+        east, north = (cols - c) * DX, -(rows - c) * DX
+        along = east * math.sin(phi) + north * math.cos(phi)
+        across = east * math.cos(phi) - north * math.sin(phi)
+        dists.append((along.max(), np.ptp(across) / 2))
+    head, half_width = np.mean(dists, axis=0)
+    e = math.sqrt(lb**2 - 1.0) / lb
+    head_exact = ros_head * t_s
+    b_exact = (head_exact + head_exact * (1 - e) / (1 + e)) / 2 * math.sqrt(1 - e**2)
+    assert -0.10 <= head / head_exact - 1 <= 0.05, head / head_exact - 1
+    assert -0.10 <= half_width / b_exact - 1 <= 0.05, half_width / b_exact - 1

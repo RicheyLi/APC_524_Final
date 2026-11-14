@@ -577,9 +577,13 @@ Undated; each is a set of conditions that are either met or not.
 YAML file and a seed; the engine meets the performance target recorded in
 `docs/performance.md`; a fire survives a period of zero spread rate, reports reaching the
 edge of its grid, has front-normal intensity and can burn through a town (WPs 1.10-1.13).
-Status: met for the constant and Alexandridis rules; the Rothermel rule is the one condition
-still open: its fire behaviour core is built (WP 2.1a), its directional rates and registration
-as a rule are not (WP 2.1b).
+Status: met. The Rothermel rule (WPs 2.1a-b) passes the physics tests: on flat uniform fuel
+it gives exactly the rates of the elliptical rule the ellipse tests use, and simulated with
+it the burn is round without wind and within 10 % of the analytic ellipse at a ratio of 1.5
+(`tests/test_physics.py`). One cost is not in the benchmark: the rule takes 0.11 s per
+evaluation on the 333 x 333 reference grid, and it is re-evaluated whenever the weather
+changes, so a 12-hour run with hourly weather spends about 1.3 s in it, more than the Numba
+engine's whole 0.5 s budget. WP 3.1 benchmarks with this rule on the fire A grid.
 
 **M2 - model is validated.** Calibrated on fire A; run on fire B without retuning; overlap and
 arrival-time errors reported for both, with the sensitivity analysis. No reported run reaches
@@ -700,7 +704,16 @@ and slope factors separately (`surface_fire`, `head_fire`, `FuelBed`) for WP 2.1
 as vectors. `configs/fuel_models.csv` holds the 40 Scott & Burgan and the 13 Anderson models.
 `configs/residence_time.yaml` now holds Anderson's (1969) values for all 53 models. Arrival
 times are unchanged (golden runs pass); cells stop flaming sooner. Rothermel's wind limit is an
-option, off by default (section 13). The remaining WPs have not started.
+option, off by default (section 13).
+
+2.1b built (branch `wp-2.1b-rothermel-rule`): `RothermelRule`, registered as `"rothermel"` in
+`spread/rothermel.py`, with the wind reduction, wind-slope vector sum and ellipse in
+`spread/ellipse.py` and its parameters in `configs/rothermel.yaml`. Against the BehavePlus
+engine it agrees to better than 1e-7 in head rate, head direction and the rate in eight
+directions (10 m wind, open and sheltered fuel, wind across and against the slope). The
+length-to-breadth ratio is capped at 8 as in BehavePlus. Canopy height and crown ratio, needed
+only for sheltered fuel, are uniform placeholders until real layers exist (section 13). The
+remaining WPs have not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
@@ -815,9 +828,17 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       wind at `0.9 I_R` (ft/min, `I_R` in Btu/ft^2/min; Rothermel 1972). Andrews et al. (2013)
       found it too restrictive. The BehavePlus engine (`behave`) applies it by default, and it
       binds in ordinary conditions: GR1 at moderate moisture, with a 3 m/s midflame wind up a
-      0.6 slope, spreads at 0.025 m/s with the limit and 0.090 m/s without. WP 2.1a ships it as
-      an option (`wind_limit_on`, off); the `"rothermel"` rule must choose, and the choice
-      enters the sensitivity analysis (WP 3.2).
+      0.6 slope, spreads at 0.025 m/s with the limit and 0.090 m/s without. The rule reads it
+      from `configs/rothermel.yaml` (`apply_wind_limit`, false until the team decides; a
+      scenario can override it in `spread.params`). The choice enters the sensitivity analysis
+      (WP 3.2).
+- [ ] **Canopy height and crown ratio for the wind adjustment factor** (WP 2.1b). Sheltered
+      fuel (crown fill `canopy_cover * crown_ratio / 3` above 0.05) needs both (Andrews 2012),
+      and `Grid` has no layers for them. The rule uses one value each for the whole grid,
+      placeholders 15 m and 0.4 in `configs/rothermel.yaml`. WP 2.2 fetches LANDFIRE canopy
+      height and base height (crown ratio = (height - base) / height); carrying them per cell
+      needs optional `Grid` layers, a change to a frozen module that needs sign-off, or the
+      placeholders stay.
 
 Resolved: study region and fire A (Chimney Fire); ignition kernel; default stencil 16 and
 `arrival_shape` 200 (after the lattice study); Rothermel implemented

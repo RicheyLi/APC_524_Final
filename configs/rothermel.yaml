@@ -1,0 +1,33 @@
+# Parameters of the "rothermel" spread rule (docs/plan.md section 2.2, WP 2.1b). Read by
+# wildfire_sim.spread.rothermel (RothermelParams). The fuel models are in fuel_models.csv.
+#
+# The rule reduces the 10 m wind of the weather sources to the 20-ft wind, then to midflame
+# height with the wind adjustment factor; combines wind and slope as vectors; and spreads in an
+# ellipse whose length-to-breadth ratio comes from the effective midflame wind.
+ten_m_to_twenty_ft:
+  value: 1.15
+  units: dimensionless
+  source: "Turner & Lawson (1978), Weather in the Canadian Forest Fire Danger Rating System, Environment Canada BC-X-177; the factor BehavePlus uses (Andrews 2012, RMRS-GTR-266)"
+  note: "20-ft wind = 10 m wind / 1.15"
+sheltered_crown_fill:
+  value: 0.05
+  units: fraction
+  source: "Andrews (2012), Modeling wind adjustment factor and midflame wind speed for Rothermel's surface fire spread model, USDA For. Serv. RMRS-GTR-266; the BehavePlus threshold"
+  note: "fuel is sheltered by the canopy where canopy_cover * crown_ratio / 3 exceeds this"
+canopy_height:
+  value: 15.0
+  units: m
+  source: "PLACEHOLDER - team assumption (docs/plan.md section 13): Grid has no canopy height layer; WP 2.2 fetches LANDFIRE canopy height"
+  note: "used only in the sheltered wind adjustment factor, uniform over the grid"
+crown_ratio:
+  value: 0.4
+  units: fraction
+  source: "PLACEHOLDER - team assumption (docs/plan.md section 13): Grid has no canopy base height layer; WP 2.2 fetches LANDFIRE canopy height and base height, crown ratio = (height - base height) / height"
+  note: "used only in the sheltered wind adjustment factor, uniform over the grid"
+lb_max:
+  value: 8.0
+  units: dimensionless
+  source: "BehavePlus (behave library, SurfaceFireSpread) caps the length-to-breadth ratio of Anderson (1983) at 8; measured through pyrothermel 0.1.4, tests/test_spread_ellipse.py"
+  note: "WP 2.1d adds a lower cap at what the lattice can represent"
+apply_wind_limit: false
+wind_limit_note: "OPEN DECISION (docs/plan.md section 13): Rothermel's (1972) wind limit U <= 0.9 I_R. Andrews et al. (2013) found it too restrictive; BehavePlus applies it by default. Off until the team decides."
