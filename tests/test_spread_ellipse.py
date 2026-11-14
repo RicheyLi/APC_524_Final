@@ -18,15 +18,25 @@ from wildfire_sim.data.synthetic import flat_uniform, slope_ramp
 from wildfire_sim.grid import Grid, Weather
 from wildfire_sim.spread import make_spread_rule
 from wildfire_sim.spread.ellipse import (
+    build_fit_table,
+    canonical_head,
     combine_wind_and_slope,
     directional_rates,
     eccentricity,
+    ellipse_radius,
+    fit_rates,
+    is_convex,
     length_to_breadth,
+    load_fit_table,
+    polygon_radius,
+    save_fit_table,
+    shape_errors,
+    symmetry_permutations,
     twenty_foot_wind,
     wind_adjustment_factor,
 )
-from wildfire_sim.spread.rothermel import RothermelRule, load_rothermel_params
-from wildfire_sim.types import CellState, LandUse, get_stencil
+from wildfire_sim.spread.rothermel import RothermelRule, lattice_fit_path, load_rothermel_params
+from wildfire_sim.types import CellState, LandUse, StencilSize, get_stencil
 
 FT, MPH = 0.3048, 0.44704
 RULE = RothermelRule()
@@ -149,10 +159,11 @@ def test_back_rate_is_head_times_1_minus_e_over_1_plus_e() -> None:
             e = float(eccentricity(lb))
             assert float(rates[k_head]) == pytest.approx(0.3)
             assert float(rates[k_back]) == pytest.approx(0.3 * (1 - e) / (1 + e))
-    # a rule cell: the back of a wind-driven fire on flat ground
+    # a rule cell: the back of a wind-driven fire on flat ground (sampled rates: the ellipse itself)
     g = flat_uniform((3, 3), 30.0, fuel_model=145)
-    out = RULE.rate_of_spread(g, Weather(wind_speed=6.0, wind_direction=270.0), stencil)  # head east
-    fire = RULE.fire(g, Weather(wind_speed=6.0, wind_direction=270.0))
+    rule = RothermelRule(lattice_rates="sampled")
+    out = rule.rate_of_spread(g, Weather(wind_speed=6.0, wind_direction=270.0), stencil)  # head east
+    fire = rule.fire(g, Weather(wind_speed=6.0, wind_direction=270.0), stencil)
     e = float(eccentricity(fire.length_to_breadth[1, 1]))
     east, west = list(stencil.bearings_deg).index(90.0), list(stencil.bearings_deg).index(270.0)
     assert out.ros[east, 1, 1] == pytest.approx(fire.ros_head[1, 1])
@@ -308,3 +319,145 @@ def test_agrees_with_the_behaveplus_engine(
     for b, r in zip(bearings, mine, strict=True):
         ref = run.run_surface_fire_in_direction_of_interest(float(b))["spread_rate"] * ch_h
         assert float(r) == pytest.approx(ref, rel=0.02), b
+
+
+# ----------------------------------------------------------------------------- lattice-fitted rates (WP 2.1d)
+
+
+@pytest.mark.parametrize("stencil_size", [8, 16])
+@pytest.mark.parametrize(("lb", "head"), [(1.5, 0.0), (1.5, 13.3), (2.0, 22.5), (2.0, 200.0), (3.0, 301.0)])
+def test_fitted_polygon_beats_the_sampled_one(stencil_size: StencilSize, lb: float, head: float) -> None:
+    """The fitted rates' lattice polygon is convex and its largest radial error is smaller than
+    that of rates sampled from the ellipse (about half on 16 neighbours)."""
+    b = get_stencil(stencil_size).bearings_deg
+    sampled = ellipse_radius(b, lb, head)
+    fitted = fit_rates(lb, head, b)
+    assert is_convex(fitted, b)
+    e_s = shape_errors(sampled, b, lb, head)["radial"]
+    e_f = shape_errors(fitted, b, lb, head)["radial"]
+    assert e_f < e_s
+    if stencil_size == 16:
+        assert e_f < 0.65 * e_s
+
+
+def test_round_fire_fit_and_sampled_rates() -> None:
+    b = get_stencil(16).bearings_deg
+    assert np.allclose(ellipse_radius(b, 1.0, 37.0), 1.0)
+    np.testing.assert_allclose(polygon_radius(np.ones(16), b, b), 1.0)  # the polygon passes through its vertices
+    assert shape_errors(np.ones(16), b, 1.0, 0.0)["radial"] < 0.04  # the 16-gon inside the circle
+
+
+def test_canonical_head_and_symmetry_permutations() -> None:
+    head, q, reflect = canonical_head(np.array([0.0, 13.3, 50.0, 100.0, 200.0, 359.0]))
+    np.testing.assert_allclose(head, [0.0, 13.3, 40.0, 10.0, 20.0, 1.0])
+    assert q.tolist() == [0, 0, 0, 1, 2, 3] and reflect.tolist() == [False, False, True, False, False, True]
+    for k in (8, 16):
+        perm = symmetry_permutations(get_stencil(k).bearings_deg)
+        assert perm.shape == (8, k) and np.all(np.sort(perm, axis=1) == np.arange(k))
+    with pytest.raises(ValueError, match="symmetric"):
+        symmetry_permutations(np.array([0.0, 10.0, 200.0]))
+
+
+def test_fit_is_symmetric() -> None:
+    """A fit at any head bearing is the canonical fit with the directions permuted."""
+    b = get_stencil(16).bearings_deg
+    table = build_fit_table(b, 16, np.array([1.0, 2.0]), np.array([0.0, 20.0, 45.0]))
+    circle = fit_rates(1.0, 0.0, b) / ellipse_radius(b, 1.0, 0.0)
+    for head in (20.0, 70.0, 110.0, 160.0, 200.0, 250.0, 290.0, 340.0):  # all map to 20 deg
+        direct = fit_rates(2.0, head, b) / ellipse_radius(b, 2.0, head) / circle
+        np.testing.assert_allclose(table.multipliers(np.array(2.0), np.array(head)), direct, rtol=1e-6)
+
+
+def test_fit_table_round_trip_and_validation(tmp_path: Path) -> None:
+    b = get_stencil(8).bearings_deg
+    table = build_fit_table(b, 8, np.array([1.0, 1.5]), np.array([0.0, 45.0]))
+    path = tmp_path / "fit.csv"
+    save_fit_table(table, path, "test")
+    back = load_fit_table(path, 8)
+    np.testing.assert_allclose(back.log_multiplier, table.log_multiplier, atol=1e-6)
+    assert np.all(back.log_multiplier[0] == 0.0)  # a round fire keeps the sampled rates
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(lines[:-1]) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="full"):
+        load_fit_table(path, 8)
+    with pytest.raises(ValueError, match="start at LB 1"):
+        build_fit_table(b, 8, np.array([1.5, 2.0]), np.array([0.0, 45.0]))
+
+
+@pytest.mark.parametrize("stencil_size", [8, 16])
+def test_shipped_tables_are_the_fits(stencil_size: StencilSize) -> None:
+    """``configs/lattice_fit_*.csv`` hold :func:`build_fit_table`'s values (spot checks on its grid),
+    multipliers of exactly 1 for a round fire, and interpolate between grid points within 0.5 %
+    of a direct fit's radial error."""
+    b = get_stencil(stencil_size).bearings_deg
+    table = load_fit_table(lattice_fit_path(stencil_size), stencil_size)
+    np.testing.assert_allclose(table.bearings_deg, b, atol=1e-6)
+    assert table.lb[0] == 1.0 and table.lb[-1] >= 2.5 and table.head_deg[-1] == 45.0
+    assert np.all(table.multipliers(np.array(1.0), np.array(123.0)) == 1.0)
+    circle = fit_rates(1.0, 0.0, b) / ellipse_radius(b, 1.0, 0.0)
+    for lb, head in ((1.5, 13.0), (2.0, 30.0), (2.1, 45.0)):
+        direct = fit_rates(lb, head, b) / ellipse_radius(b, lb, head) / circle
+        np.testing.assert_allclose(table.multipliers(np.array(lb), np.array(head)), direct, rtol=1e-4)
+    rng = np.random.default_rng(3)
+    for _ in range(20):
+        lb, head = float(rng.uniform(1.0, 2.2)), float(rng.uniform(0.0, 360.0))
+        rates = ellipse_radius(b, lb, head) * table.multipliers(np.array(lb), np.array(head)) * circle
+        err = shape_errors(rates, b, lb, head)["radial"]
+        assert err <= shape_errors(fit_rates(lb, head, b), b, lb, head)["radial"] + 0.005
+
+
+def test_rule_caps_the_ratio_per_stencil_and_rate_kind() -> None:
+    """The lattice cap (``configs/rothermel.yaml``): 2.1 / 1.4 with fitted rates, 1.5 / 1.2 sampled;
+    without a stencil only BehavePlus's cap of 8 applies. The head rate is not changed."""
+    g = flat_uniform((2, 2), 30.0, fuel_model=145)
+    wx = Weather(wind_speed=12.0)
+    free = RULE.fire(g, wx)
+    assert free.length_to_breadth[0, 0] > 2.5 and not free.lb_capped.any()
+    sizes: tuple[StencilSize, StencilSize] = (8, 16)
+    for kind, caps in (("fitted", (1.4, 2.1)), ("sampled", (1.2, 1.5))):
+        rule = RothermelRule(lattice_rates=kind)
+        for k, cap in zip(sizes, caps, strict=True):
+            capped = rule.fire(g, wx, get_stencil(k))
+            assert rule.lb_cap(get_stencil(k)) == cap
+            assert np.all(capped.length_to_breadth == cap) and capped.lb_capped.all()
+            np.testing.assert_array_equal(capped.ros_head, free.ros_head)
+    calm = RULE.fire(g, Weather(wind_speed=1.0), get_stencil(16))
+    assert not calm.lb_capped.any()
+
+
+def test_rule_records_the_capped_cells_of_its_last_evaluation() -> None:
+    g = flat_uniform((2, 3), 30.0, fuel_model=145)
+    g.land_use[0, 0] = int(LandUse.WATER)
+    rule = RothermelRule()
+    assert rule.lb_capped is None
+    rule.rate_of_spread(g, Weather(wind_speed=12.0), get_stencil(16))
+    assert rule.lb_capped is not None and rule.lb_capped.tolist() == [[False, True, True], [True, True, True]]
+    rule.rate_of_spread(g, Weather(wind_speed=1.0), get_stencil(16))
+    assert not rule.lb_capped.any()
+
+
+def test_fitted_and_sampled_rules_agree_on_a_round_fire() -> None:
+    """No wind and no slope: the fitted multipliers are exactly 1, so both kinds give the same rates."""
+    g = flat_uniform((3, 3), 30.0, fuel_model=102)
+    sizes: tuple[StencilSize, StencilSize] = (8, 16)
+    for k in sizes:
+        fitted = RothermelRule(lattice_rates="fitted").rate_of_spread(g, Weather(), get_stencil(k)).ros
+        sampled = RothermelRule(lattice_rates="sampled").rate_of_spread(g, Weather(), get_stencil(k)).ros
+        np.testing.assert_array_equal(fitted, sampled)
+    with pytest.raises(ValueError, match="lattice_rates"):
+        RothermelRule(lattice_rates="other")  # ty: ignore[invalid-argument-type]
+
+
+def test_lattice_cap_parameters_are_validated(tmp_path: Path) -> None:
+    text = (configs_dir() / "rothermel.yaml").read_text(encoding="utf-8")
+    bad = tmp_path / "rothermel.yaml"
+    bad.write_text(text.replace("    value: 2.1\n", "    value: 0.9\n"), encoding="utf-8")
+    with pytest.raises(ValueError, match="lattice_cap_fitted"):
+        load_rothermel_params(bad)
+    bad.write_text(text.replace("lattice_cap_sampled:\n  8:", "lattice_cap_sampled:\n  32:"), encoding="utf-8")
+    with pytest.raises(ValueError, match="stencils 8 and 16"):
+        load_rothermel_params(bad)
+    params = load_rothermel_params()
+    assert params.lattice_rates == "fitted"
+    with pytest.raises(ValueError, match="32-neighbour"):
+        params.lattice_cap("fitted", 32)

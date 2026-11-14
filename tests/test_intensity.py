@@ -44,6 +44,8 @@ from wildfire_sim.sim import (
     run,
 )
 from wildfire_sim.spread.base import SpreadOutput
+from wildfire_sim.spread.ellipse import load_fit_table
+from wildfire_sim.spread.rothermel import lattice_fit_path
 from wildfire_sim.types import STENCIL_8, STENCIL_16, CellState, FloatArray, Stencil, get_stencil
 
 DX = 30.0  # m
@@ -68,19 +70,33 @@ class EllipticalRule:
     """``R(theta) = R_head (1 - e) / (1 - e cos theta)`` with a uniform head intensity ``I_HEAD``.
 
     ``theta`` is the angle between a stencil direction and the head bearing (the rule of
-    ``tests/test_physics.py``). ``heat`` selects whether the rule also gives heat per unit area.
+    ``tests/test_physics.py``). ``heat`` selects whether the rule also gives heat per unit area;
+    ``fitted`` multiplies the rates by the shipped lattice-fitted multipliers (WP 2.1d), as the
+    ``"rothermel"`` rule does.
     """
 
     name = "elliptical"
 
-    def __init__(self, lb: float, head_bearing_deg: float, *, heat: bool = True, intensity: float = I_HEAD) -> None:
-        self.lb, self.head, self.heat, self.intensity = lb, head_bearing_deg, heat, intensity
+    def __init__(
+        self,
+        lb: float,
+        head_bearing_deg: float,
+        *,
+        heat: bool = True,
+        intensity: float = I_HEAD,
+        fitted: bool = False,
+    ) -> None:
+        self.lb, self.head, self.heat, self.intensity, self.fitted = lb, head_bearing_deg, heat, intensity, fitted
 
     def rates(self, stencil: Stencil) -> FloatArray:
         """``(K,)`` rate per stencil direction, m/s."""
         e = eccentricity(self.lb)
         theta = np.radians(np.asarray(stencil.bearings_deg, dtype=np.float64) - self.head)
-        return ROS * (1.0 - e) / (1.0 - e * np.cos(theta))
+        rates = ROS * (1.0 - e) / (1.0 - e * np.cos(theta))
+        if self.fitted:
+            table = load_fit_table(lattice_fit_path(stencil.size), stencil.size)
+            rates = rates * table.multipliers(np.array(self.lb), np.array(self.head))
+        return rates
 
     def rate_of_spread(self, grid: Grid, weather: Weather, stencil: Stencil) -> SpreadOutput:
         h, w = grid.shape
@@ -105,7 +121,14 @@ def back_ratio(lb: float) -> float:
 
 @functools.cache
 def fire(
-    lb: float, head_deg: float, *, arrival_shape: float = 200.0, stencil: int = 16, seed: int = 0, heat: bool = True
+    lb: float,
+    head_deg: float,
+    *,
+    arrival_shape: float = 200.0,
+    stencil: int = 16,
+    seed: int = 0,
+    heat: bool = True,
+    fitted: bool = False,
 ) -> tuple[RunResult, tuple[int, int]]:
     """Run an elliptical fire on a grid sized to hold it; returns the result and the ignition cell."""
     ratio = back_ratio(lb)
@@ -131,7 +154,7 @@ def fire(
             "stencil": stencil,
         }
     )
-    result = run(cfg, seed=seed, rule=EllipticalRule(lb, head_deg, heat=heat), record_events=False)
+    result = run(cfg, seed=seed, rule=EllipticalRule(lb, head_deg, heat=heat, fitted=fitted), record_events=False)
     assert result.provenance["reached_edge_s"] is None, "the test grid is too small"
     return result, ignition
 
@@ -301,9 +324,10 @@ def test_noise_free_intensity_is_the_normal_speed_of_each_polygon_side(lb: float
 # close to the ellipse and every part is within 20 %. At LB 3 the flank is 27-45 % too hot and,
 # when the head lies between two stencil directions (22.5 degrees), the cells on the head
 # bearing sit on a slow side and read 0.4 of the head intensity. That is the lattice limit of
-# docs/lattice_study.md, to be removed by the lattice-fitted rates and length-to-breadth cap of
-# WP 2.1d; test_plan_target_at_lb_3 records it as a strict expected failure. The bounds here
-# are regression guards with 0.03 of slack on the measured range.
+# docs/lattice_study.md. These bounds are for rates sampled from the ellipse; since WP 2.1d the
+# "rothermel" rule uses lattice-fitted rates and caps the ratio at 2.1 (16 neighbours), so it
+# never produces LB 3 (FITTED_BOUNDS below). The bounds here are regression guards with 0.03 of
+# slack on the measured range.
 ELLIPSE_BOUNDS: dict[tuple[float, float], dict[str, tuple[float, float]]] = {
     (1.5, 90.0): {"head": (0.93, 1.0), "flank": (0.94, 1.11), "back": (0.97, 1.09)},
     (1.5, 22.5): {"head": (0.85, 1.0), "flank": (0.99, 1.20), "back": (0.97, 1.12)},
@@ -312,10 +336,30 @@ ELLIPSE_BOUNDS: dict[tuple[float, float], dict[str, tuple[float, float]]] = {
 }
 PLAN_TOLERANCE = 0.20  # what LB 1.5 meets on every part, and the target LB 3 misses
 
+# WP 2.1d: the same with lattice-fitted rates, at LB 1.5 and at the 16-neighbour cap (2.1).
+# Measured simulated / analytic intensity, seeds 0-2 (docs/lattice_study.md section 7):
+#   LB   head bearing   head          flank         back
+#   1.5  90             0.97 - 0.99   1.02 - 1.05   0.98 - 1.05
+#   1.5  22.5           0.91 - 0.99   1.08 - 1.13   0.99 - 1.07
+#   2.1  90             0.97 - 0.99   1.11 - 1.17   1.01 - 1.05
+#   2.1  22.5           0.74 - 0.84   0.95 - 1.00   1.01 - 1.08
+# Fitting moves every part toward 1 (sampled at 2.1 and 22.5: head 0.70 - 0.78, flank up to
+# 1.05). At the cap with the head between stencil directions the head cells still read 0.74 -
+# 0.84: the polygon's head is a corner on the nearest stencil direction (26.6 deg) and the
+# 22.5 deg ray crosses the slower side next to it. test_plan_target_at_the_cap records that.
+FITTED_BOUNDS: dict[tuple[float, float], dict[str, tuple[float, float]]] = {
+    (1.5, 90.0): {"head": (0.94, 1.0), "flank": (0.99, 1.08), "back": (0.95, 1.08)},
+    (1.5, 22.5): {"head": (0.88, 1.0), "flank": (1.05, 1.16), "back": (0.96, 1.10)},
+    (2.1, 90.0): {"head": (0.94, 1.0), "flank": (1.08, 1.20), "back": (0.98, 1.08)},
+    (2.1, 22.5): {"head": (0.71, 0.87), "flank": (0.92, 1.03), "back": (0.98, 1.11)},
+}
 
-def ellipse_ratios(lb: float, head_deg: float, *, heat: bool = True, seed: int = 0) -> dict[str, float]:
+
+def ellipse_ratios(
+    lb: float, head_deg: float, *, heat: bool = True, seed: int = 0, fitted: bool = False
+) -> dict[str, float]:
     """Simulated over analytic intensity for the head, the flank (mean of both sides) and the back."""
-    result, ignition = fire(lb, head_deg, heat=heat, seed=seed)
+    result, ignition = fire(lb, head_deg, heat=heat, seed=seed, fitted=fitted)
     left, right = flank_bearings(lb, head_deg)
     ratio = back_ratio(lb)
     flank = (ray_mean(result, ignition, left, min_cells=10) + ray_mean(result, ignition, right, min_cells=10)) / 2
@@ -344,11 +388,31 @@ def test_head_flank_and_back_intensity_against_the_ellipse(lb: float, head_deg: 
             assert value == pytest.approx(1.0, abs=PLAN_TOLERANCE), part
 
 
-@pytest.mark.parametrize("head_deg", [90.0, 22.5])
-@pytest.mark.xfail(strict=True, reason="lattice limit at LB 3 (docs/lattice_study.md); WP 2.1d fits the rates")
-def test_plan_target_at_lb_3(head_deg: float) -> None:
-    """Head, flank and back within 20 % of the analytic ellipse at LB 3: not met on this lattice."""
-    for part, value in ellipse_ratios(3.0, head_deg).items():
+@pytest.mark.parametrize(("lb", "head_deg"), list(FITTED_BOUNDS))
+def test_fitted_rates_intensity_against_the_ellipse(lb: float, head_deg: float) -> None:
+    """WP 2.1d: intensities with lattice-fitted rates, within the measured bounds of
+    :data:`FITTED_BOUNDS` (seed 0), and at LB 1.5 within the plan's 20 % on every part."""
+    ratios = ellipse_ratios(lb, head_deg, fitted=True)
+    for part, (low, high) in FITTED_BOUNDS[(lb, head_deg)].items():
+        assert low <= ratios[part] <= high, (part, ratios[part])
+    if lb == 1.5:
+        for part, value in ratios.items():
+            assert value == pytest.approx(1.0, abs=PLAN_TOLERANCE), part
+
+
+def test_plan_target_at_the_cap_with_the_head_on_an_axis() -> None:
+    """At the 16-neighbour cap (2.1) with fitted rates and the head on a grid axis, head, flank and
+    back are within 20 % of the analytic ellipse (measured: 0.97, 1.17, 1.05)."""
+    for part, value in ellipse_ratios(2.1, 90.0, fitted=True).items():
+        assert value == pytest.approx(1.0, abs=PLAN_TOLERANCE), part
+
+
+@pytest.mark.xfail(strict=True, reason="head between stencil directions at the cap (docs/lattice_study.md section 7)")
+def test_plan_target_at_the_cap() -> None:
+    """Restates the LB 3 record of WP 1.12 for what the rule can now produce: at the cap (2.1) with
+    fitted rates and the head at 22.5 deg the head cells read 0.74 of the head intensity, outside
+    20 %. LB 3 is above every cap (see the comment at :data:`FITTED_BOUNDS`)."""
+    for part, value in ellipse_ratios(2.1, 22.5, fitted=True).items():
         assert value == pytest.approx(1.0, abs=PLAN_TOLERANCE), part
 
 

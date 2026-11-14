@@ -32,7 +32,8 @@ from wildfire_sim.data.synthetic import flat_uniform
 from wildfire_sim.grid import Grid, Weather
 from wildfire_sim.sim import load_kernel_corrections, run
 from wildfire_sim.spread.base import SpreadOutput
-from wildfire_sim.spread.rothermel import RothermelRule
+from wildfire_sim.spread.ellipse import load_fit_table
+from wildfire_sim.spread.rothermel import RothermelRule, lattice_fit_path
 from wildfire_sim.types import FloatArray, Stencil, get_stencil
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -270,7 +271,14 @@ def test_steady_wind_ellipse(stencil: int, lb: float, head_deg: float) -> None:
 @pytest.mark.parametrize("lb", [1.5, 3.0, 6.0])
 @pytest.mark.parametrize("stencil", [8, 16])
 def test_ellipse_plan_target(stencil: int, lb: float) -> None:
-    """(b) The plan's target: head and flank within 10 % for every head direction. Not met.
+    """(b) The plan's target: head and flank within 10 % for every head direction. Not met with
+    rates *sampled* from the ellipse (this test rule).
+
+    WP 2.1d: the "rothermel" rule now uses lattice-fitted rates and caps the ratio at what
+    the lattice represents (2.1 on 16 neighbours, 1.4 on 8), and meets the target up to the cap
+    (:func:`test_rothermel_wind_ellipse_up_to_the_cap`,
+    :func:`test_fitted_rates_on_8_neighbours_up_to_their_cap`).
+    LB 3 and 6 lie above every cap. This record stays for the sampled rates.
 
     Strict xfail: if a change to the lattice (a larger stencil, a different correction) makes
     this pass, the xfail turns into a failure and this record must be updated. Worst cases
@@ -581,15 +589,22 @@ def test_default_kernel_slow_fuel_strip() -> None:
     assert strip_delay(DEFAULT_STENCIL, DEFAULT_SHAPE, range(5)) == pytest.approx(STRIP_PREDICTED_S, rel=0.05)
 
 
-# ----------------------------------------------------------------------------- the Rothermel rule (WP 2.1b)
+# ----------------------------------------------------------------------------- the Rothermel rule (WPs 2.1b, 2.1d)
 
 # FM1 (short grass, the fuel of the flat_uniform generator) at the default Weather moisture.
 ROTHERMEL_PARAMS = {"apply_wind_limit": False}
+FITTED_HEADS = (
+    0.0,
+    13.3,
+    22.5,
+    45.0,
+)  # plan WP 2.1d: on an axis, midway between 16-neighbour directions, 22.5, diagonal
+CAP_16 = 2.1  # configs/rothermel.yaml lattice_cap_fitted[16]
 
 
 @functools.cache
 def rothermel_head(lb: float) -> tuple[float, float]:
-    """10 m wind (m/s) that gives FM1 an ellipse of ratio ``lb``, and the head rate (m/s) it gives."""
+    """10 m wind (m/s) that gives FM1 an ellipse of ratio ``lb`` (uncapped), and the head rate (m/s)."""
     rule = RothermelRule(apply_wind_limit=False)
     g = Grid.empty((1, 1), DX)
     g.fuel_model[:] = 1
@@ -601,21 +616,36 @@ def rothermel_head(lb: float) -> tuple[float, float]:
     return u, float(fire(u).ros_head[0, 0])
 
 
-@pytest.mark.parametrize("head_deg", [*ELLIPSE_HEADS, 13.3, 200.0])
-@pytest.mark.parametrize("lb", [1.0, 1.5, 3.0])
+@pytest.mark.parametrize("head_deg", [*FITTED_HEADS, 200.0])
+@pytest.mark.parametrize("lb", [1.0, 1.5, 2.1, 3.0])
 def test_rothermel_rule_on_uniform_ground_is_the_elliptical_rule(lb: float, head_deg: float) -> None:
-    """WP 2.1b acceptance (physics tests 1.4 pass with this rule): on flat uniform fuel and uniform
-    weather the ``"rothermel"`` rule gives every cell exactly :class:`EllipticalRule`'s rates for
-    its head rate, ratio and head bearing, so the ellipse tests above hold for it unchanged. The
-    two runs below check it in the simulator at the shipped defaults."""
+    """On flat uniform fuel and uniform weather the ``"rothermel"`` rule gives every cell the rates of
+    :class:`EllipticalRule` for its head rate, head bearing and its ratio capped at the lattice cap,
+    times the lattice-fitted multipliers (WP 2.1d); with ``lattice_rates="sampled"``, exactly the
+    elliptical rule at the sampled cap. So the ellipse tests above describe it, and at a ratio of
+    1 (no wind) the fitted rates are the sampled ones."""
     wind, ros_head = rothermel_head(lb)
     grid = flat_uniform((5, 6), DX, fuel_model=1)
     weather = Weather(wind_speed=wind, wind_direction=(head_deg + 180.0) % 360.0)
     for k in (8, 16):
         stencil = get_stencil(k)
-        mine = RothermelRule(apply_wind_limit=False).rate_of_spread(grid, weather, stencil).ros
-        theirs = EllipticalRule(ros_head, lb, head_deg).rate_of_spread(grid, weather, stencil).ros
-        np.testing.assert_allclose(mine, theirs, rtol=1e-9)
+        sampled_rule = RothermelRule(apply_wind_limit=False, lattice_rates="sampled")
+        fitted_rule = RothermelRule(apply_wind_limit=False, lattice_rates="fitted")
+        lb_s = min(lb, sampled_rule.lb_cap(stencil))
+        lb_f = min(lb, fitted_rule.lb_cap(stencil))
+        sampled = sampled_rule.rate_of_spread(grid, weather, stencil).ros
+        fitted = fitted_rule.rate_of_spread(grid, weather, stencil).ros
+        np.testing.assert_allclose(
+            sampled, EllipticalRule(ros_head, lb_s, head_deg).rate_of_spread(grid, weather, stencil).ros, rtol=1e-9
+        )
+        multipliers = fitted_rule.fit_table(k).multipliers(np.array(lb_f), np.array(head_deg))
+        expected = (
+            EllipticalRule(ros_head, lb_f, head_deg).rate_of_spread(grid, weather, stencil).ros
+            * multipliers[:, None, None]
+        )
+        np.testing.assert_allclose(fitted, expected, rtol=1e-9)
+        if lb == 1.0:
+            np.testing.assert_array_equal(fitted, sampled)
 
 
 def test_rothermel_no_wind_burn_is_round() -> None:
@@ -623,7 +653,8 @@ def test_rothermel_no_wind_burn_is_round() -> None:
 
     Axis extent / (R_0 T) in [0.97, 1.03] and area radius / (R_0 T) in [0.98, 1.02], the bounds
     of :func:`test_default_kernel_front_speed_matches_r`. Measured (5 seeds): 0.975 and 0.999,
-    the same as the constant rule, as the rates are the same up to scale.
+    the same as the constant rule, as the rates are the same up to scale (fitted multipliers are
+    1 for a round fire).
     """
     _, r0 = rothermel_head(1.0)
     t_s = 40 * DX / r0
@@ -631,29 +662,25 @@ def test_rothermel_no_wind_burn_is_round() -> None:
         shape=(109, 109),
         rule="rothermel",
         params=ROTHERMEL_PARAMS,
-        duration=t_s,
+        duration=math.ceil(t_s / 60.0) * 60.0,  # whole steps past T; the burn is measured at T
         stencil=DEFAULT_STENCIL,
         arrival_shape=DEFAULT_SHAPE,
     )
     axis_r, area_r = [], []
     for seed in range(5):
-        mask = run(cfg, seed=seed, record_events=False).burned_mask
-        assert_inside(mask)
+        result = run(cfg, seed=seed, record_events=False)
+        assert_inside(result.burned_mask)
+        mask = burned_by(result.arrival_time, t_s)
+        assert result.provenance["lb_capped_cell_hours"] == 0.0
         axis_r.append(extents(mask)[0] / (r0 * t_s))
         area_r.append(math.sqrt(mask.sum() / math.pi) * DX / (r0 * t_s))
     assert 0.97 <= float(np.mean(axis_r)) <= 1.03, np.mean(axis_r)
     assert 0.98 <= float(np.mean(area_r)) <= 1.02, np.mean(area_r)
 
 
-@pytest.mark.parametrize("head_deg", ELLIPSE_HEADS)
-def test_rothermel_wind_ellipse(head_deg: float) -> None:
-    """(b) with the Rothermel rule at the shipped defaults: a 10 m wind giving FM1 a ratio of 1.5.
-
-    Head and flank within 10 % of the analytic ellipse of the rule's own head rate, the bound of
-    :func:`test_default_kernel_ellipse`. Measured (5 seeds): head -4.5 %, -4.1 %, -4.2 % and
-    flank -4.4 %, -2.6 %, -6.5 % at head bearings 0, 22.5 and 45 deg.
-    """
-    lb = 1.5
+def rothermel_ellipse_errors(lb: float, head_deg: float, seeds: range = range(5)) -> tuple[float, float, float]:
+    """Head and flank error against the analytic ellipse of ratio ``lb`` (the rule's own head rate),
+    and the run's capped cell-hours, for FM1 under a 10 m wind giving that ratio (uncapped)."""
     wind, ros_head = rothermel_head(lb)
     t_s = ELLIPSE_HEAD_CELLS * DX / ros_head
     n = 2 * math.ceil(1.35 * ELLIPSE_HEAD_CELLS) + 1
@@ -662,16 +689,18 @@ def test_rothermel_wind_ellipse(head_deg: float) -> None:
         shape=(n, n),
         rule="rothermel",
         params=ROTHERMEL_PARAMS,
-        duration=t_s,
+        duration=math.ceil(t_s / 60.0) * 60.0,  # whole steps past T; the burn is measured at T
         stencil=DEFAULT_STENCIL,
         arrival_shape=DEFAULT_SHAPE,
         weather=[{"wind_speed": wind, "wind_direction": (head_deg + 180.0) % 360.0}],
     )
     phi = math.radians(head_deg)
-    dists = []
-    for seed in range(5):
-        mask = run(cfg, seed=seed, record_events=False).burned_mask
-        assert_inside(mask)
+    dists, capped = [], 0.0
+    for seed in seeds:
+        result = run(cfg, seed=seed, record_events=False)
+        assert_inside(result.burned_mask)
+        mask = burned_by(result.arrival_time, t_s)
+        capped = max(capped, result.provenance["lb_capped_cell_hours"])
         rows, cols = np.nonzero(mask)
         east, north = (cols - c) * DX, -(rows - c) * DX
         along = east * math.sin(phi) + north * math.cos(phi)
@@ -681,5 +710,108 @@ def test_rothermel_wind_ellipse(head_deg: float) -> None:
     e = math.sqrt(lb**2 - 1.0) / lb
     head_exact = ros_head * t_s
     b_exact = (head_exact + head_exact * (1 - e) / (1 + e)) / 2 * math.sqrt(1 - e**2)
-    assert -0.10 <= head / head_exact - 1 <= 0.05, head / head_exact - 1
-    assert -0.10 <= half_width / b_exact - 1 <= 0.05, half_width / b_exact - 1
+    return float(head / head_exact - 1), float(half_width / b_exact - 1), capped
+
+
+@pytest.mark.parametrize("head_deg", FITTED_HEADS)
+@pytest.mark.parametrize("lb", [1.5, CAP_16])
+def test_rothermel_wind_ellipse_up_to_the_cap(lb: float, head_deg: float) -> None:
+    """WP 2.1d acceptance: with lattice-fitted rates at the shipped defaults (16 neighbours, shape
+    200), head and flank within 10 % of the analytic ellipse at head bearings 0, 13.3, 22.5 and
+    45 deg for every ratio up to the cap (2.1). The cap does not apply at or below it.
+
+    Measured (5 seeds, docs/lattice_study.md section 7): ratio 1.5 worst head -4.3 % (13.3 deg),
+    flank -3.7 % (45 deg); ratio 2.1 worst head -9.8 % (13.3 deg), flank -9.3 % (45 deg). With
+    sampled rates ratio 2.1 is 17 % short at 13.3 deg.
+    """
+    head_err, flank_err, capped = rothermel_ellipse_errors(lb, head_deg)
+    assert abs(head_err) <= 0.10, head_err
+    assert abs(flank_err) <= 0.10, flank_err
+    assert capped == 0.0
+
+
+@pytest.mark.xfail(strict=True, reason="above the 16-neighbour cap of 2.1 (docs/lattice_study.md section 7)")
+def test_fitted_ellipse_beyond_the_cap() -> None:
+    """Why the cap is 2.1: with fitted rates a ratio of 2.3 misses 10 % at 13.3 deg (measured head
+    -11.5 %). Run without the cap (the test rule), so it records the lattice, not the rule."""
+    head_err, flank_err, _, _ = fitted_ellipse_errors(16, 2.3, 13.3)
+    assert abs(head_err) <= 0.10 and abs(flank_err) <= 0.10, (head_err, flank_err)
+
+
+@functools.cache
+def fitted_ellipse_errors(stencil: int, lb: float, head_deg: float) -> tuple[float, float, float, float]:
+    """:func:`ellipse_errors` at the shipped shape with the lattice-fitted test rule."""
+    n = 2 * math.ceil(1.35 * ELLIPSE_HEAD_CELLS) + 1
+    c = n // 2
+    cfg = scenario(shape=(n, n), duration=ELLIPSE_T_S, stencil=stencil, arrival_shape=DEFAULT_SHAPE)
+    rule = FittedEllipticalRule(ROS, lb, head_deg)
+    phi = math.radians(head_deg)
+    dists = []
+    for seed in range(5):
+        mask = run(cfg, seed=seed, rule=rule, record_events=False).burned_mask
+        assert_inside(mask)
+        rows, cols = np.nonzero(mask)
+        east, north = (cols - c) * DX, -(rows - c) * DX
+        along = east * math.sin(phi) + north * math.cos(phi)
+        across = east * math.cos(phi) - north * math.sin(phi)
+        dists.append((along.max(), -along.min(), np.ptp(across) / 2))
+    head, back, half_width = np.mean(dists, axis=0)
+    e = math.sqrt(lb**2 - 1.0) / lb
+    head_exact = ROS * ELLIPSE_T_S
+    back_exact = head_exact * (1 - e) / (1 + e)
+    b_exact = (head_exact + back_exact) / 2 * math.sqrt(1 - e**2)
+    return float(head / head_exact - 1), float(half_width / b_exact - 1), float(back), back_exact
+
+
+class FittedEllipticalRule(EllipticalRule):
+    """:class:`EllipticalRule` times the shipped lattice-fitted multipliers (no cap)."""
+
+    name = "elliptical_fitted"
+
+    def rate_of_spread(self, grid: Grid, weather: Weather, stencil: Stencil) -> SpreadOutput:
+        out = super().rate_of_spread(grid, weather, stencil)
+        table = load_fit_table(lattice_fit_path(stencil.size), stencil.size)
+        m = table.multipliers(np.array(self.lb), np.array(self.head))
+        return _output(out.ros * m[:, None, None])
+
+
+@pytest.mark.parametrize("stencil", [8, 16])
+def test_fitted_rates_on_8_neighbours_up_to_their_cap(stencil: int) -> None:
+    """The 8-neighbour cap (1.4) and the 16-neighbour one (2.1): head and flank within 10 % at the
+    four head bearings with the fitted test rule. Measured worst: 8 neighbours 9.7 % (22.5 deg),
+    16 neighbours 9.8 % (13.3 deg)."""
+    cap = {8: 1.4, 16: CAP_16}[stencil]
+    for head_deg in FITTED_HEADS:
+        head_err, flank_err, _, _ = fitted_ellipse_errors(stencil, cap, head_deg)
+        assert abs(head_err) <= 0.10 and abs(flank_err) <= 0.10, (head_deg, head_err, flank_err)
+
+
+def test_rothermel_ellipse_above_the_cap_is_capped_and_counted() -> None:
+    """A wind that would give a ratio of 3 is drawn at the cap, 2.1, with the head rate kept; every
+    burning cell-hour is counted in ``provenance["lb_capped_cell_hours"]``."""
+    wind, ros_head = rothermel_head(3.0)
+    rule = RothermelRule(apply_wind_limit=False)
+    grid = flat_uniform((5, 5), DX, fuel_model=1)
+    stencil = get_stencil(DEFAULT_STENCIL)
+    fire = rule.fire(grid, Weather(wind_speed=wind), stencil)
+    assert np.all(fire.lb_capped) and np.allclose(fire.length_to_breadth, CAP_16)
+    assert fire.ros_head[0, 0] == pytest.approx(ros_head)
+    uncapped = rule.fire(grid, Weather(wind_speed=wind))
+    assert not uncapped.lb_capped.any() and uncapped.length_to_breadth[0, 0] == pytest.approx(3.0)
+
+    t_s = 20 * DX / ros_head
+    cfg = scenario(
+        shape=(61, 61),
+        rule="rothermel",
+        params=ROTHERMEL_PARAMS,
+        duration=t_s,
+        dt=30.0,
+        stencil=DEFAULT_STENCIL,
+        arrival_shape=DEFAULT_SHAPE,
+        weather=[{"wind_speed": wind, "wind_direction": 180.0}],
+    )
+    result = run(cfg, seed=0, record_events=False)
+    assert result.provenance["lb_capped_cell_hours"] > 0.0
+    # a rule that does not cap the ellipse reports nothing
+    constant = cfg.spread.model_copy(update={"rule": "constant", "params": {"ros": ROS}})
+    assert run(cfg.model_copy(update={"spread": constant}), seed=0).provenance["lb_capped_cell_hours"] == 0.0

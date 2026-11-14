@@ -31,3 +31,30 @@ lb_max:
   note: "WP 2.1d adds a lower cap at what the lattice can represent"
 apply_wind_limit: false
 wind_limit_note: "OPEN DECISION (docs/plan.md section 13): Rothermel's (1972) wind limit U <= 0.9 I_R. Andrews et al. (2013) found it too restrictive; BehavePlus applies it by default. Off until the team decides."
+# Elongated fires on the lattice (docs/plan.md section 2.4, WP 2.1d; docs/lattice_study.md
+# section 7). "fitted": per-direction rates whose lattice polygon best matches the fire ellipse,
+# from the tables configs/lattice_fit_8.csv and configs/lattice_fit_16.csv; "sampled": rates
+# taken from the ellipse in each stencil direction (before WP 2.1d). The study's default.
+lattice_rates: fitted
+# Largest length-to-breadth ratio the lattice represents with head and flank within 10 % of the
+# analytic ellipse at every tested head bearing, per stencil and rate kind. The rule caps the
+# ratio here (the head rate is kept, the fire is drawn rounder) and the run records the
+# cell-hours in which the cap applied.
+lattice_cap_fitted:
+  8:
+    value: 1.4
+    units: dimensionless
+    source: "docs/lattice_study.md section 7 (scripts/lattice_study.py --fitted): 8 neighbours, arrival_shape 200, 5 seeds, head bearings 0, 13.3, 22.5, 45 deg; worst head or flank error 9.7 % at 1.4, 11.6 % at 1.5"
+  16:
+    value: 2.1
+    units: dimensionless
+    source: "docs/lattice_study.md section 7 (scripts/lattice_study.py --fitted): 16 neighbours, arrival_shape 200, 5 seeds, head bearings 0, 13.3, 22.5, 45 deg (and 6.6, 10, 17, 30, 35.8, 40); worst head or flank error 9.8 % at 2.1, 10.4 % at 2.15"
+lattice_cap_sampled:
+  8:
+    value: 1.2
+    units: dimensionless
+    source: "docs/lattice_study.md section 7: sampled rates, 8 neighbours; worst error 9.7 % at 1.2, 11.5 % at 1.25"
+  16:
+    value: 1.5
+    units: dimensionless
+    source: "docs/lattice_study.md section 7: sampled rates, 16 neighbours; worst error 8.0 % at 1.5, 11.5 % at 1.75"

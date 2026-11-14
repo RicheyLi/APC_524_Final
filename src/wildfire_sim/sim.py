@@ -298,6 +298,11 @@ class RunResult:
             ``reached_edge_s``: the time, s, at which the fire first reached the edge band of
             the grid (see :func:`first_edge_arrival`), or None if it never did. A run with a
             value here is a lower bound on the fire: the model cannot spread beyond the grid.
+            ``lb_capped_cell_hours``: burning cells whose fire ellipse the spread rule capped at
+            what the lattice represents (WP 2.1d), times the time they burned capped, cell-hours;
+            0 for rules that do not cap. Read from the rule's ``lb_capped`` attribute (the
+            ``(H, W)`` mask of its last evaluation) when it has one. Where it is above 0 the
+            fire was drawn rounder than its wind and slope imply.
     """
 
     grid: Grid
@@ -1053,6 +1058,7 @@ def run(
     t_ign = config.ignition.time_s
     ignited = False
     steps_done = 0
+    capped_cell_s = 0.0  # burning cells whose ellipse the rule capped (WP 2.1d) x time, cell-s
     for i in range(config.n_steps):
         t, t_end = i * dt, (i + 1) * dt
         weather = series.at(t)
@@ -1063,6 +1069,9 @@ def run(
         if not ignited and t_ign < t_end:
             ignited = True
             _ignite_initial(engine, ignition_cells, t_ign)
+        capped = getattr(rule, "lb_capped", None)  # set by rules that cap the ellipse, e.g. "rothermel"
+        if capped is not None and engine.burning.size:
+            capped_cell_s += float(np.count_nonzero(np.asarray(capped).reshape(-1)[engine.burning])) * dt
         engine.advance(t, t_end)
         steps_done = i + 1
         if ignited and engine.burning.size == 0:
@@ -1084,6 +1093,7 @@ def run(
         "n_steps": steps_done,
         "final_time_s": steps_done * dt,
         "reached_edge_s": None if edge is None else edge[0],
+        "lb_capped_cell_hours": capped_cell_s / 3600.0,
     }
     return RunResult(
         grid=g,
