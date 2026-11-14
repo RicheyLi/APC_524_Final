@@ -425,3 +425,37 @@ def test_naive_start_time_is_a_user_error(tmp_path: Path) -> None:
     scenario.write_text(TINY + "start_time_utc: '2016-08-13T16:00:00'\n")
     result = runner.invoke(app, ["run", str(scenario), "--out", str(tmp_path / "x")])
     _assert_user_error(result, "Invalid scenario")
+
+
+# ----------------------------------------------------------------------------- lattice cap (WP 2.1d)
+
+WINDY = """\
+name: windy
+grid: {kind: synthetic, generator: flat_uniform, shape: [41, 41], dx: 30.0, fuel_model: 1}
+spread: {rule: rothermel}
+ignition: {center: true}
+weather: {series: [{wind_speed: 15.0, wind_direction: 270.0}]}
+dt_s: 30.0
+duration_s: 300.0
+"""
+
+
+def test_run_warns_when_the_fire_ellipse_is_capped(tmp_path: Path) -> None:
+    """A 15 m/s wind over grass asks for a longer ellipse than the lattice represents: the run
+    records the capped cell-hours and the CLI warns; a calm run records 0 and does not warn."""
+    path = tmp_path / "windy.yaml"
+    path.write_text(WINDY)
+    out = tmp_path / "windy"
+    result = runner.invoke(app, ["run", str(path), "--out", str(out)])
+    assert result.exit_code == 0, result.output
+    summary = _strict_json(out / "summary.json")
+    assert summary["lb_capped_cell_hours"] == _strict_json(out / "provenance.json")["lb_capped_cell_hours"] > 0
+    flat = " ".join(result.output.split())
+    assert "Warning" in flat and "drawn rounder" in flat
+
+    calm = tmp_path / "calm"
+    path.write_text(WINDY.replace("wind_speed: 15.0", "wind_speed: 0.0"))
+    result = runner.invoke(app, ["run", str(path), "--out", str(calm)])
+    assert result.exit_code == 0, result.output
+    assert _strict_json(calm / "summary.json")["lb_capped_cell_hours"] == 0.0
+    assert "drawn rounder" not in " ".join(result.output.split())

@@ -34,13 +34,22 @@ Outputs (``docs/img/lattice/``; ``_shape200`` files for the alternative shape):
 * ``hull_limit.png``: worst-case deterministic-limit error over head directions vs LB.
 * ``isotropic_profile.png``: front speed / R against direction with no wind, after correction.
 
+WP 2.1d adds lattice-fitted rates (``wildfire_sim.spread.ellipse.fit_rates``): ``--fit-tables``
+fits them on a grid of ratios and canonical head bearings and writes
+``configs/lattice_fit_8.csv`` and ``configs/lattice_fit_16.csv``; ``--fitted`` simulates sampled
+and fitted rates at head bearings 0, 13.3, 22.5 and 45 degrees (shape 200), reports the
+largest ratio within 10 % for each, and writes ``fitted_errors.csv`` and ``fitted_limit.png``.
+
 Usage::
 
-    uv run python scripts/lattice_study.py
+    uv run python scripts/lattice_study.py                 # WP 1.4 study
+    uv run python scripts/lattice_study.py --fit-tables    # write the fitted-rate tables (about 3 min)
+    uv run python scripts/lattice_study.py --fitted        # WP 2.1d study (about 3 min)
 """
 
 from __future__ import annotations
 
+import argparse
 import csv
 import math
 import os
@@ -59,6 +68,8 @@ from wildfire_sim.config import ScenarioConfig, configs_dir
 from wildfire_sim.grid import Grid, Weather
 from wildfire_sim.sim import run
 from wildfire_sim.spread.base import SpreadOutput
+from wildfire_sim.spread.ellipse import build_fit_table, load_fit_table, save_fit_table
+from wildfire_sim.spread.rothermel import lattice_fit_path
 from wildfire_sim.types import FloatArray, Stencil, StencilSize, get_stencil
 
 OUT = Path(__file__).resolve().parents[1] / "docs" / "img" / "lattice"
@@ -514,8 +525,164 @@ def print_results(results: Sequence[CaseResult]) -> None:
         )
 
 
+# ----------------------------------------------------------------------------- WP 2.1d: lattice-fitted rates
+
+FIT_LBS = np.round(np.arange(1.0, 2.6001, 0.05), 4)  # table ratios
+FIT_HEADS = np.arange(0.0, 45.001, 1.0)  # table canonical head bearings, deg
+FITTED_HEADS = (0.0, 13.3, 22.5, 45.0)  # plan: on an axis, midway between 16-neighbour directions, 22.5, diagonal
+FITTED_LBS: dict[StencilSize, tuple[float, ...]] = {
+    8: (1.0, 1.1, 1.2, 1.25, 1.3, 1.4, 1.5, 1.6),
+    16: (1.0, 1.25, 1.5, 1.75, 2.0, 2.05, 2.1, 2.15, 2.2, 2.3),
+}
+FITTED_SHAPE = 200.0  # the shipped arrival_shape
+TOLERANCE = 0.10  # head and flank within 10 % of the analytic ellipse (plan WP 2.1d)
+MARGIN = 0.25
+"""Fitted rates ship only if they raise the cap of the default (16-neighbour) stencil by at least
+this much over sampled rates (plan WP 2.1d: "if the fitted rates gain less than the study's
+stated margin over sampled rates ... only the cap ships")."""
+
+
+class FittedEllipticalRule(EllipticalRule):
+    """:class:`EllipticalRule` times the lattice-fitted multipliers of the shipped table."""
+
+    name = "elliptical_fitted"
+
+    def directional_rates(self, stencil: Stencil) -> FloatArray:
+        table = load_fit_table(lattice_fit_path(stencil.size), stencil.size)
+        return super().directional_rates(stencil) * table.multipliers(np.array(self.lb), np.array(self.head))
+
+
+def write_fit_tables() -> None:
+    """Fit the rates on the (ratio, bearing) grid for both stencils and write ``configs/lattice_fit_*.csv``."""
+    for size in STENCILS:
+        bearings = get_stencil(size).bearings_deg
+        table = build_fit_table(bearings, size, FIT_LBS, FIT_HEADS)
+        source = (
+            "scripts/lattice_study.py --fit-tables (wildfire_sim.spread.ellipse.build_fit_table): "
+            f"minimax relative radial error of the lattice polygon, ratios {FIT_LBS[0]:g}-{FIT_LBS[-1]:g} "
+            f"step 0.05, canonical head bearings 0-45 deg step 1"
+        )
+        path = lattice_fit_path(size)
+        save_fit_table(table, path, source)
+        print(f"wrote {path}")
+
+
+def run_fitted_case(stencil: StencilSize, lb: float, head_deg: float, fitted: bool, seeds: Sequence[int]) -> CaseResult:
+    """Like :func:`run_case` at the shipped shape, with sampled or fitted rates."""
+    n = 2 * math.ceil(1.35 * HEAD_CELLS) + 1
+    cfg = ellipse_config(n, stencil, T_S, FITTED_SHAPE)
+    rule = FittedEllipticalRule(R_HEAD, lb, head_deg) if fitted else EllipticalRule(R_HEAD, lb, head_deg)
+    origin = (n // 2, n // 2)
+    samples = []
+    arrival = np.empty(0)
+    for seed in seeds:
+        arrival = run(cfg, seed=seed, rule=rule, record_events=False).arrival_time
+        rows, cols = np.nonzero(~np.isnan(arrival))
+        if rows.min() == 0 or cols.min() == 0 or rows.max() == n - 1 or cols.max() == n - 1:
+            raise RuntimeError("burn reached the grid edge")
+        samples.append(burn_distances(arrival, origin, head_deg, T_S, DX))
+    arr = np.array([[s.head, s.back, s.half_width] for s in samples])
+    se = arr.std(axis=0, ddof=1) / math.sqrt(len(samples)) if len(samples) > 1 else np.zeros(3)
+    return CaseResult(
+        stencil,
+        FITTED_SHAPE,
+        lb,
+        head_deg,
+        Ellipse(*map(float, arr.mean(axis=0))),
+        Ellipse(*map(float, se)),
+        Ellipse.of(lb, T_S),
+        arrival,
+    )
+
+
+def largest_within(results: Sequence[CaseResult], stencil: StencilSize) -> float:
+    """Largest tested ratio up to which head and flank stay within :data:`TOLERANCE` at every bearing."""
+    limit = 1.0
+    for lb in FITTED_LBS[stencil]:
+        cases = [r for r in results if r.stencil == stencil and r.lb == lb]
+        if all(abs(r.error("head")) <= TOLERANCE and abs(r.error("half_width")) <= TOLERANCE for r in cases):
+            limit = lb
+        else:
+            break
+    return limit
+
+
+def fitted_study() -> dict[tuple[StencilSize, str], float]:
+    """Sampled vs fitted rates in the simulator: errors, the caps, and whether fitting meets the margin.
+
+    Writes ``docs/img/lattice/fitted_errors.csv`` and ``fitted_limit.png`` and returns the cap per
+    (stencil, rate kind).
+    """
+    seeds = range(N_SEEDS)
+    results: dict[str, list[CaseResult]] = {"sampled": [], "fitted": []}
+    for kind in results:
+        for s in STENCILS:
+            for lb in FITTED_LBS[s]:
+                for h in FITTED_HEADS:
+                    results[kind].append(run_fitted_case(s, lb, h, kind == "fitted", seeds))
+    caps = {(s, kind): largest_within(rs, s) for kind, rs in results.items() for s in STENCILS}
+    with (OUT / "fitted_errors.csv").open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["rates", "stencil", "lb", "head_deg", "head_err", "flank_err", "back_err"])
+        for kind, rs in results.items():
+            for r in rs:
+                writer.writerow(
+                    [
+                        kind,
+                        r.stencil,
+                        r.lb,
+                        r.head_deg,
+                        f"{r.error('head'):+.3f}",
+                        f"{r.error('half_width'):+.3f}",
+                        f"{r.error('back'):+.3f}",
+                    ]
+                )
+    fig = _figure(9.0, 3.6)
+    for i, s in enumerate(STENCILS):
+        ax = fig.add_subplot(1, 2, i + 1)
+        for kind, style in (("sampled", "--"), ("fitted", "-")):
+            worst = [
+                max(
+                    max(abs(r.error("head")), abs(r.error("half_width")))
+                    for r in results[kind]
+                    if r.stencil == s and r.lb == lb
+                )
+                for lb in FITTED_LBS[s]
+            ]
+            ax.plot(FITTED_LBS[s], 100 * np.array(worst), style, marker="o", ms=3, color="#1f4e79", label=kind)
+        ax.axhline(100 * TOLERANCE, color="#a33", lw=0.8)
+        ax.set(title=f"{s} neighbours", xlabel="length-to-breadth ratio", ylabel="worst head or flank error, %")
+        ax.legend(frameon=False)
+    FigureCanvasAgg(fig).print_png(str(OUT / "fitted_limit.png"))
+    print(f"\nsampled vs fitted rates, shape {FITTED_SHAPE:g}, {N_SEEDS} seeds, head bearings {FITTED_HEADS}")
+    print("| rates | stencil | LB | head deg | head err | flank err | back err |")
+    print("| --- | --- | --- | --- | --- | --- | --- |")
+    for kind, rs in results.items():
+        for r in rs:
+            print(
+                f"| {kind} | {r.stencil} | {r.lb:g} | {r.head_deg:g} | {100 * r.error('head'):+.1f} % | "
+                f"{100 * r.error('half_width'):+.1f} % | {100 * r.error('back'):+.1f} % |"
+            )
+    for s in STENCILS:
+        print(f"stencil {s}: cap sampled {caps[(s, 'sampled')]:g}, fitted {caps[(s, 'fitted')]:g}")
+    gain = caps[(16, "fitted")] - caps[(16, "sampled")]
+    verdict = "ship fitted rates" if gain >= MARGIN else "ship the cap only"
+    print(f"gain on 16 neighbours: {gain:+.2f} (margin {MARGIN}): {verdict}")
+    return caps
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--fit-tables", action="store_true", help="fit the rates and write configs/lattice_fit_*.csv")
+    parser.add_argument("--fitted", action="store_true", help="WP 2.1d study: sampled vs fitted rates, the caps")
+    args = parser.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
+    if args.fit_tables:
+        write_fit_tables()
+    if args.fitted:
+        fitted_study()
+    if args.fit_tables or args.fitted:
+        return
     seeds = range(N_SEEDS)
     for shape, suffix in ((20.0, ""), (ALT_SHAPE, f"_shape{ALT_SHAPE:g}")):
         results = [run_case(s, lb, h, seeds, shape) for s in STENCILS for lb in LBS for h in HEADS]

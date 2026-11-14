@@ -54,6 +54,7 @@ from __future__ import annotations
 import csv
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -64,9 +65,11 @@ from wildfire_sim.sim import FlameLengthModel, flame_length_from_intensity, load
 from wildfire_sim.spread import register
 from wildfire_sim.spread.base import SpreadOutput
 from wildfire_sim.spread.ellipse import (
+    LatticeFitTable,
     combine_wind_and_slope,
     directional_rates,
     length_to_breadth,
+    load_fit_table,
     twenty_foot_wind,
     wind_adjustment_factor,
 )
@@ -715,6 +718,9 @@ def residence_times(table: FuelModelTable | None = None, moisture: FuelMoisture 
 # ----------------------------------------------------------------------------- spread rule
 
 
+LatticeRates = Literal["fitted", "sampled"]
+
+
 class RothermelParams(BaseModel):
     """Schema of ``configs/rothermel.yaml``.
 
@@ -723,9 +729,12 @@ class RothermelParams(BaseModel):
         sheltered_crown_fill: Crown fill fraction above which fuel is sheltered by the canopy.
         canopy_height: Canopy height, m, for the sheltered wind adjustment factor.
         crown_ratio: Crown ratio (fraction) for the sheltered wind adjustment factor.
-        lb_max: Largest length-to-breadth ratio of the fire ellipse.
+        lb_max: Largest length-to-breadth ratio of the fire ellipse (BehavePlus's cap).
         apply_wind_limit: Apply Rothermel's wind limit ``0.9 I_R`` (an open decision).
         wind_limit_note: Why ``apply_wind_limit`` has its value.
+        lattice_rates: ``"fitted"`` or ``"sampled"`` directional rates (WP 2.1d).
+        lattice_cap_fitted: Stencil size -> largest ratio the lattice represents with fitted rates.
+        lattice_cap_sampled: The same with sampled rates.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -737,6 +746,9 @@ class RothermelParams(BaseModel):
     lb_max: CitedValue
     apply_wind_limit: bool = False
     wind_limit_note: str = ""
+    lattice_rates: LatticeRates = "fitted"
+    lattice_cap_fitted: dict[int, CitedValue]
+    lattice_cap_sampled: dict[int, CitedValue]
 
     @model_validator(mode="after")
     def _in_range(self) -> RothermelParams:
@@ -750,12 +762,32 @@ class RothermelParams(BaseModel):
             raise ValueError("crown_ratio must lie in [0, 1]")
         if not self.lb_max.value >= 1:
             raise ValueError("lb_max must be >= 1")
+        for name, caps in (
+            ("lattice_cap_fitted", self.lattice_cap_fitted),
+            ("lattice_cap_sampled", self.lattice_cap_sampled),
+        ):
+            if sorted(caps) != [8, 16]:
+                raise ValueError(f"{name} needs entries for stencils 8 and 16")
+            if any(not c.value >= 1 for c in caps.values()):
+                raise ValueError(f"{name} values must be >= 1")
         return self
+
+    def lattice_cap(self, rates: LatticeRates, stencil_size: int) -> float:
+        """Largest length-to-breadth ratio for a stencil and rate kind."""
+        caps = self.lattice_cap_fitted if rates == "fitted" else self.lattice_cap_sampled
+        if stencil_size not in caps:
+            raise ValueError(f"no lattice cap for a {stencil_size}-neighbour stencil")
+        return float(caps[stencil_size].value)
 
 
 def load_rothermel_params(path: str | Path | None = None) -> RothermelParams:
     """Load the rule parameters; default ``configs_dir() / "rothermel.yaml"``."""
     return load_yaml(configs_dir() / "rothermel.yaml" if path is None else path, RothermelParams)
+
+
+def lattice_fit_path(stencil_size: int) -> Path:
+    """The shipped fitted-rate table for a stencil, ``configs_dir() / f"lattice_fit_{stencil_size}.csv"``."""
+    return configs_dir() / f"lattice_fit_{stencil_size}.csv"
 
 
 @dataclass(frozen=True)
@@ -772,8 +804,10 @@ class RothermelFire:
         phi_effective: Vector sum of the two, as used (after the wind limit if applied).
         head_bearing: Bearing of maximum spread, degrees.
         effective_wind: Effective midflame wind of ``phi_effective``, m/s.
-        length_to_breadth: Length-to-breadth ratio of the fire ellipse (1 on unburnable cells).
-        ros_head: Head rate of spread, m/s.
+        length_to_breadth: Length-to-breadth ratio of the fire ellipse as used, after the caps
+            (1 on unburnable cells).
+        lb_capped: Bool, burnable cells whose ratio the lattice cap reduced.
+        ros_head: Head rate of spread, m/s (not changed by the cap).
         intensity: Head fireline intensity, kW/m.
         heat_per_area: Heat per unit area, kJ/m^2.
         wind_limited: Bool, where the wind limit capped ``phi_effective``.
@@ -787,6 +821,7 @@ class RothermelFire:
     head_bearing: FloatArray
     effective_wind: FloatArray
     length_to_breadth: FloatArray
+    lb_capped: np.ndarray
     ros_head: FloatArray
     intensity: FloatArray
     heat_per_area: FloatArray
@@ -808,9 +843,16 @@ class RothermelRule:
     3. Wind and slope added as vectors (toward ``weather.wind_to_bearing`` and up the slope,
        ``aspect + 180``): the head bearing and ``phi_e``; the head rate ``R_0 (1 + phi_e)``,
        with Rothermel's wind limit if ``apply_wind_limit``.
-    4. The ellipse: ``LB`` from the effective wind, capped at ``lb_max``; the rate toward
-       stencil direction ``k`` is ``R_head (1 - e) / (1 - e cos(b_k - head))``.
-    5. Rates, head intensity and flame length times ``(1 - retardant)``.
+    4. The ellipse: ``LB`` from the effective wind, capped at ``lb_max`` and at the lattice cap
+       of the stencil (WP 2.1d), which keeps the head rate and draws the fire rounder.
+    5. Directional rates: ``R_head (1 - e) / (1 - e cos(b_k - head))`` sampled from the
+       ellipse, times the lattice-fitted multipliers if ``lattice_rates`` is ``"fitted"``
+       (:class:`~wildfire_sim.spread.ellipse.LatticeFitTable`; 1 for a round fire).
+    6. Rates, head intensity and flame length times ``(1 - retardant)``.
+
+    After each :meth:`rate_of_spread` the rule keeps :attr:`lb_capped`, the ``(H, W)`` cells
+    whose ratio the lattice cap reduced; the simulator reads it to count the cell-hours the cap
+    applied to burning cells (``provenance["lb_capped_cell_hours"]``).
 
     The fuel models come from ``configs/fuel_models.csv``; a cell whose fuel model is not in it
     (non-burnable 91-99, or 0) does not spread, like a cell whose land use cannot burn.
@@ -821,6 +863,7 @@ class RothermelRule:
         apply_wind_limit: Overrides the YAML value when not None.
         canopy_height: Canopy height, m; overrides the YAML value when not None.
         crown_ratio: Crown ratio, fraction; overrides the YAML value when not None.
+        lattice_rates: ``"fitted"`` or ``"sampled"``; overrides the YAML value when not None.
     """
 
     name = "rothermel"
@@ -832,6 +875,7 @@ class RothermelRule:
         apply_wind_limit: bool | None = None,
         canopy_height: float | None = None,
         crown_ratio: float | None = None,
+        lattice_rates: LatticeRates | None = None,
     ) -> None:
         self.params = load_rothermel_params(params_path)
         self.table = load_fuel_models(fuel_models_path)
@@ -840,12 +884,30 @@ class RothermelRule:
         self.apply_wind_limit = p.apply_wind_limit if apply_wind_limit is None else bool(apply_wind_limit)
         self.canopy_height = float(p.canopy_height.value if canopy_height is None else canopy_height)
         self.crown_ratio = float(p.crown_ratio.value if crown_ratio is None else crown_ratio)
+        self.lattice_rates: LatticeRates = p.lattice_rates if lattice_rates is None else lattice_rates
         if not self.canopy_height > 0:
             raise ValueError("canopy_height must be > 0 m")
         if not 0 <= self.crown_ratio <= 1:
             raise ValueError("crown_ratio must lie in [0, 1]")
+        if self.lattice_rates not in ("fitted", "sampled"):
+            raise ValueError("lattice_rates must be 'fitted' or 'sampled'")
+        self._fit_tables: dict[int, LatticeFitTable] = {}
+        self.lb_capped: np.ndarray | None = None
 
-    def fire(self, grid: Grid, weather: Weather) -> RothermelFire:
+    def fit_table(self, stencil_size: int) -> LatticeFitTable:
+        """The fitted-rate table of a stencil, read once from ``configs/``."""
+        if stencil_size not in self._fit_tables:
+            self._fit_tables[stencil_size] = load_fit_table(lattice_fit_path(stencil_size), stencil_size)
+        return self._fit_tables[stencil_size]
+
+    def lb_cap(self, stencil: Stencil | None) -> float:
+        """Ratio cap in force: BehavePlus's ``lb_max`` and, with a stencil, the lattice cap."""
+        cap = float(self.params.lb_max.value)
+        if stencil is not None:
+            cap = min(cap, self.params.lattice_cap(self.lattice_rates, stencil.size))
+        return cap
+
+    def fire(self, grid: Grid, weather: Weather, stencil: Stencil | None = None) -> RothermelFire:
         """Head fire, direction and ellipse of every cell, before the retardant multiplier.
 
         Args:
@@ -853,6 +915,7 @@ class RothermelRule:
                 ``aspect`` (downhill bearing, degrees) and the burnable mask. Not modified.
             weather: ``wind_speed`` (10 m, m/s), ``wind_to_bearing`` (degrees) and the fuel
                 moistures.
+            stencil: When given, the ratio is also capped at the stencil's lattice cap.
         """
         h, w = grid.shape
         rows = self.table.index(grid.fuel_model).reshape(-1)
@@ -877,15 +940,20 @@ class RothermelRule:
         phi_e, head = combine_wind_and_slope(phi_w, weather.wind_to_bearing, phi_s, upslope)
         hf = head_fire(bed, phi_e, flame=self.flame, wind_limit_on=self.apply_wind_limit)
         phi_used = np.where(hf.wind_limited, bed.wind_factor(hf.effective_wind), phi_e)
-        lb = length_to_breadth(hf.effective_wind, p.lb_max.value)
+        lb_free = length_to_breadth(hf.effective_wind, p.lb_max.value)
+        cap = self.lb_cap(stencil)
+        lb = np.minimum(lb_free, cap)
 
         def full(values: FloatArray, fill: float = 0.0) -> FloatArray:
             out = np.full(h * w, fill, dtype=np.float64)
             out[burnable] = values
             return out.reshape(h, w)
 
-        limited = np.zeros(h * w, dtype=bool)
-        limited[burnable] = hf.wind_limited
+        def mask(values: np.ndarray) -> np.ndarray:
+            out = np.zeros(h * w, dtype=bool)
+            out[burnable] = values
+            return out.reshape(h, w)
+
         return RothermelFire(
             midflame_wind=full(midflame),
             phi_wind=full(phi_w),
@@ -894,10 +962,11 @@ class RothermelRule:
             head_bearing=full(head),
             effective_wind=full(hf.effective_wind),
             length_to_breadth=full(lb, 1.0),
+            lb_capped=mask(lb_free > cap * (1.0 + 1e-9)),  # rounding noise at the cap is not a cap
             ros_head=full(hf.ros),
             intensity=full(hf.intensity),
             heat_per_area=full(bed.heat_per_area),
-            wind_limited=limited.reshape(h, w),
+            wind_limited=mask(hf.wind_limited),
             burnable=burnable.reshape(h, w),
         )
 
@@ -909,9 +978,12 @@ class RothermelRule:
             ``flame_length`` (m); ``heat_per_area`` (kJ/m^2) for the front-normal intensity of
             WP 1.12. Rates, intensity and flame length include ``(1 - retardant)``.
         """
-        f = self.fire(grid, weather)
+        f = self.fire(grid, weather, stencil)
         keep = 1.0 - np.clip(grid.retardant.astype(np.float64), 0.0, 1.0)
         ros = directional_rates(f.ros_head * keep, f.head_bearing, f.length_to_breadth, stencil.bearings_deg)
+        if self.lattice_rates == "fitted":
+            ros = ros * self.fit_table(stencil.size).multipliers(f.length_to_breadth, f.head_bearing)
+        self.lb_capped = f.lb_capped
         intensity = f.intensity * keep
         return SpreadOutput(
             ros=ros,

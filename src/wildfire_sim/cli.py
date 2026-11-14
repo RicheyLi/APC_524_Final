@@ -189,6 +189,13 @@ def run(
             f"the fire reached the edge of the grid at {edge:,.0f} s. The model cannot spread beyond the grid, "
             "so the burned area and everything after that time are lower bounds; use a larger grid."
         )
+    capped = summary["lb_capped_cell_hours"]
+    if capped > 0:
+        _warn(
+            f"the fire ellipse was capped at what the lattice represents for {capped:,.1f} burning cell-hours "
+            "(docs/lattice_study.md section 7). There the head rate is right but the fire is drawn rounder "
+            "than its wind and slope imply, so its flanks run too wide."
+        )
 
 
 # ----------------------------------------------------------------------------- ensemble

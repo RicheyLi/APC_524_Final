@@ -214,7 +214,8 @@ def run_summary(result: sim.RunResult, name: str) -> dict[str, Any]:
         Dict with ``scenario``, ``seed``, ``burned_cells``, ``burned_area_m2``, ``burned_area_ha``,
         ``simulated_time_s``, ``steps``, ``last_ignition_s`` (None if nothing burned),
         ``reached_edge_s`` (time, s, at which the fire reached the edge band of its grid, or
-        None; when set, the burned area is a lower bound), ``wall_clock_s`` and
+        None; when set, the burned area is a lower bound), ``lb_capped_cell_hours`` (burning
+        cell-hours in which the spread rule capped the fire ellipse, WP 2.1d), ``wall_clock_s`` and
         ``final_state_counts`` (cells per :class:`CellState` name).
     """
     burned = int(np.count_nonzero(result.burned_mask))
@@ -230,6 +231,7 @@ def run_summary(result: sim.RunResult, name: str) -> dict[str, Any]:
         "steps": int(result.provenance["n_steps"]),
         "last_ignition_s": float(finite.max()) if finite.size else None,
         "reached_edge_s": result.provenance.get("reached_edge_s"),
+        "lb_capped_cell_hours": float(result.provenance.get("lb_capped_cell_hours", 0.0)),
         "wall_clock_s": result.elapsed_s,
         "final_state_counts": {s.name: int(np.count_nonzero(result.grid.state == int(s))) for s in CellState},
     }

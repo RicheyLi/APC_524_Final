@@ -216,6 +216,11 @@ of 3 the flank reads 27-45 % too hot and a head that lies between two stencil di
 reads 0.4 of the head value ([lattice_study.md](lattice_study.md), section 6). Suppression
 results on elongated fires therefore also wait for WP 2.1d.
 
+After WP 2.1d the `"rothermel"` rule caps the ratio at 2.1, so a ratio of 3 does not occur.
+With fitted rates, at a ratio of 1.5 every part is within 13 % and at the cap within 17 %,
+except one case: with the head between two stencil directions the cells on the head bearing
+read 0.74-0.84 of the head intensity ([lattice_study.md](lattice_study.md), section 7).
+
 **Why Rothermel is implemented here and not only wrapped.** `pyrothermel` publishes only a
 Windows wheel; on Linux it needs a C++ toolchain, so in CI (Ubuntu) every Rothermel test would
 be skipped. It is also called one cell at a time. A NumPy implementation runs everywhere, is
@@ -286,6 +291,15 @@ rates fitted so the lattice polygon best matches the ellipse, a cap on the lengt
 ratio at the largest value the lattice represents within 10 %, a count of how often the cap
 bites, and a calibration test that recovers the same parameters at every head bearing (WP
 3.1). The choice among the remaining options is recorded in section 13.
+
+As built (WP 2.1d, [lattice_study.md](lattice_study.md) section 7): fitted rates halve the
+polygon's shape error and raise the largest ratio drawn within 10 % at every tested bearing
+from 1.5 to 2.1 on 16 neighbours (1.2 to 1.4 on 8). The rule caps the ratio there, keeping the
+head rate, so a fire in a stronger wind (above about 3.4 m/s effective midflame wind, a 10 m
+wind of about 10.7 m/s over open grass) is drawn rounder than it is: its flanks run too wide.
+Each run records the burning cell-hours under the cap (`lb_capped_cell_hours`) and the CLI
+warns. The fitted rates do not reach a ratio of 3, which reopens the choice of method
+(section 13).
 
 ### 2.5 Extensions
 
@@ -723,7 +737,19 @@ only for sheltered fuel, are uniform placeholders until real layers exist (secti
 2.1c built (branch `wp-2.1c-fuel-moisture`): `spread/moisture.py` computes 1-h and 10-h dead
 fuel moisture from temperature, relative humidity and an optional cloudiness code, per hour
 (`apply_hourly` on a `WeatherSeries`), with its parameters in `configs/fuel_moisture.yaml`.
-The remaining WPs have not started.
+
+2.1d built (branch `wp-2.1d-lattice-fit`): lattice-fitted rates (`spread/ellipse.py`:
+`fit_rates`, `LatticeFitTable`; tables `configs/lattice_fit_8.csv`, `configs/lattice_fit_16.csv`
+written by `scripts/lattice_study.py --fit-tables`), used by the `"rothermel"` rule
+(`lattice_rates: fitted` in `configs/rothermel.yaml`), and a cap on the length-to-breadth ratio
+at 2.1 (16 neighbours) and 1.4 (8). Head and flank are within 10 % of the analytic ellipse at
+head bearings 0, 13.3, 22.5 and 45 degrees up to the cap (`tests/test_physics.py`); a round fire
+keeps its rates exactly; constant and Alexandridis runs are unchanged (golden runs pass).
+`provenance` and `summary.json` carry `lb_capped_cell_hours` and `wildfire-sim run` warns. Like
+WP 2.1a, it also touches files outside its list, because the plan's deliverable needs them:
+`sim.py` (the cell-hour count), `io.py` and `cli.py` (summary and warning), `configs/`, and
+the tests of WP 1.12 (`tests/test_intensity.py`, re-measured) and of the CLI. The remaining WPs
+have not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
@@ -815,7 +841,8 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       | Silverado (Orange Co.) | 2020 | 13,390 acres (5,419 ha) | 26 Oct-7 Nov | Gusts to 80 mph; aircraft grounded at first, so little early air attack; slightly above the size range |
 
       To check before choosing: the wind during the main run against the length-to-breadth
-      cap of WP 2.1d (a Santa Ana fire may sit above it for most of its growth); how many
+      cap of WP 2.1d (2.1: an effective midflame wind of about 3.4 m/s, a 10 m wind of about
+      10.7 m/s over open grass; a Santa Ana fire may sit above it for most of its growth); how many
       VIIRS overpasses saw the fire growing; that an MTBS perimeter and a LANDFIRE version
       older than the fire exist.
 - [ ] Refresh `scripts/bench_baseline.json` from a CI run now that WPs 1.10-1.13 are in the
@@ -849,6 +876,17 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       height and base height (crown ratio = (height - base) / height); carrying them per cell
       needs optional `Grid` layers, a change to a frozen module that needs sign-off, or the
       placeholders stay.
+- [ ] **Front propagation above a ratio of 2.1** (WP 2.1d). The decision after the fourth review
+      said a different front-propagation method is reconsidered only if the fitted rates do
+      not reach a ratio of 3 at every bearing. They reach 2.1 on 16 neighbours
+      ([lattice_study.md](lattice_study.md) section 7), so the condition is met. Options:
+      (a) accept the cap: fires in winds above it are drawn rounder (head right, flanks too
+      wide), counted in `lb_capped_cell_hours` and flagged; (b) a method without the lattice
+      limit, such as a fast-marching or level-set solver of the arrival time with the elliptical
+      rate as a continuous function of direction, at the cost of rewriting the engine and its
+      kernel noise; (c) larger stencils, which the decision rules out (a 48-neighbour stencil
+      reaches about 2.75 with sampled rates). Until decided, (a) is what ships. Fire A's and
+      fire B's winds against the cap should inform it.
 - [ ] **Inputs and time lag of the hourly fuel moisture** (WP 2.1c, for WP 2.4). (1) The
       sunshine correction needs a cloudiness code (0 clear to 3 overcast) for each daylight
       hour; WP 2.4 must take it from the hourly source's cloud cover or pass none, which treats
@@ -869,7 +907,8 @@ Decided after the fourth review:
 - **Elongated fires on the lattice:** lattice-fitted directional rates with a cap on the
   length-to-breadth ratio (WP 2.1d, before Phase 3). A different front-propagation method is
   reconsidered only if the fitted rates do not reach a ratio of 3 at every bearing. Larger
-  stencils are not added.
+  stencils are not added. Done in WP 2.1d: the fitted rates reach 2.1 (16 neighbours), not
+  3, so the method question is open again (open decisions above).
 - **Fire B criteria:** a US fire in the same broad fuel group as the Chimney Fire (shrub and
   grass, surface fire dominant) but a different place and wind direction, wind-driven, with
   an MTBS perimeter, VIIRS coverage and little early suppression, 1,000-10,000 ha. A fire in
