@@ -6,7 +6,7 @@ resources acting on the grid, and a black-box optimizer that tunes reactive supp
 policies on Monte Carlo ensembles.
 
 * [GitHub](https://github.com/RicheyLi/APC_524_Final) | [Documentation](https://richeyli.github.io/APC_524_Final/)
-* Richey Li and Oscar Ansted, Princeton University
+* Richey Li, Oscar Ansted, and Sunny Lin, Princeton University
 * MIT License
 
 ## What it does
