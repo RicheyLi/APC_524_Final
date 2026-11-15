@@ -34,7 +34,13 @@ LAYER_SPECS: dict[str, tuple[type, float | int | bool]] = {
     "burn_timer": (np.float32, 0.0),
     "intensity": (np.float32, 0.0),
     "arrival_time": (np.float32, np.nan),
+    # breaks (WP 2.5): optional, zeros when absent
+    "break_width_m": (np.float32, 0.0),
 }
+
+OPTIONAL_LAYERS: frozenset[str] = frozenset({"break_width_m"})
+"""Layers that may be omitted when constructing a :class:`Grid` or missing from an older save
+file; they then take their default fill."""
 
 _SAVE_FORMAT_VERSION = 1
 
@@ -63,6 +69,10 @@ class Grid:
         burn_timer: Seconds of residence time remaining for burning cells. ``float32``.
         intensity: Byram fireline intensity of the most recent step, kW/m. ``float32``.
         arrival_time: Simulated time at which the cell ignited, s; NaN if never. ``float32``.
+        break_width_m: Width of a road or stream narrower than the barrier threshold that
+            crosses the cell, m; 0 where there is none (WP 2.5). The cell keeps its fuel; the
+            break holds or is crossed by the breach model of WP 2.9. Optional: omitted, it is
+            all zeros. ``float32``.
     """
 
     dx: float
@@ -81,6 +91,14 @@ class Grid:
     arrival_time: FloatArray
     metadata: dict[str, str] = field(default_factory=dict)
     """Free-form provenance (data source, bbox, CRS, download date). Strings only."""
+    break_width_m: FloatArray = field(default_factory=lambda: np.zeros((0, 0), dtype=np.float32))
+
+    def __post_init__(self) -> None:
+        # an optional layer left out (the (0, 0) placeholder) gets its default fill
+        for name in OPTIONAL_LAYERS:
+            if getattr(self, name).shape == (0, 0):
+                dtype, fill = LAYER_SPECS[name]
+                setattr(self, name, np.full(self.state.shape, fill, dtype=dtype))
 
     # ------------------------------------------------------------------ construction
 
@@ -128,11 +146,13 @@ class Grid:
                 raise ValueError(f"layer {name!r} has dtype {arr.dtype}, expected {np.dtype(dtype)}")
         if self.dx <= 0:
             raise ValueError("dx must be positive")
-        for name in ("canopy_cover", "elevation", "slope", "aspect", "asset_value", "retardant"):
+        for name in ("canopy_cover", "elevation", "slope", "aspect", "asset_value", "retardant", "break_width_m"):
             if not np.all(np.isfinite(getattr(self, name))):
                 raise ValueError(f"layer {name!r} must be finite everywhere")
         if np.any(self.asset_value < 0):
             raise ValueError("asset_value must be >= 0")
+        if np.any(self.break_width_m < 0):
+            raise ValueError("break_width_m must be >= 0")
         if not (np.all(self.canopy_cover >= 0) and np.all(self.canopy_cover <= 1)):
             raise ValueError("canopy_cover must lie in [0, 1]")
         if np.any(self.slope < 0):
@@ -207,7 +227,12 @@ class Grid:
             version = int(data["_format_version"])
             if version != _SAVE_FORMAT_VERSION:
                 raise ValueError(f"unsupported grid file version {version}")
-            layers: dict[str, Any] = {name: np.asarray(data[name]) for name in LAYER_SPECS}
+            # files written before an optional layer existed lack it; it then takes its default
+            layers: dict[str, Any] = {
+                name: np.asarray(data[name])
+                for name in LAYER_SPECS
+                if name in data.files or name not in OPTIONAL_LAYERS
+            }
             keys = [str(k) for k in data["_meta_keys"]]
             vals = [str(v) for v in data["_meta_vals"]]
             grid = cls(dx=float(data["dx"]), metadata=dict(zip(keys, vals, strict=True)), **layers)

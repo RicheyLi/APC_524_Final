@@ -1,0 +1,55 @@
+# Roads, water and buildings from OpenStreetMap (docs/plan.md section 3, WP 2.5).
+# Read by wildfire_sim.data.osm (OsmParams).
+#
+# Barrier rule (section 3): a 30 m cell is wider than most roads and streams, so only wide
+# features become unburnable cells: motorways and trunk roads, any road or waterway at least
+# unburnable_width_m wide, and water mapped as polygons (lakes, reservoirs, riverbanks). A
+# narrower road or stream is a break: the cell keeps its fuel and stores the feature's width in
+# Grid.break_width_m, for the breach model of WP 2.9.
+#
+# Width of a line feature, in order: its OSM `width` tag (metres; feet converted); for a road,
+# its `lanes` tag times lane_width_m; else the default of its class below. Classes not listed
+# (footpaths, cycleways, steps, proposed or abandoned roads, ...) are ignored: they are
+# narrower than the 1.5 m at which Wilson's (1988) breach data begin, or not built.
+
+barrier_highways: [motorway, trunk]
+barrier_highways_source: "docs/plan.md section 3 (barrier rule): motorways and trunk roads become unburnable cells. Divided multi-lane highways, often mapped as two one-way ways whose individual widths understate the cross-section"
+
+unburnable_width_m:
+  value: 15.0
+  units: m
+  source: "Wilson, A. A. G. (1988), Width of firebreak that is necessary to stop grass fires: some field experiments, Can. J. For. Res. 18, 682-687: breach model fitted on breaks 1.5-15 m wide"
+  note: "team choice: wider features lie outside the breach model's data and are treated as full barriers; without trees the model gives under 0.1 % crossing at 15 m up to the 17 MW/m of the experiments. Crossing of wide barriers by spotting is WP 6.1"
+
+lane_width_m:
+  value: 3.6
+  units: m
+  source: "AASHTO (2018), A Policy on Geometric Design of Highways and Streets, 7th ed.: 12 ft (3.6 m) lanes on high-speed, high-volume highways; FHWA, Lane Width, https://safety.fhwa.dot.gov/geometric/pubs/mitigationstrategies/chapter3/3_lanewidth.cfm"
+  note: "used with the OSM lanes tag; shoulders are not added"
+
+# Default width of a road class without width or lanes tags: paved width including shoulders.
+highway_width_m:
+  primary: {value: 12.0, units: m, source: "PLACEHOLDER - team assumption: two 3.6 m lanes and two 2.4 m (8 ft) shoulders, AASHTO rural arterial"}
+  primary_link: {value: 6.0, units: m, source: "PLACEHOLDER - team assumption: one 3.6 m lane and a 2.4 m shoulder"}
+  secondary: {value: 10.0, units: m, source: "PLACEHOLDER - team assumption: two 3.6 m lanes and two 1.2 m shoulders"}
+  secondary_link: {value: 6.0, units: m, source: "PLACEHOLDER - team assumption"}
+  tertiary: {value: 8.0, units: m, source: "PLACEHOLDER - team assumption: two 3.3 m lanes and narrow shoulders"}
+  tertiary_link: {value: 5.0, units: m, source: "PLACEHOLDER - team assumption"}
+  unclassified: {value: 6.0, units: m, source: "PLACEHOLDER - team assumption: two 3.0 m lanes, no shoulders"}
+  residential: {value: 8.0, units: m, source: "PLACEHOLDER - team assumption: two 3.0 m lanes and parking or verge"}
+  living_street: {value: 6.0, units: m, source: "PLACEHOLDER - team assumption"}
+  service: {value: 4.0, units: m, source: "PLACEHOLDER - team assumption: one lane (driveways, access roads)"}
+  track: {value: 3.0, units: m, source: "PLACEHOLDER - team assumption: unpaved single-track forest or farm road"}
+  motorway_link: {value: 6.0, units: m, source: "PLACEHOLDER - team assumption: one 3.6 m lane and a 2.4 m shoulder"}
+  trunk_link: {value: 6.0, units: m, source: "PLACEHOLDER - team assumption"}
+
+# Default width of a waterway mapped as a line, when it has no width tag.
+waterway_width_m:
+  river: {value: 10.0, units: m, source: "PLACEHOLDER - team assumption (OSM: a river is wider than a person can step over; wide rivers are usually also mapped as polygons)"}
+  canal: {value: 8.0, units: m, source: "PLACEHOLDER - team assumption"}
+  stream: {value: 2.0, units: m, source: "PLACEHOLDER - team assumption (OSM wiki: a stream is narrow enough to step or jump over)"}
+  ditch: {value: 1.5, units: m, source: "PLACEHOLDER - team assumption"}
+  drain: {value: 1.5, units: m, source: "PLACEHOLDER - team assumption"}
+
+include_intermittent: false
+include_intermittent_source: "PLACEHOLDER - team assumption: intermittent streams and ponds (OSM intermittent=yes) are dry for part of the year, in California's fire season usually, so they are not counted as water or breaks"
