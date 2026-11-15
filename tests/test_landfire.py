@@ -276,7 +276,7 @@ def test_grid_codes_map_non_burnable_fuel_models() -> None:
 
 def write_geotiff(path: Path, data: np.ndarray, west: float, north: float, cell_deg: float) -> None:
     rasterio = pytest.importorskip("rasterio")
-    from rasterio.transform import from_origin
+    from_origin = pytest.importorskip("rasterio.transform").from_origin
 
     profile = {
         "driver": "GTiff",

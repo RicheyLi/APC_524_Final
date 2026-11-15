@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import importlib
 import io
 import json
 import math
@@ -89,6 +90,21 @@ URBAN_CODE = 91  # NB1, urban/developed
 WATER_CODE = 98  # NB8, open water
 NO_FUEL_CODES = (92, 93, 99)  # NB2 snow/ice, NB3 agricultural (non-burnable), NB9 bare ground
 """FBFM40 non-burnable codes (Scott & Burgan 2005) other than urban and water: no fuel."""
+
+
+def optional_import(module: str) -> Any:
+    """Import a module of the optional ``geo`` extra.
+
+    Imported by name, as ``sim_fast`` imports numba, so the type checker and the default
+    install (without the extra) do not need it.
+
+    Raises:
+        ImportError: The module is missing, with the install command.
+    """
+    try:
+        return importlib.import_module(module)
+    except ImportError as exc:
+        raise ImportError(f"{module} is needed here: install the geo extra (uv sync --extra geo)") from exc
 
 
 # ----------------------------------------------------------------------------- versions
@@ -533,10 +549,11 @@ def ingest_archived(
             box does not overlap a source raster.
         ImportError: ``rasterio`` is not installed.
     """
-    import rasterio
-    from rasterio.errors import WindowError
-    from rasterio.warp import transform_bounds
-    from rasterio.windows import Window, from_bounds
+    rasterio = optional_import("rasterio")
+    WindowError = optional_import("rasterio.errors").WindowError
+    transform_bounds = optional_import("rasterio.warp").transform_bounds
+    windows = optional_import("rasterio.windows")
+    Window, from_bounds = windows.Window, windows.from_bounds
 
     check_version(version, fire_date)
     products = tuple(p for p in PRODUCTS if p in sources)
@@ -587,7 +604,7 @@ def ingest_archived(
 
 def read_layer(layers: LandfireLayers, product: str) -> tuple[np.ndarray, dict[str, Any]]:
     """One product as an array with its raster profile (CRS, transform, nodata). Needs ``rasterio``."""
-    import rasterio
+    rasterio = optional_import("rasterio")
 
     path, band = layers.files[product]
     with rasterio.open(path) as src:
