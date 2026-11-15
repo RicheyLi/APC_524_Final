@@ -6,9 +6,11 @@ This module builds it for the centroid of the study area.
 
 **Source.** The plan uses an hourly analysis (HRRR) if its archive covers both validation fires
 and disaggregated gridMET for both otherwise (section 13). The HRRR archive misses 2-14 of the
-24 analysis hours on every day of the Chimney Fire (12 August-7 September 2016, checked with
-:func:`hrrr_missing_hours`), so both fires use gridMET (Abatzoglou 2013), a 1/24 degree (about
-4 km) daily dataset. :func:`fetch_gridmet` reads it at a point through the THREDDS NetCDF Subset
+24 analysis hours on every day of the 2016 Chimney Fire (checked with
+:func:`hrrr_missing_hours`), fire A when this module was written, so it implements gridMET
+(Abatzoglou 2013), a 1/24 degree (about 4 km) daily dataset. Fire A is now the 2024 Lake Fire,
+which HRRR covers completely; whether to add an HRRR reader is decided with fire B.
+:func:`fetch_gridmet` reads gridMET at a point through the THREDDS NetCDF Subset
 Service of the University of Idaho and caches it with a SHA-256 manifest. The service returns the
 packed integers stored in the files, so the client applies each variable's ``scale_factor`` and
 ``add_offset`` from the dataset's attributes.

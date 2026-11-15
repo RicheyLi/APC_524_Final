@@ -37,7 +37,8 @@ from wildfire_sim.data.landfire import (
 from wildfire_sim.types import LandUse
 from wildfire_sim.urban import load_urban_model
 
-CHIMNEY = dt.date(2016, 8, 13)  # fire A, the Chimney Fire (plan section 7)
+CHIMNEY = dt.date(2016, 8, 13)  # the 2016 Chimney Fire, fire A until it was replaced (plan section 13)
+LAKE = dt.date(2024, 7, 5)  # fire A, the 2024 Lake Fire
 BBOX = BBox(-121.10, 35.55, -121.05, 35.60)
 EMAIL = "someone@example.org"
 
@@ -60,6 +61,10 @@ def test_refuses_a_version_newer_than_the_fire() -> None:
         check_version("LF2016", CHIMNEY)
     assert check_version("LF2014", CHIMNEY).layer_prefix == "LF2014"
     assert check_version("LF2016", dt.date(2017, 1, 10)).on_service  # the year after is fine
+    # fire A, the 2024 Lake Fire: LF2024 is refused, LF2023 (on the service) is the newest allowed
+    with pytest.raises(ValueError, match="newest that predates it is LF2023"):
+        check_version("LF2024", LAKE)
+    assert check_version("LF2023", LAKE).on_service
     with pytest.raises(ValueError, match="through 2024"):
         check_version("LF2024", dt.date(2024, 9, 1))
     with pytest.raises(ValueError, match="unknown LANDFIRE version"):
