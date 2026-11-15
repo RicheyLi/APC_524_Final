@@ -820,7 +820,26 @@ water polygons become WATER; motorways, trunk roads and anything at least 15 m w
 Bridges, tunnels, culverts, footpaths and intermittent streams are left out. Lines are made
 4-connected so no stencil move, knight moves included, passes between two cells of a line that
 touch only at a corner. A 2 km box at Lake Nacimiento gives 839 water cells, 815 break cells
-and 32 buildings. The remaining WPs have not started.
+and 32 buildings.
+
+2.6 built (branch `wp-2.6-download-data`): `scripts/download_data.py <region>` builds
+`data/cache/<region>/` (`grid.npz`, `canopy.npz`, `weather.yaml`, `perimeter.geojson`,
+`manifest.json`) from the regions of `configs/regions.yaml` (`data/cache.py`): the MTBS perimeter
+from the USFS map service, then LANDFIRE, 3DEP, OpenStreetMap and gridMET through WPs 2.2-2.5;
+the grid is the LANDFIRE lattice cut to the perimeter's bounding box plus 3 km and one cell. Fire
+A (`lake_2024`) builds to 815 x 978 cells, 97 % burnable, the perimeter 101 cells from the edge;
+`--verify` rebuilds it from the caches with identical file hashes; its 5 km crop
+(`tests/fixtures/lake_2024_5km.npz`, 0.31 MB) and weather are committed, and a three-hour
+Rothermel run on the crop burns about 680 ha. Two things the build turned up: (1) the grid must
+be in a projection whose north is true north, because wind bearings and aspect are measured
+against grid north; LANDFIRE's service delivers an Albers projection centred on the request
+(0.09 deg off across the grid), while its national EPSG:5070 would be 14.5 deg off at 120 W, so
+the build refuses a grid rotated by more than 1 deg; (2) an aspect just below 360 deg became
+360.0 when stored as float32 and failed `Grid.validate`; `data/terrain.py` now wraps it to 0.
+`docs/data.md` records each source's access method, licence and attribution; a weekly CI job
+(`.github/workflows/network.yml`) runs the `network` tests, the LANDFIRE ones only once the
+repository secret `WILDFIRE_SIM_LANDFIRE_EMAIL` is set. Fire B's region waits for its choice.
+The remaining WPs have not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
@@ -961,11 +980,11 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       height and base height (crown ratio = (height - base) / height); carrying them per cell
       needs optional `Grid` layers, a change to a frozen module that needs sign-off, or the
       placeholders stay.
-- [ ] **Canopy layers in `Grid`** (WP 2.6). WP 2.2 caches canopy cover, height, base height
-      and bulk density as LANDFIRE gives them. Converting them to `Grid` units (canopy cover
-      as a fraction) is WP 2.6; carrying height and base height per cell (for the sheltered
-      wind adjustment factor, WP 2.1b, and crown fire, WP 6.2) needs optional `Grid` layers,
-      a frozen-module change that needs sign-off.
+- [ ] **Canopy layers in `Grid`** (WP 2.6). WP 2.6 converts canopy cover into
+      `Grid.canopy_cover` (a fraction) and writes canopy height, base height (m) and bulk
+      density (kg/m^3) to `canopy.npz` beside each region's grid, cell for cell. Carrying them
+      in `Grid` itself (for the sheltered wind adjustment factor, WP 2.1b, and crown fire, WP
+      6.2) needs optional `Grid` layers, a frozen-module change that needs sign-off.
 - [ ] **Front propagation above a ratio of 2.1** (WP 2.1d). The decision after the fourth review
       said a different front-propagation method is reconsidered only if the fitted rates do
       not reach a ratio of 3 at every bearing. They reach 2.1 on 16 neighbours

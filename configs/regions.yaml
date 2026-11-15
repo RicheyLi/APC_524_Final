@@ -1,0 +1,32 @@
+# Study regions: one per validation fire (docs/plan.md sections 2, 3 and 7, WP 2.6).
+# Read by wildfire_sim.data.cache (Region); built by scripts/download_data.py.
+#
+# A region's grid is the bounding box of the fire's observed final perimeter (MTBS) plus a
+# buffer of at least 3 km on every side, so the grid size follows the fire (section 2),
+# snapped to the 30 m LANDFIRE lattice in EPSG:5070.
+#
+# Fields:
+#   role               "A" (calibration) or "B" (test without retuning)
+#   mtbs_fire_id       MTBS event id (Monitoring Trends in Burn Severity)
+#   mtbs_year          year of the MTBS "Burned Area Boundaries" layer holding the perimeter
+#   fire_date          ignition date (local); the LANDFIRE version must predate it
+#   landfire_version   newest LANDFIRE version before the fire (configs/landfire_versions.yaml)
+#   buffer_m           buffer around the perimeter's bounding box, m (at least 3000)
+#   weather_start_utc  start of the hourly weather series; a scenario on this region sets
+#                      start_time_utc to this instant (WP 1.14) and ignition.time_s from it
+#   weather_days       length of the weather series, days
+#
+# Fire B is added here when the team chooses it (section 13).
+regions:
+  lake_2024:
+    role: A
+    description: "2024 Lake Fire, Santa Barbara County, CA: chaparral and grass, grew 5-17 July 2024"
+    mtbs_fire_id: CA3478712005220240705
+    mtbs_year: 2024
+    fire_date: 2024-07-05
+    landfire_version: LF2023
+    buffer_m: 3000
+    weather_start_utc: 2024-07-05T07:00:00Z
+    weather_days: 14
+    source: "MTBS Burned Area Boundaries 2024 (USFS EDW_MTBS_01 map service); CAL FIRE incident page https://www.fire.ca.gov/incidents/2024/7/5/lake-fire (reported 5 July 2024, about 15:48 PDT)"
+    note: "weather starts at local midnight (PDT) on the day of ignition and covers the main growth to 17 July"

@@ -86,6 +86,19 @@ def test_rejects_bad_input() -> None:
         slope_aspect(np.ones((3, 3)), 0.0)
 
 
+def test_aspect_just_below_360_stays_below_360_in_float32() -> None:
+    """Found building the Lake Fire grid (WP 2.6): a bearing of 360 - 6e-6 deg cast to float32 is 360.0."""
+    from wildfire_sim.data.terrain import aspect_float32
+
+    # downhill almost due north, a hair west of it
+    z = np.array([[0.0, 0.0], [1.0, 1.0 + 2e-7]]) * 30.0
+    _, aspect = slope_aspect(z, 30.0)
+    assert np.all(aspect < 360.0) and np.float32(aspect.max()) == np.float32(360.0)  # the trap
+    a32 = aspect_float32(aspect)
+    assert a32.dtype == np.float32 and np.all((a32 >= 0) & (a32 < 360))
+    assert aspect_float32(np.array([0.0, 90.0, 359.9])).tolist() == pytest.approx([0.0, 90.0, 359.9])
+
+
 def test_slope_angle() -> None:
     np.testing.assert_allclose(slope_angle_deg(np.array([0.0, 1.0])), [0.0, 45.0])
 

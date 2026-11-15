@@ -1,0 +1,101 @@
+# Data
+
+Every model input comes from a free, public US source. A study region is built with one
+command, and every download is cached with a manifest so a build can be reproduced and
+checked. Downloaded data is never committed; only a 5 km x 5 km crop of each region is, for
+offline tests.
+
+## Building a region
+
+The regions are defined in `configs/regions.yaml`, one per validation fire:
+
+| Region | Role | Fire | Pre-fire fuels | Weather window | Grid |
+| --- | --- | --- | --- | --- | --- |
+| `lake_2024` | A (calibration) | 2024 Lake Fire, Santa Barbara County, CA (MTBS `CA3478712005220240705`, 41,216 acres) | LANDFIRE LF2023 | 14 days from 5 July 2024, 00:00 PDT | 815 x 978 cells of 30 m (24.5 x 29.3 km), 97 % burnable; perimeter 101 cells from the edge; grid north within 0.09 deg of true north |
+
+As built (2026-11-15) the Lake Fire grid is mostly chaparral and grass: SH5 (29 % of cells),
+GR2 (20 %), GS2 (15 %), SH4 (15 %), GS3 and TL3; 36,576 cells carry a road or stream break and
+261 buildings are worth 104.4 million USD. A three-hour Rothermel run on the committed crop,
+ignited at the reported time in the afternoon weather of 5 July (40 deg C, 10 % humidity, 1-h
+moisture 1.7 %), burns about 680 ha before reaching the crop's edge.
+
+Fire B is added when the team chooses it (plan section 13).
+
+```sh
+uv sync --extra geo
+$env:WILDFIRE_SIM_LANDFIRE_EMAIL = "you@example.edu"   # PowerShell; export ... in bash
+uv run python scripts/download_data.py lake_2024        # or --all
+uv run python scripts/download_data.py lake_2024 --verify
+```
+
+The build:
+
+1. reads the fire's final perimeter from MTBS;
+2. downloads LANDFIRE, 3DEP, OpenStreetMap and gridMET for the perimeter's bounding box plus the
+   buffer (at least 3 km) and a 1 km margin, each cached by its own module under `data/cache/`;
+3. cuts the grid from the LANDFIRE raster's own 30 m lattice: the perimeter's bounding box plus
+   the buffer and one cell on every side, so the grid size follows the fire;
+4. assembles `grid.npz` (fuel model, land use, canopy cover, elevation, slope, aspect, asset
+   value, break widths), `canopy.npz` (canopy height and base height in m, bulk density in
+   kg/m^3, which have no `Grid` layer yet), `weather.yaml` (one point per hour) and a copy of the
+   perimeter;
+5. checks that the grid validates and that no cell the perimeter touches lies within the buffer
+   of the edge;
+6. writes `data/cache/<region>/manifest.json` and the crop `tests/fixtures/<region>_5km.npz`
+   (with `<region>_weather.yaml`), centred on the MTBS point of origin.
+
+A scenario on a region uses `grid: {kind: cached, path: data/cache/<region>/grid.npz}`, the
+series of `weather.yaml`, and `start_time_utc` equal to the region's `weather_start_utc`
+(WP 1.14), with the ignition time counted from it.
+
+**Reproducing a build.** The manifest records every source (with each download's own
+manifest: URL or query, version, access time, SHA-256) and the SHA-256 of each output file.
+`--verify` rebuilds the region from the caches into a scratch directory and compares the
+hashes; it reports any file that differs.
+
+## Sources
+
+| Input | Source and access | Licence | Attribution |
+| --- | --- | --- | --- |
+| Fuel model (FBFM40), canopy cover, height, base height, bulk density | [LANDFIRE](https://landfire.gov) Product Service job API (`https://lfps.usgs.gov/api`, submit, poll, download a zip of GeoTIFFs); needs an email address, read from `WILDFIRE_SIM_LANDFIRE_EMAIL` and never stored (`data/landfire.py`) | US Government work, public domain | LANDFIRE, U.S. Department of the Interior and U.S. Department of Agriculture |
+| Elevation (slope and aspect computed) | USGS [3D Elevation Program](https://www.usgs.gov/3d-elevation-program) 10 m DEM through `py3dep` (`data/terrain.py`) | Public domain | U.S. Geological Survey, 3D Elevation Program |
+| Wind, temperature, humidity, radiation, 100-h fuel moisture | [gridMET](https://www.climatologylab.org/gridmet.html) daily, read at a point through the THREDDS NetCDF Subset Service of `thredds.northwestknowledge.net` (`data/weather.py`) | Stated variously as free of known copyright restrictions (Google Earth Engine catalogue) and CC BY 4.0 (UCAR GDEX); we attribute as CC BY 4.0 requires | Abatzoglou, J. T. (2013), Int. J. Climatol. 33, 121-131; Climatology Lab, UC Merced |
+| Roads, waterways, water bodies, buildings | [OpenStreetMap](https://www.openstreetmap.org) through the Overpass API with `osmnx` (`data/osm.py`); the public Overpass server asks automated clients to retry with backoff when busy, which the client does | [Open Database Licence (ODbL) 1.0](https://www.openstreetmap.org/copyright) | (c) OpenStreetMap contributors |
+| Fire perimeter and point of origin | [MTBS](https://www.mtbs.gov) Burned Area Boundaries through the USFS map service `EDW_MTBS_01` (`data/cache.py`) | Public domain | Monitoring Trends in Burn Severity, USDA Forest Service and USGS |
+| Hourly analysis coverage check | NOAA HRRR archive on AWS (`noaa-hrrr-bdp-pds`), listing only (`data/weather.py`, `hrrr_missing_hours`) | NOAA Open Data, no restrictions | NOAA |
+| Live fuel moisture | National Fuel Moisture Database, now in [FEMS](https://www.wildfire.gov/application/fems); no public API, so samples are passed in and a seasonal default is used until then (plan section 13) | Public domain | USDA Forest Service |
+
+**Projection: grid north is true north.** The simulator measures wind bearings (from true
+north, as gridMET gives them) and aspect against the grid's up direction, so grid north must be
+true north. The LANDFIRE Product Service delivers its rasters in an Albers projection centred on
+the request (central meridian at the box's centre, standard parallels at its south and north
+edges), where that holds to 0.09 deg across the Lake Fire grid. LANDFIRE's national projection,
+EPSG:5070, would not do: its central meridian is 96 W, so at 120 W its grid north is rotated
+about 14.5 deg and every wind would be applied 14.5 deg off. The build measures the rotation
+(`grid_rotation_deg`), records it in the manifest and refuses a grid rotated by more than 1 deg.
+The price is one resampling of LANDFIRE's categorical layers on its server.
+
+**Units.** LANDFIRE stores canopy cover in percent, canopy height and base height in metres x
+10 and bulk density in kg/m^3 x 100, with -9999 for no data; the build converts them
+(`landfire_canopy`). gridMET's point service returns the packed integers of its files; the
+client applies each variable's `scale_factor` and `add_offset`.
+
+## The LANDFIRE version must predate the fire
+
+A LANDFIRE version's fuels reflect the disturbances through the last year of its disturbance
+window, so a version from the fire's year or later may already show the fire's own scar
+(`configs/landfire_versions.yaml`, `check_version`). This was checked directly for the first
+fire A, the 2016 Chimney Fire: inside its MTBS perimeter 98 % of LF2016's cells carry a fire
+disturbance (`LF2016_FDist`; under 1 % in a 3 km ring outside), and the fuels there are
+post-fire (GS1 most common, against GR2, TL3 and SH2 outside). Its pre-fire version, LF2014, is
+not obtainable (the map viewer offers LF2016 and later, the Product Service serves only LF2014's
+disturbance layers, and ScienceBase has no LF2014 fuel model), so fire A became the 2024 Lake
+Fire, whose pre-fire version LF2023 is on the service and shows no disturbance inside the
+perimeter (plan section 13).
+
+## Network tests
+
+Tests that call these services are marked `network` and run with `--run-network`. A scheduled
+CI job (`.github/workflows/network.yml`, Mondays) runs them so a changed service is noticed. The
+LANDFIRE tests and the full region build need the repository secret
+`WILDFIRE_SIM_LANDFIRE_EMAIL` and skip without it.
