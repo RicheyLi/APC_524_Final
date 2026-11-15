@@ -46,6 +46,15 @@ uv run wildfire-sim plot runs/wind
 figures of a saved run or ensemble. See [docs/usage.md](docs/usage.md) for every option,
 the output files and the Python API.
 
+## Assumptions and data
+
+* **Asset value.** Every building is worth 400,000 USD (a team assumption, `configs/costs.yaml`);
+  a cell's asset value is the number of OpenStreetMap buildings in it times that figure.
+  Burned wildland carries no dollar value.
+* **Data sources.** LANDFIRE (fuels and canopy), USGS 3DEP (elevation), gridMET (weather) and
+  OpenStreetMap (roads, water, buildings). Map data (c) OpenStreetMap contributors, available
+  under the [Open Database Licence](https://www.openstreetmap.org/copyright).
+
 ## Development
 
 ```sh

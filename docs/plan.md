@@ -347,7 +347,9 @@ cache to disk with a manifest, run.
 **Barrier rule.** A 30 m cell is wider than most roads and streams, so marking every road cell
 unburnable would create barriers that do not exist. Only features at least as wide as a
 documented threshold (motorways and trunk roads, rivers and lakes mapped as polygons) become
-unburnable cells.
+unburnable cells. As built (WP 2.5) the threshold is 15 m, the widest break in Wilson's (1988)
+experiments: wider features lie outside the breach model's data and are treated as full
+barriers (`configs/osm.yaml`).
 
 **Breaks.** A narrower road or stream is a *break*: the cell keeps its fuel and records the
 feature's width in metres. A break either holds or is crossed, depending on the fire's
@@ -799,8 +801,20 @@ code for the 1-h moisture comes from gridMET's daily radiation (Angstrom formula
 daylight hours. Live moisture is the mean of nearby National Fuel Moisture Database samples
 passed in, else a Scott & Burgan live moisture scenario by month (placeholder mapping, section
 13). Parameters in `configs/weather.yaml`. On 13 August 2016 at the fire's origin this gives
-40 deg C and 10 % humidity at 15:00 local time and a 1-h moisture of 1.7 %. The remaining WPs
-have not started.
+40 deg C and 10 % humidity at 15:00 local time and a 1-h moisture of 1.7 %.
+
+2.5 built (branch `wp-2.5-osm`): `Grid` has the signed-off optional layer `break_width_m`
+(zeros when absent; grid files saved before it still load). `data/osm.py` fetches roads,
+waterways, water polygons and buildings through `osmnx` (Overpass, retried with backoff when the
+public server is busy; live download succeeded, test marked `network`), caches them as GeoJSON
+with a SHA-256 manifest, and applies the barrier rule with the parameters of `configs/osm.yaml`:
+water polygons become WATER; motorways, trunk roads and anything at least 15 m wide become ROAD
+(or WATER); narrower roads and streams become breaks of their width (OSM `width` tag, else
+`lanes` x 3.6 m, else a class default); `asset_value` = buildings per cell x 400,000 USD.
+Bridges, tunnels, culverts, footpaths and intermittent streams are left out. Lines are made
+4-connected so no stencil move, knight moves included, passes between two cells of a line that
+touch only at a corner. A 2 km box at Lake Nacimiento gives 839 water cells, 815 break cells
+and 32 buildings. The remaining WPs have not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
@@ -917,6 +931,13 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       midpoint of Dai & Deser's (1999) global land range, 0.85 m/s, peaking at 14:00 local
       solar time; local winds (a sea breeze, a Santa Ana) can differ widely. Both enter the
       sensitivity analysis (WP 3.2).
+- [ ] **Road and stream widths** (WP 2.5). A road or stream without an OSM `width` or `lanes`
+      tag gets a default width by class (`configs/osm.yaml`: primary 12 m down to track 3 m;
+      river 10 m, stream 2 m), all team placeholders. Every trunk road is a full barrier, as
+      section 3 says, though in rural California many are two-lane roads about 12 m wide that
+      the width rule alone would make breaks. Intermittent streams and ponds are left out as dry
+      in the fire season. The break widths enter the breach model (WP 2.9) and the sensitivity
+      analysis (WP 3.2).
 - [ ] Cost figures with sources: hourly rates and mobilization costs per resource type; water
       and retardant per litre. Left as placeholders until WP 4.6.
 - [ ] **Rothermel's wind limit** (WP 2.1b). The original limit caps the effective midflame

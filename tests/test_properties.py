@@ -267,6 +267,7 @@ def grids(draw: st.DrawFn) -> Grid:
         "burn_timer": _f32(0.0, 1e5),
         "intensity": _f32(0.0, 1e5),
         "arrival_time": st.one_of(st.just(math.nan), _f32(0.0, 1e6)),
+        "break_width_m": _f32(0.0, 100.0),
     }
     layers: dict[str, Any] = {}
     for name, (dtype, _) in LAYER_SPECS.items():
