@@ -1,0 +1,59 @@
+# LANDFIRE data versions (docs/plan.md section 3, WP 2.2). Read by wildfire_sim.data.landfire.
+#
+# A version's fuel layers reflect the disturbances (fires, treatments) through the last year of
+# its annual disturbance window, so a version may be used for a fire only if that year is before
+# the fire's year: otherwise its fuels may already show the fire's own scar (plan section 3).
+#
+# Checked 2026-11-14 against:
+#   - LANDFIRE Product Version Comparison Table, https://landfire.gov/data ("annual disturbance"
+#     years and transition-rule windows per version; "Archived Versions can be found on the U.S.
+#     Geological Survey's ScienceBase or by request from the help desk").
+#   - LF 2016 Remap, https://landfire.gov/data/lf2016 ("reflect circa 2016 ground conditions").
+#   - The LANDFIRE Product Service product list, https://lfps.usgs.gov/api/products (layer names
+#     LF2016_FBFM40, ..., LF2025_CBD; no other versions are served).
+#
+# Fields: disturbance_years = [first, last] annual disturbance year of the version;
+# on_service = whether https://lfps.usgs.gov serves it (else: archived, load local GeoTIFFs);
+# layer_prefix = the LFPS layer-name prefix ("<prefix>_FBFM40").
+source: "LANDFIRE Product Version Comparison Table, https://landfire.gov/data (checked 2026-11-14); LFPS product list, https://lfps.usgs.gov/api/products"
+versions:
+  LF2025:
+    disturbance_years: [2025, 2025]
+    on_service: true
+    layer_prefix: LF2025
+    note: "Update, completed 2026; fuel transition rules for 2016-2025 disturbances"
+  LF2024:
+    disturbance_years: [2024, 2024]
+    on_service: true
+    layer_prefix: LF2024
+    note: "Update, completed 2025; fuel transition rules for 2015-2024 disturbances"
+  LF2023:
+    disturbance_years: [2023, 2023]
+    on_service: true
+    layer_prefix: LF2023
+    note: "Update, completed 2024; fuel transition rules for 2014-2023 disturbances"
+  LF2022:
+    disturbance_years: [2021, 2022]
+    on_service: true
+    layer_prefix: LF2022
+    note: "Update, completed 2023; fuel transition rules for 2013-2022 disturbances"
+  LF2020:
+    disturbance_years: [2017, 2020]
+    on_service: false
+    layer_prefix: LF2020
+    note: "Update, completed 2023, archived; fuel transition rules for 2012-2020 disturbances"
+  LF2016:
+    disturbance_years: [2015, 2016]
+    on_service: true
+    layer_prefix: LF2016
+    note: "LF 2016 Remap, new base map, completed 2021; fuel transition rules for 2010-2016 disturbances; circa 2016 ground conditions"
+  LF2014:
+    disturbance_years: [2013, 2014]
+    on_service: false
+    layer_prefix: LF2014
+    note: "Update, completed 2017, archived (ScienceBase or help desk); vegetation and fuel transition rules for 2005-2014 disturbances. The newest version that predates the Chimney Fire (2016, fire A)"
+  LF2012:
+    disturbance_years: [2011, 2012]
+    on_service: false
+    layer_prefix: LF2012
+    note: "Update, completed 2015, archived"

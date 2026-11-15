@@ -378,6 +378,20 @@ manifest (source, version, access date, bounding box, CRS, SHA-256 of each file)
 data is ODbL). Access methods are checked when each WP starts, because download services
 change; a scheduled CI job runs the `network` tests weekly to catch it when they do.
 
+**LANDFIRE, as checked for WP 2.2 (2026-11-14).** The LANDFIRE Product Service
+(https://lfps.usgs.gov) has a job API but publishes no reference for it; the client uses the
+calls its own web page makes: `POST /api/job/submit` with a JSON body (`Layer_List`,
+`Area_of_Interest` as "W S E N" in WGS84 degrees, a required `Email`), `GET
+/api/job/status/?JobId=...` until it returns an `outputFile` URL, then that zip. Its product
+list (`/api/products`) serves LF2016, LF2022, LF2023, LF2024 and LF2025 only, with layer names
+such as `LF2022_FBFM40`. A live job through the client succeeded (`tests/test_landfire.py`,
+marked `network`). The version comparison table (https://landfire.gov/data) gives each version's
+annual disturbance years: LF2016 covers 2015-2016, so its fuels may already show a 2016 fire,
+and the newest version before fire A (August 2016) is **LF2014**, which is archived (USGS
+ScienceBase or the LANDFIRE help desk) and not on the service. WP 2.2 therefore also loads
+archived GeoTIFFs that a person downloads (`ingest_archived`); the version table is
+`configs/landfire_versions.yaml`.
+
 ## 4. Firefighting tactics
 
 Every tactic is a resource that arrives after a dispatch delay, works at a limited rate, costs
@@ -748,8 +762,19 @@ keeps its rates exactly; constant and Alexandridis runs are unchanged (golden ru
 `provenance` and `summary.json` carry `lb_capped_cell_hours` and `wildfire-sim run` warns. Like
 WP 2.1a, it also touches files outside its list, because the plan's deliverable needs them:
 `sim.py` (the cell-hour count), `io.py` and `cli.py` (summary and warning), `configs/`, and
-the tests of WP 1.12 (`tests/test_intensity.py`, re-measured) and of the CLI. The remaining WPs
-have not started.
+the tests of WP 1.12 (`tests/test_intensity.py`, re-measured) and of the CLI.
+
+2.2 built (branch `wp-2.2-landfire`): `data/landfire.py` gets FBFM40, canopy cover, height, base
+height and bulk density for a bounding box and a named version, either from the LANDFIRE
+Product Service (`fetch_landfire`; the email address LFPS requires comes from the environment
+variable `WILDFIRE_SIM_LANDFIRE_EMAIL` and is never cached) or from archived GeoTIFFs clipped to
+the box (`ingest_archived`, needs the `geo` extra). Both write GeoTIFFs and a manifest
+(version, box, access time, file and band per product, SHA-256) under `data/cache/<key>/`.
+`check_version` refuses a version whose disturbance years reach the fire's year, using
+`configs/landfire_versions.yaml`. `grid_codes` maps FBFM40 to `Grid.fuel_model` and
+`Grid.land_use`: urban (91) to urban cells with the surrogate fuel of `configs/urban.yaml`,
+water (98) to water, snow, non-burnable agriculture and bare ground (92, 93, 99) to no fuel.
+The remaining WPs have not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
@@ -876,6 +901,17 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       height and base height (crown ratio = (height - base) / height); carrying them per cell
       needs optional `Grid` layers, a change to a frozen module that needs sign-off, or the
       placeholders stay.
+- [ ] **LF2014 for fire A** (WP 2.2, for WP 2.6). Decided: fire A uses LANDFIRE LF2014, the
+      newest version before the Chimney Fire, loaded with `ingest_archived` from GeoTIFFs a
+      team member downloads once (USGS ScienceBase, or a request to the LANDFIRE help desk).
+      Still to do: get the files, and record in `docs/data.md` where they came from. LF2014
+      predates the LF 2016 Remap, a new base map, so fire A and a fire B on LF2022 or later
+      will run on fuels mapped by different LANDFIRE methods.
+- [ ] **Canopy layers in `Grid`** (WP 2.6). WP 2.2 caches canopy cover, height, base height
+      and bulk density as LANDFIRE gives them. Converting them to `Grid` units (canopy cover
+      as a fraction) is WP 2.6; carrying height and base height per cell (for the sheltered
+      wind adjustment factor, WP 2.1b, and crown fire, WP 6.2) needs optional `Grid` layers,
+      a frozen-module change that needs sign-off.
 - [ ] **Front propagation above a ratio of 2.1** (WP 2.1d). The decision after the fourth review
       said a different front-propagation method is reconsidered only if the fitted rates do
       not reach a ratio of 3 at every bearing. They reach 2.1 on 16 neighbours
