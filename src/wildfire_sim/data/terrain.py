@@ -268,12 +268,26 @@ class Terrain:
     metadata: dict[str, str]
 
 
+def aspect_float32(aspect: FloatArray) -> FloatArray:
+    """Aspect as ``float32`` (the ``Grid`` dtype), still in [0, 360).
+
+    Near 360 deg float32 values are about 3e-5 deg apart, so a bearing just below 360 rounds up
+    to 360.0 when cast; it is the same direction as 0 and is stored as 0.
+    """
+    out = np.asarray(aspect, dtype=np.float64).astype(np.float32)
+    out[out >= np.float32(360.0)] = np.float32(0.0)
+    return out
+
+
 def terrain_for_grid(dem: DemFile | str | Path, target: TargetGrid) -> Terrain:
-    """Elevation resampled onto ``target``, its slope and aspect, and the grid metadata."""
+    """Elevation resampled onto ``target``, its slope and aspect, and the grid metadata.
+
+    The aspect is returned as ``float32`` in [0, 360) (:func:`aspect_float32`), ready for ``Grid``.
+    """
     elevation = reproject_to(dem, target)
     dx, dy = target.cell_size
     slope, aspect = slope_aspect(elevation, dx, dy)
-    return Terrain(elevation, slope, aspect, grid_metadata(target))
+    return Terrain(elevation, slope, aspect_float32(aspect), grid_metadata(target))
 
 
 def slope_angle_deg(slope: FloatArray) -> FloatArray:
