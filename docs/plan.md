@@ -774,7 +774,17 @@ the box (`ingest_archived`, needs the `geo` extra). Both write GeoTIFFs and a ma
 `configs/landfire_versions.yaml`. `grid_codes` maps FBFM40 to `Grid.fuel_model` and
 `Grid.land_use`: urban (91) to urban cells with the surrogate fuel of `configs/urban.yaml`,
 water (98) to water, snow, non-burnable agriculture and bare ground (92, 93, 99) to no fuel.
-The remaining WPs have not started.
+
+2.3 built (branch `wp-2.3-terrain`): `data/terrain.py` fetches the 3DEP 10 m DEM for a bounding
+box with `py3dep.get_dem` (in EPSG:5070, the projection LANDFIRE uses; a live download succeeded,
+test marked `network`) and caches it with a SHA-256 manifest under `data/cache/dem-<key>/`;
+resamples it bilinearly onto the LANDFIRE grid, refusing a DEM that does not cover every cell;
+computes slope (rise over run) and aspect (downhill bearing, degrees) with `np.gradient` and the
+grid's own cell sizes; and writes `crs` (WKT), `transform` (six affine coefficients),
+`centroid_lon` and `centroid_lat` for `Grid.metadata`. The slope and aspect of
+`synthetic.slope_ramp` are recovered to 2e-6 and 0.0002 deg on every cell (acceptance: 1e-3 and
+0.5 deg). Slope errors from the projection are under about 1 % (EPSG:5070 is equal-area, not
+conformal). The remaining WPs have not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
