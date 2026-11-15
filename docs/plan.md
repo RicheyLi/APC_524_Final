@@ -337,7 +337,7 @@ cache to disk with a manifest, run.
 | --- | --- | --- | --- |
 | Fuel model, canopy cover, height, base height, bulk density | LANDFIRE (Scott & Burgan 40 fuel models) | 30 m | US only. The LANDFIRE **version must predate the fire** being simulated, or the fuels already show its scar |
 | Elevation, slope, aspect | USGS 3DEP | 10-30 m | Slope and aspect computed here |
-| Wind, temperature, humidity | gridMET daily, disaggregated to hours (an hourly analysis, RTMA or HRRR, was preferred, but the HRRR archive misses hours on every day of fire A, section 13) | about 4 km | One value per hour for the grid, with the diurnal profiles documented in `data/weather.py` |
+| Wind, temperature, humidity | gridMET daily, disaggregated to hours (WP 2.4); an hourly analysis (HRRR) if it covers both fires' dates, decided with fire B (section 13) | about 4 km | One value per hour for the grid, with the diurnal profiles documented in `data/weather.py` |
 | Dead fuel moisture | 1-h computed from T and RH; 10-h from the 1-h value by a cited offset; 100-h from gridMET (`fm100`) | about 4 km | gridMET has no 1-h or 10-h moisture |
 | Live fuel moisture | National Fuel Moisture Database samples near the site (now served through the Fire Environment Mapping System, FEMS); seasonal default otherwise | Point | Matters most in shrub fuels such as chaparral |
 | Roads, rivers, lakes, buildings | OpenStreetMap (osmnx) | Vector | See the barrier rule below |
@@ -388,11 +388,12 @@ calls its own web page makes: `POST /api/job/submit` with a JSON body (`Layer_Li
 list (`/api/products`) serves LF2016, LF2022, LF2023, LF2024 and LF2025 only, with layer names
 such as `LF2022_FBFM40`. A live job through the client succeeded (`tests/test_landfire.py`,
 marked `network`). The version comparison table (https://landfire.gov/data) gives each version's
-annual disturbance years: LF2016 covers 2015-2016, so its fuels may already show a 2016 fire,
-and the newest version before fire A (August 2016) is **LF2014**, which is archived (USGS
-ScienceBase or the LANDFIRE help desk) and not on the service. WP 2.2 therefore also loads
-archived GeoTIFFs that a person downloads (`ingest_archived`); the version table is
-`configs/landfire_versions.yaml`.
+annual disturbance years: LF2016 covers 2015-2016, so its fuels may already show a 2016 fire.
+For fire A, the 2024 Lake Fire, the newest version before the fire is **LF2023**, on the
+service. The first fire A, the 2016 Chimney Fire, needed LF2014, which is archived and whose
+fuel layers could not be obtained, so fire A was changed (section 13). WP 2.2 also loads
+archived GeoTIFFs that a person downloads (`ingest_archived`), for any fire whose pre-fire
+version is archived; the version table is `configs/landfire_versions.yaml`.
 
 ## 4. Firefighting tactics
 
@@ -516,8 +517,9 @@ the profile in [performance.md](performance.md)):
 Starting a worker pool costs 9-17 s, so the optimizer (WP 4.5) must keep one pool for the whole
 search instead of starting one per candidate.
 
-**These numbers do not cover fire A.** The Chimney Fire burned 46,344 acres (about 18,750 ha)
-in 24 days (13 August to 6 September 2016), which is almost twice the whole reference area. Its grid has about ten times the cells, and
+**These numbers do not cover fire A.** The Lake Fire's MTBS perimeter encloses 41,216 acres
+(about 16,700 ha), 1.7 times the whole reference area, and the fire grew for about twelve days
+(5 to 17 July 2024). Its grid, the perimeter plus 3 km, has about seven times the cells, and
 even the early-growth window used for calibration is days, not 12 hours. Calibration cost is
 therefore one to two orders of magnitude above the table. It is measured on the fire A grid
 before the calibration study is sized (WP 3.1), and the same is done for runs with
@@ -529,11 +531,15 @@ change.
 
 ## 7. Validation
 
-**Calibrate on fire A, test on fire B without retuning.** Fire A is the 2016 Chimney Fire, San
-Luis Obispo County, CA: it has an MTBS perimeter, VIIRS hotspots showing daily growth,
-pre-fire LANDFIRE fuels, and a published CA simulation to compare with (arXiv 2507.00761).
-Fire B has the same data available and, like A, is a fire where surface fire dominated (see
-*Open decisions*).
+**Calibrate on fire A, test on fire B without retuning.** Fire A is the 2024 Lake Fire, Santa
+Barbara County, CA (MTBS `CA3478712005220240705`), a chaparral and grass fire that grew over
+about twelve days. It has an MTBS perimeter; VIIRS hotspots from three satellites (Suomi NPP,
+NOAA-20, NOAA-21), so about three times the overpasses of a 2016 fire; complete hourly
+analyses (HRRR); and pre-fire LANDFIRE fuels (LF2023) that the service delivers. It replaced
+the 2016 Chimney Fire, whose pre-fire fuels could not be obtained (section 13); with it went
+the comparison with a published simulation of that fire (arXiv 2507.00761). Fire B has the
+same data available and, like A, is a fire where surface fire dominated (see *Open
+decisions*).
 
 **What fire B can and cannot show.** The calibrated spread multiplier mostly corrects the bias
 of the fuel models that dominate fire A; FARSITE's rate-of-spread adjustment factors are
@@ -637,7 +643,7 @@ Pareto front, with spotting switched on.
 | Rothermel implementation | Native vectorized NumPy (WP 2.1), cross-checked against `pyrothermel` (optional extra `rothermel`) and published BehavePlus values. |
 | Default stencil | 16 neighbours, from the lattice study in WP 1.4: better than 8 at every length-to-breadth ratio, at about twice the run time. |
 | Package name | `wildfire_sim` (CLI `wildfire-sim`). |
-| Validation fires | A: 2016 Chimney Fire (calibration). B: to be chosen (test, no retuning). |
+| Validation fires | A: 2024 Lake Fire (calibration; replaced the 2016 Chimney Fire, section 13). B: to be chosen (test, no retuning). |
 | Weather | One hourly scalar series per run. Hourly analysis where available, disaggregated gridMET otherwise. Spatially varying wind is out of scope. |
 | Primary Python | 3.12. 3.13 tested in CI; 3.14 allowed to fail. |
 | Suppression set | Hand crews, dozers, engines and aircraft. |
@@ -790,8 +796,8 @@ conformal).
 
 2.4 built (branch `wp-2.4-weather`): `data/weather.py` builds the run's `WeatherConfig`, one point
 per hour from `start_time_utc`, at the grid centroid. The HRRR archive misses 2-14 of the 24
-analysis hours on every day of the Chimney Fire, so by the rule of section 13 both fires use
-gridMET, read at a point through its THREDDS subset service (packed values unpacked with each
+analysis hours on every day of the Chimney Fire (then fire A), so by the rule of section 13 it
+uses gridMET (the choice reopened when fire A became the Lake Fire, section 13), read at a point through its THREDDS subset service (packed values unpacked with each
 variable's scale and offset; live download succeeded, test marked `network`) and cached with a
 SHA-256 manifest. Days become hours in local solar time: temperature by Parton & Logan (1981),
 humidity on the same curve inverted so both of gridMET's extremes are kept, wind speed a cosine
@@ -837,7 +843,7 @@ and 32 buildings. The remaining WPs have not started.
 | --- | --- | --- | --- | --- |
 | 3.1 | `scripts/calibrate.py`, `configs/calibrated.yaml`, `docs/performance.md` | 2.1 (a-d), 1.10, 1.11, 2.6-2.9, optuna | First, `scripts/bench.py` on the fire A grid over the early-growth window, recorded in `docs/performance.md`; trial and seed counts are chosen from it. Then an Optuna study on fire A over the spread-rate multiplier in [0.3, 3] and ellipse `lb_scale` in [0.5, 2] (and `ros_base`, `c2` for the Alexandridis rule), minimizing a weighted sum of (1 - Jaccard at the end of the early-growth window) and normalized arrival-interval error (section 7), averaged over fixed seeds; writes best parameters and the objective evaluated on a grid around them | Runs on the committed crop in CI with 3 trials x 2 seeds (marked `slow`); on a synthetic "observed" fire generated with known parameters, recovers them within 10 %, and the recovered values agree within 10 % when that fire's wind blows along a grid axis, at 13.3, at 22.5 and at 45 degrees to it; a trial in which any run reaches the grid edge is rejected, not scored |
 | 3.2 | `scripts/sensitivity.py`, `docs/sensitivity.md` | 1.6, 2.1 | Morris screening of burned area and head arrival time over wind speed, wind direction, 1-h and live moisture, rate multiplier, kernel shape and stencil | Ranks a deliberately inert parameter last; figures regenerate from the script |
-| 3.3 | `docs/validation.md`, `notebooks/validation.ipynb` | 3.1, 3.2 | Fire A (calibrated) and fire B (not retuned): burn-probability map vs. observed perimeter, arrival-time scatter, metrics table with intervals, objective surface, discussion of the suppression confound; Rothermel vs. Alexandridis; comparison with the published Chimney Fire simulation | Figures regenerate from a script |
+| 3.3 | `docs/validation.md`, `notebooks/validation.ipynb` | 3.1, 3.2 | Fire A (calibrated) and fire B (not retuned): burn-probability map vs. observed perimeter, arrival-time scatter, metrics table with intervals, objective surface, discussion of the suppression confound; Rothermel vs. Alexandridis; comparison with published simulations of the same fires where they exist | Figures regenerate from a script |
 
 ### Phase 4 - Suppression and strategy search
 
@@ -955,12 +961,6 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       height and base height (crown ratio = (height - base) / height); carrying them per cell
       needs optional `Grid` layers, a change to a frozen module that needs sign-off, or the
       placeholders stay.
-- [ ] **LF2014 for fire A** (WP 2.2, for WP 2.6). Decided: fire A uses LANDFIRE LF2014, the
-      newest version before the Chimney Fire, loaded with `ingest_archived` from GeoTIFFs a
-      team member downloads once (USGS ScienceBase, or a request to the LANDFIRE help desk).
-      Still to do: get the files, and record in `docs/data.md` where they came from. LF2014
-      predates the LF 2016 Remap, a new base map, so fire A and a fire B on LF2022 or later
-      will run on fuels mapped by different LANDFIRE methods.
 - [ ] **Canopy layers in `Grid`** (WP 2.6). WP 2.2 caches canopy cover, height, base height
       and bulk density as LANDFIRE gives them. Converting them to `Grid` units (canopy cover
       as a fraction) is WP 2.6; carrying height and base height per cell (for the sheltered
@@ -985,7 +985,7 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       (`m(t + dt) = m_eq + (m(t) - m_eq) exp(-dt / 10 h)`, Fosberg and Deeming 1971) would be
       more faithful but is not in the plan.
 
-Resolved: study region and fire A (Chimney Fire); ignition kernel; default stencil 16 and
+Resolved: fire A (the 2024 Lake Fire, which replaced the Chimney Fire; below); ignition kernel; default stencil 16 and
 `arrival_shape` 200 (after the lattice study); Rothermel implemented
 natively with `pyrothermel` as a cross-check; package name; frozen-module changes signed
 off: optional `SpreadOutput.heat_per_area` (WP 1.12), `LandUse.URBAN` burnable (WP 1.13),
@@ -999,7 +999,7 @@ Decided after the fourth review:
   reconsidered only if the fitted rates do not reach a ratio of 3 at every bearing. Larger
   stencils are not added. Done in WP 2.1d: the fitted rates reach 2.1 (16 neighbours), not
   3, so the method question is open again (open decisions above).
-- **Fire B criteria:** a US fire in the same broad fuel group as the Chimney Fire (shrub and
+- **Fire B criteria:** a US fire in the same broad fuel group as fire A (shrub and
   grass, surface fire dominant) but a different place and wind direction, wind-driven, with
   an MTBS perimeter, VIIRS coverage and little early suppression, 1,000-10,000 ha. A fire in
   another fuel group may be added as a stress test, reported as such; a timber fire needs WP
@@ -1038,8 +1038,24 @@ Decided after the fourth review:
 - **Hourly weather:** one source for both fires; HRRR analysis hours if the archive covers
   both, disaggregated gridMET for both otherwise. Checked in WP 2.4 (`hrrr_missing_hours`, on
   2026-11-15): the AWS archive misses 2-14 of the 24 surface analyses on every day from 12
-  August to 7 September 2016 (fire A), and the RTMA archive starts in 2019, so both fires use
-  disaggregated gridMET.
+  August to 7 September 2016 (the Chimney Fire, fire A at the time), and the RTMA archive
+  starts in 2019, so WP 2.4 built disaggregated gridMET. With the Lake Fire as fire A the
+  question reopens: the archive has every analysis hour from 5 to 20 July 2024 (checked
+  2026-11-15), so HRRR is used if fire B's dates are covered too, which needs a GRIB2 reader,
+  a new dependency; otherwise both fires keep gridMET. Decided when fire B is chosen.
+- **Fire A replaced by the 2024 Lake Fire** (decided 2026-11-15, during WP 2.6). The Chimney
+  Fire's pre-fire fuels are LANDFIRE LF2014, and its fuel layers could not be obtained: the
+  LANDFIRE map viewer offers LF2016 to LF2025 only, the Product Service serves only LF2014's
+  disturbance layers, and ScienceBase's "LANDFIRE 2014 (140) NGDA Products" has no fuel model.
+  LF2016 cannot stand in: inside the Chimney Fire's MTBS perimeter 98 % of its cells carry a
+  fire disturbance (`LF2016_FDist`, against under 1 % in a 3 km ring outside), and its fuels
+  there are post-fire (GS1 most common, against GR2, TL3 and SH2 outside). Candidates were
+  vetted on the same evidence (MTBS record; the pre-fire version's disturbance and fuel mix
+  inside the perimeter): the Lake Fire (2024; LF2023, 100 % undisturbed; shrub 44 %, grass
+  and grass-shrub 40 %) was chosen over the Alamo (2017, 11,856 ha) and Whittier (2017,
+  7,498 ha) fires for its three VIIRS satellites and complete hourly analyses. Both fires now
+  use LANDFIRE versions after the LF 2016 Remap, so they share one base map. The 2.4 and 2.5
+  examples near Lake Nacimiento remain test cases only.
 - **Module owners:** all three team members own every module.
 
 ## 14. Design review log
@@ -1167,7 +1183,7 @@ any of these work packages).
 - [Alexandridis et al. 2008, CA model of the Spetses Island fire](https://dspace.lib.ntua.gr/xmlui/handle/123456789/18520)
 - [Alexandridis et al. 2011, CA spread with suppression tactics (Int. J. Wildland Fire)](https://publish.csiro.au/wf/ExportCitation/wf09119)
 - [Russo et al. 2013, same CA applied to the 2008 Rhodes fire without retuning](https://cetjournal.it/index.php/cet/article/view/6182)
-- [CA wildfire simulator applied to the 2016 Chimney Fire (arXiv 2507.00761)](https://arxiv.org/pdf/2507.00761)
+- [CA wildfire simulator applied to the 2016 Chimney Fire, fire A until it was replaced (arXiv 2507.00761)](https://arxiv.org/pdf/2507.00761)
 - [pyretechnics: Python fire behavior equations](https://ost.ecosyste.ms/projects/351112)
 - [pyrothermel: Python bindings for Rothermel models](https://pypi.org/project/pyrothermel/)
 - [behave: the BehavePlus fire behaviour library](https://github.com/firelab/behave)

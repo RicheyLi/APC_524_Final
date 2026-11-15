@@ -30,7 +30,7 @@ reaches the fire's year: its fuels may already show the fire's scar.
   keeps them in one place. The email address is read from the environment variable
   :data:`EMAIL_ENV` and is never written to the cache.
 * :func:`ingest_archived` takes GeoTIFFs the user downloaded from an archived version (for
-  example LF2014 from USGS ScienceBase, the newest version before fire A), clips them to the
+  example LF2014 from the LANDFIRE help desk, the newest version before a 2016 fire), clips them to the
   bounding box and writes the same cache layout. It needs ``rasterio`` (``uv sync --extra geo``).
 
 Either way the layers land in ``data/cache/<key>/`` with a ``manifest.json`` recording the
@@ -533,7 +533,7 @@ def ingest_archived(
 ) -> LandfireLayers:
     """Clip user-downloaded GeoTIFFs of an archived version to ``bbox`` and cache them.
 
-    For versions the service no longer offers, such as LF2014 (fire A). Each source raster is
+    For versions the service no longer offers, such as LF2014. Each source raster is
     clipped to the bounding box (transformed into the raster's CRS, expanded to whole cells) and
     written as ``<version>_<product>.tif`` with the source's CRS, cell size and nodata value.
 

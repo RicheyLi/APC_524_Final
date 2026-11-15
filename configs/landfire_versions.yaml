@@ -51,7 +51,7 @@ versions:
     disturbance_years: [2013, 2014]
     on_service: false
     layer_prefix: LF2014
-    note: "Update, completed 2017, archived (ScienceBase or help desk); vegetation and fuel transition rules for 2005-2014 disturbances. The newest version that predates the Chimney Fire (2016, fire A)"
+    note: "Update, completed 2017, archived (ScienceBase or help desk); vegetation and fuel transition rules for 2005-2014 disturbances. The newest version that predates the 2016 Chimney Fire; its fuel layers could not be obtained, so fire A became the 2024 Lake Fire (LF2023; docs/plan.md section 13)"
   LF2012:
     disturbance_years: [2011, 2012]
     on_service: false
