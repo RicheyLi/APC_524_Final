@@ -1,0 +1,89 @@
+# Hourly weather from daily gridMET (docs/plan.md sections 3 and 13, WP 2.4).
+# Read by wildfire_sim.data.weather (WeatherParams).
+#
+# gridMET gives daily maximum and minimum temperature and relative humidity, daily mean wind
+# speed and direction, daily mean shortwave radiation and the 100-h fuel moisture (Abatzoglou
+# 2013). The simulator needs one value per hour, so each day is spread over its hours with the
+# profiles below. Hours are placed in local solar time (UTC + longitude / 15 h).
+
+# Temperature: Parton & Logan (1981). Sine from the minimum (at sunrise + c) to sunset, with the
+# maximum a hours after solar noon (+ c); exponential decay with coefficient b from sunset to the
+# next minimum. Their coefficients for air temperature at 150 cm (screen height).
+parton_logan:
+  a:
+    value: 1.86
+    units: h
+    source: "Parton, W. J. & Logan, J. A. (1981), A model for diurnal variation in soil and air temperature, Agric. Meteorol. 23, 205-216, Table 1 (air temperature at 150 cm)"
+    note: "lag of the maximum temperature after solar noon"
+  b:
+    value: 2.20
+    units: dimensionless
+    source: "Parton & Logan (1981), Table 1 (air temperature at 150 cm)"
+    note: "night-time decay coefficient"
+  c:
+    value: -0.17
+    units: h
+    source: "Parton & Logan (1981), Table 1 (air temperature at 150 cm)"
+    note: "lag of the minimum temperature after sunrise (negative: just before sunrise)"
+
+# Wind speed: a cosine around the daily mean, so the mean of the 24 hours of a day equals
+# gridMET's daily mean exactly. The amplitude is limited to the daily mean so the wind never
+# turns negative.
+wind_amplitude_m_s:
+  value: 0.85
+  units: m/s
+  source: "Dai, A. & Deser, C. (1999), Diurnal and semidiurnal variations in global surface wind and divergence fields, J. Geophys. Res. 104(D24), 31109-31125: amplitude of the diurnal cycle of surface wind speed over land 0.6-1.1 m/s"
+  note: "midpoint of the published range; a global climatology, not a local value. The cycle is strongest over high terrain and in summer"
+wind_peak_hour_lst:
+  value: 14.0
+  units: h (local solar time)
+  source: "Dai & Deser (1999): surface wind speed peaks in the early afternoon over most land"
+  note: "14:00 is our reading of 'early afternoon'"
+
+# Relative humidity: the temperature curve inverted, from the day's maximum at the temperature
+# minimum to its minimum at the temperature maximum (both gridMET's), as FARSITE pairs its
+# daily humidity extremes with the temperature extremes (Finney 1998). No parameters.
+
+# Cloudiness for the fuel-moisture sunshine correction (WP 2.1c, section 13): relative sunshine
+# duration n/N from the Angstrom formula Rs = (a_s + b_s n/N) Ra with gridMET's daily
+# radiation Rs and the extraterrestrial radiation Ra; cloud cover = 1 - n/N, in tenths, mapped
+# to the NFDRS state-of-weather codes (0: under 1/10, 1: 1/10-5/10, 2: 6/10-9/10, 3: over 9/10;
+# Deeming et al. 1977). Night hours get no code (no sun correction).
+angstrom_a:
+  value: 0.25
+  units: dimensionless
+  source: "Allen, R. G., Pereira, L. S., Raes, D. & Smith, M. (1998), Crop evapotranspiration, FAO Irrigation and Drainage Paper 56, eq. 35: recommended a_s when no calibration is available"
+angstrom_b:
+  value: 0.50
+  units: dimensionless
+  source: "Allen et al. (1998), FAO-56, eq. 35: recommended b_s when no calibration is available"
+
+# Live fuel moisture. National Fuel Moisture Database samples near the site are used when given
+# (data.weather.NfmdSample); otherwise a seasonal default: one of Scott & Burgan's (2005) live
+# fuel moisture scenarios per calendar month.
+live_scenarios:
+  L1:
+    herb: {value: 0.30, units: fraction, source: "Scott, J. H. & Burgan, R. E. (2005), Standard fire behavior fuel models, USDA For. Serv. Gen. Tech. Rep. RMRS-GTR-153, live fuel moisture scenario L1 (low, herbaceous fully cured)"}
+    woody: {value: 0.60, units: fraction, source: "Scott & Burgan (2005), RMRS-GTR-153, scenario L1"}
+  L2:
+    herb: {value: 0.60, units: fraction, source: "Scott & Burgan (2005), RMRS-GTR-153, scenario L2 (moderate, 2/3 cured)"}
+    woody: {value: 0.90, units: fraction, source: "Scott & Burgan (2005), RMRS-GTR-153, scenario L2"}
+  L3:
+    herb: {value: 0.90, units: fraction, source: "Scott & Burgan (2005), RMRS-GTR-153, scenario L3 (high, 1/3 cured)"}
+    woody: {value: 1.20, units: fraction, source: "Scott & Burgan (2005), RMRS-GTR-153, scenario L3"}
+  L4:
+    herb: {value: 1.20, units: fraction, source: "Scott & Burgan (2005), RMRS-GTR-153, scenario L4 (very high, fully green)"}
+    woody: {value: 1.50, units: fraction, source: "Scott & Burgan (2005), RMRS-GTR-153, scenario L4"}
+seasonal_scenario:
+  source: "PLACEHOLDER - team assumption for California's summer-dry climate (green in late winter and spring, cured from July to October); replace with NFMD samples (section 13)"
+  months: {1: L3, 2: L4, 3: L4, 4: L4, 5: L3, 6: L2, 7: L1, 8: L1, 9: L1, 10: L1, 11: L2, 12: L3}
+nfmd_window_days:
+  value: 30
+  units: days
+  source: "PLACEHOLDER - team assumption: NFMD sites are sampled about every two weeks in fire season"
+  note: "samples taken this many days or fewer before or after the date are used"
+nfmd_radius_km:
+  value: 50
+  units: km
+  source: "PLACEHOLDER - team assumption"
+  note: "samples from sites this far or nearer from the grid centroid are used"

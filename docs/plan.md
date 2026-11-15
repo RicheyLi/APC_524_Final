@@ -337,9 +337,9 @@ cache to disk with a manifest, run.
 | --- | --- | --- | --- |
 | Fuel model, canopy cover, height, base height, bulk density | LANDFIRE (Scott & Burgan 40 fuel models) | 30 m | US only. The LANDFIRE **version must predate the fire** being simulated, or the fuels already show its scar |
 | Elevation, slope, aspect | USGS 3DEP | 10-30 m | Slope and aspect computed here |
-| Wind, temperature, humidity | Hourly analysis (RTMA or HRRR) where available; gridMET daily otherwise | 2.5-4 km | One value per hour for the grid. Daily data is disaggregated with a documented diurnal profile |
+| Wind, temperature, humidity | gridMET daily, disaggregated to hours (an hourly analysis, RTMA or HRRR, was preferred, but the HRRR archive misses hours on every day of fire A, section 13) | about 4 km | One value per hour for the grid, with the diurnal profiles documented in `data/weather.py` |
 | Dead fuel moisture | 1-h computed from T and RH; 10-h from the 1-h value by a cited offset; 100-h from gridMET (`fm100`) | about 4 km | gridMET has no 1-h or 10-h moisture |
-| Live fuel moisture | National Fuel Moisture Database samples near the site; seasonal default otherwise | Point | Matters most in shrub fuels such as chaparral |
+| Live fuel moisture | National Fuel Moisture Database samples near the site (now served through the Fire Environment Mapping System, FEMS); seasonal default otherwise | Point | Matters most in shrub fuels such as chaparral |
 | Roads, rivers, lakes, buildings | OpenStreetMap (osmnx) | Vector | See the barrier rule below |
 | Asset value | Building footprints x an assumed USD per building | Vector | A team assumption, stated in the README |
 | Historical fires (validation) | MTBS burn perimeters; NASA FIRMS VIIRS hotspots; daily perimeters where published | Perimeter; 375 m detections | Final burned area and timing of spread |
@@ -784,7 +784,23 @@ grid's own cell sizes; and writes `crs` (WKT), `transform` (six affine coefficie
 `centroid_lon` and `centroid_lat` for `Grid.metadata`. The slope and aspect of
 `synthetic.slope_ramp` are recovered to 2e-6 and 0.0002 deg on every cell (acceptance: 1e-3 and
 0.5 deg). Slope errors from the projection are under about 1 % (EPSG:5070 is equal-area, not
-conformal). The remaining WPs have not started.
+conformal).
+
+2.4 built (branch `wp-2.4-weather`): `data/weather.py` builds the run's `WeatherConfig`, one point
+per hour from `start_time_utc`, at the grid centroid. The HRRR archive misses 2-14 of the 24
+analysis hours on every day of the Chimney Fire, so by the rule of section 13 both fires use
+gridMET, read at a point through its THREDDS subset service (packed values unpacked with each
+variable's scale and offset; live download succeeded, test marked `network`) and cached with a
+SHA-256 manifest. Days become hours in local solar time: temperature by Parton & Logan (1981),
+humidity on the same curve inverted so both of gridMET's extremes are kept, wind speed a cosine
+around the daily mean (amplitude and early-afternoon peak from Dai & Deser 1999) whose 24 hours
+average to the daily mean exactly, direction and 100-h moisture held for the day. The sunshine
+code for the 1-h moisture comes from gridMET's daily radiation (Angstrom formula, FAO-56) for
+daylight hours. Live moisture is the mean of nearby National Fuel Moisture Database samples
+passed in, else a Scott & Burgan live moisture scenario by month (placeholder mapping, section
+13). Parameters in `configs/weather.yaml`. On 13 August 2016 at the fire's origin this gives
+40 deg C and 10 % humidity at 15:00 local time and a 1-h moisture of 1.7 %. The remaining WPs
+have not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
@@ -891,9 +907,16 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       cited 15 s it gives 7.5 min); the minimum
       intensity of the breach model (WP 2.9; placeholder 0.18 MW/m). All five are in the
       sensitivity analysis (WP 3.2).
-- [ ] Whether the HRRR archive has the analysis hours for both fires' dates (WP 2.4). The
-      RTMA archive on AWS starts in 2019, so it cannot serve fire A; the HRRR archive starts
-      in 2014 and has gaps. If either fire is not covered, both use disaggregated gridMET.
+- [ ] **Live fuel moisture and the diurnal wind** (WP 2.4). (1) The National Fuel Moisture
+      Database is now served through FEMS, whose API is not published, so `data/weather.py`
+      takes samples as records (`NfmdSample`) and no sample has been fetched yet. Until a team
+      member downloads the sites near each fire, live moisture is a Scott & Burgan scenario
+      chosen by month (placeholder mapping for California in `configs/weather.yaml`: L1, cured,
+      July-October, so fire A runs at 30 % herbaceous and 60 % woody). The sample window (30
+      days) and radius (50 km) are placeholders too. (2) The wind's daily cycle uses the
+      midpoint of Dai & Deser's (1999) global land range, 0.85 m/s, peaking at 14:00 local
+      solar time; local winds (a sea breeze, a Santa Ana) can differ widely. Both enter the
+      sensitivity analysis (WP 3.2).
 - [ ] Cost figures with sources: hourly rates and mobilization costs per resource type; water
       and retardant per litre. Left as placeholders until WP 4.6.
 - [ ] **Rothermel's wind limit** (WP 2.1b). The original limit caps the effective midflame
@@ -933,10 +956,10 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       kernel noise; (c) larger stencils, which the decision rules out (a 48-neighbour stencil
       reaches about 2.75 with sampled rates). Until decided, (a) is what ships. Fire A's and
       fire B's winds against the cap should inform it.
-- [ ] **Inputs and time lag of the hourly fuel moisture** (WP 2.1c, for WP 2.4). (1) The
-      sunshine correction needs a cloudiness code (0 clear to 3 overcast) for each daylight
-      hour; WP 2.4 must take it from the hourly source's cloud cover or pass none, which treats
-      every hour as shaded and makes the fuel moister by day. (2) The 10-h moisture is the
+- [ ] **Time lag of the hourly fuel moisture** (WP 2.1c). (1) Done in WP 2.4: the sunshine
+      correction's cloudiness code comes from gridMET's daily radiation (relative sunshine by
+      the Angstrom formula, FAO-56 eq. 35), the same for every daylight hour of a day, none at
+      night. A daily value cannot show a cloudy morning and a clear afternoon. (2) The 10-h moisture is the
       NFDRS equilibrium rule (1.28 EMC) applied every hour, so it has no 10-hour lag; a lag
       (`m(t + dt) = m_eq + (m(t) - m_eq) exp(-dt / 10 h)`, Fosberg and Deeming 1971) would be
       more faithful but is not in the plan.
@@ -992,7 +1015,10 @@ Decided after the fourth review:
     pull request, an exception to the one-WP-owns-its-files rule of `CONTRIBUTING.md`:
     replacing the residence times is part of the WP and would fail CI without them.
 - **Hourly weather:** one source for both fires; HRRR analysis hours if the archive covers
-  both, disaggregated gridMET for both otherwise.
+  both, disaggregated gridMET for both otherwise. Checked in WP 2.4 (`hrrr_missing_hours`, on
+  2026-11-15): the AWS archive misses 2-14 of the 24 surface analyses on every day from 12
+  August to 7 September 2016 (fire A), and the RTMA archive starts in 2019, so both fires use
+  disaggregated gridMET.
 - **Module owners:** all three team members own every module.
 
 ## 14. Design review log
