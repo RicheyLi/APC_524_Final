@@ -13,6 +13,7 @@ nav = [
   { "Sensitivity analysis" = "sensitivity.md" },
   { "Performance" = "performance.md" },
   { "Calibration" = "calibration.md" },
+  { "Validation" = "validation.md" },
   { "Data" = "data.md" },
   { "API Reference" = "api.md" },
 ]

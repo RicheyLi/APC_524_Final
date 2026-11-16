@@ -1,0 +1,70 @@
+# Settings of the validation of fires A and B (docs/plan.md sections 6 and 7, WP 3.3;
+# docs/validation.md). Read by wildfire_sim.evaluation (ValidationSettings); scripts/validate.py
+# takes its defaults from here. The detection footprint and the synthetic overpass interval are
+# those of configs/calibration.yaml, so validation scores arrival times exactly as calibration did.
+#
+# Every value is cited; "judgment" marks a team choice that no measurement backs.
+n_runs:
+  value: 200
+  units: count
+  source: "docs/plan.md section 6: 50-200 runs is typical; the run count must bring the interval's half-width under rel_half_width of the mean, which the script checks (runs_for_precision) and reports"
+base_seed:
+  value: 20261117
+  units: dimensionless
+  source: "team choice; the run seeds are wildfire_sim.ensemble.derive_seeds(base_seed, n_runs). They must not be calibration seeds (configs/calibration.yaml base_seed 0, truth_seed 999), which the script checks, so the test does not reuse the link thresholds the parameters were fitted on"
+consensus_threshold:
+  value: 0.5
+  units: fraction of runs
+  source: "docs/plan.md section 7: the simulated burned area is the cells burned in at least half the runs"
+ci_level:
+  value: 0.95
+  units: dimensionless
+  source: "team choice: the conventional two-sided 95 % level, as in wildfire_sim.metrics and wildfire_sim.ensemble"
+n_boot:
+  value: 10000
+  units: count
+  source: "the default of wildfire_sim.metrics.bootstrap_ci; Efron & Tibshirani (1993, ch. 13) recommend at least 1000 resamples for a percentile interval"
+bootstrap_seed:
+  value: 0
+  units: dimensionless
+  source: "team choice; seeds the bootstrap resampling so every interval reproduces"
+rel_half_width:
+  value: 0.05
+  units: fraction of the mean
+  source: "judgment: the stated precision of docs/plan.md section 6 for the mean burned area, a 95 % half-width within 5 % of the mean"
+dt_s:
+  value: 60.0
+  units: s
+  source: "the time step of the calibration (scripts/calibrate.py default), so the test runs the model as it was fitted; arrival times do not depend on dt (docs/plan.md section 2.4)"
+# Comparison window after the recorded ignition, per region (configs/regions.yaml).
+window_hours:
+  lake_2024:
+    value: 48.0
+    units: h
+    source: "the calibration window of configs/calibration.yaml (window_hours, PLACEHOLDER - team choice): fire A is tested over the growth it was fitted to"
+    note: "a daily perimeter must have been posted by the window end; check once the region is built"
+  silverado_2020:
+    value: 48.0
+    units: h
+    source: "judgment: fire B grew mainly on 26-27 October 2020 (configs/regions.yaml), so two days after the ignition cover its main run; the same length as fire A's window"
+    note: "fire B has no daily perimeters, so its overlap is scored only against the final MTBS perimeter, which includes suppression"
+# Input uncertainty sampled by every run (docs/plan.md section 6; wildfire_sim.ensemble applies
+# it). Each sigma takes the screening range of configs/sensitivity.yaml as about +-2 standard
+# deviations.
+ensemble:
+  wind_speed_sigma_frac:
+    value: 0.15
+    units: "sigma of ln(factor) on the 10 m wind speed, dimensionless"
+    source: "judgment: the +-30 % wind-speed range of configs/sensitivity.yaml (itself a judgment: no local verification of the HRRR 10 m wind has been done for these fires) taken as two standard deviations"
+  wind_direction_sigma_deg:
+    value: 15.0
+    units: deg
+    source: "judgment: the +-30 deg direction range of configs/sensitivity.yaml (a 3 km analysis does not resolve terrain-channelled wind) taken as two standard deviations"
+  moisture_sigma_frac:
+    value: 0.15
+    units: "sigma of ln(factor) on all five fuel moistures together, dimensionless"
+    source: "judgment: the +-30 % dead-moisture ranges of configs/sensitivity.yaml taken as two standard deviations"
+  ros_multiplier_sigma_frac:
+    value: 0.1
+    units: "sigma of ln(factor) on every directional rate, dimensionless"
+    source: "judgment: residual uncertainty of the calibrated rate, of the order of the 10 % recovery tolerance of WP 3.1 (docs/plan.md section 12); applied on top of the calibrated ros_multiplier through ensemble.ScaledRateRule"
