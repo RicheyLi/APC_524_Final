@@ -124,6 +124,24 @@ by 12 UTC on 7 July, when the first infrared perimeter enclosed 4,959 ha. The ig
 gives 5 July 2024, 22:48 UTC (15:48 PDT), at 34.7868 N, 120.0520 W (IRWIN `2024-CALPF-001542`;
 the initially reported position, 34.785 N, 120.0448 W, is 660 m away and is kept in the cache).
 
+## Running a fire
+
+Once a region and its observations are built, one command runs the fire on its real grid,
+ignited at the recorded point and time, and compares it with what was observed:
+
+```sh
+uv run python scripts/demo_real_fire.py lake_2024 --hours 24
+uv run python scripts/demo_real_fire.py silverado_2020 --hours 12
+```
+
+It prints the simulated and observed burned area, their overlap (Jaccard and Sorensen), the
+share of VIIRS detections whose interval contains the simulated arrival and the median error,
+and writes a map to `runs/demo_<region>.png`. About a minute per simulated day of fire A with the
+Numba engine (`uv sync --extra fast`). These runs are **not calibrated** (Phase 3): before
+calibration the Lake Fire burns about four times its observed first-day area and Silverado too
+little, round where the real fires ran with the wind. Listing the overpasses queries NASA's
+public catalogue, so the command needs an internet connection even with everything cached.
+
 ## The LANDFIRE version must predate the fire
 
 A LANDFIRE version's fuels reflect the disturbances through the last year of its disturbance
