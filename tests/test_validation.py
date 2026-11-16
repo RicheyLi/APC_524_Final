@@ -495,6 +495,37 @@ def test_earthdata_http_retries_and_keeps_the_token_to_nasa() -> None:
     http._requests = FakeRequests([FakeResponse(302, {"location": "https://urs.earthdata.nasa.gov/oauth/authorize"})])
     with pytest.raises(PermissionError, match="refused the token"):
         http.signed_url("https://data.lpdaac.earthdatacloud.nasa.gov/f.nc")
+    # a redirect that only mentions the login host elsewhere in its URL is not a refusal
+    lookalike = "https://cdn.example/signed?next=urs.earthdata.nasa.gov"
+    http._requests = FakeRequests([FakeResponse(302, {"location": lookalike})])
+    assert http.signed_url("https://data.lpdaac.earthdatacloud.nasa.gov/f.nc") == lookalike
+    # and the token is never sent to a host that is not an Earthdata data host
+    unsent = FakeRequests([FakeResponse(200)])
+    http._requests = unsent
+    with pytest.raises(PermissionError, match="token is not sent"):
+        http.signed_url("https://data.example.org/f.nc?x=.earthdatacloud.nasa.gov")
+    assert unsent.calls == []
+
+
+@pytest.mark.parametrize(
+    ("url", "ok"),
+    [
+        ("https://data.lpdaac.earthdatacloud.nasa.gov/a/b.nc", True),
+        ("https://DATA.laadsdaac.earthdatacloud.nasa.gov/b.nc", True),
+        ("http://data.lpdaac.earthdatacloud.nasa.gov/b.nc", False),  # not https
+        ("https://data.example.org/b.nc", False),
+        ("https://data.example.org/.earthdatacloud.nasa.gov/b.nc", False),  # the domain only in the path
+        ("https://data.lpdaac.earthdatacloud.nasa.gov.example.org/b.nc", False),  # the domain as a prefix
+        ("https://data.lpdaac.earthdatacloud.nasa.gov@example.org/b.nc", False),  # the domain as user info
+        ("https://lpdaac.earthdatacloud.nasa.gov/b.nc", False),  # not a data host
+        ("not a url", False),
+    ],
+)
+def test_earthdata_data_urls_are_recognised_by_host(url: str, ok: bool) -> None:
+    from wildfire_sim.data.validation import _https_nc, is_earthdata_data_url
+
+    assert is_earthdata_data_url(url) is ok
+    assert _https_nc({"links": [{"href": url}]}) == (url if ok else None)
 
 
 def test_earthdata_token_sources(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

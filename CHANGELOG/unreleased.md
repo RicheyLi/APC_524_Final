@@ -83,6 +83,7 @@ These are the changes that will go out in the next release.
 
 ## Fixed
 
+- `data.validation`: NASA Earthdata hosts are checked by parsing the URL's host name instead of by substring (CodeQL `py/incomplete-url-substring-sanitization`). The Earthdata token is sent only to `https://data.<daac>.earthdatacloud.nasa.gov` (`is_earthdata_data_url`; any other URL is refused before a request is made), only such links are taken from the catalogue, and a refused token is recognised by the redirect's host being `urs.earthdata.nasa.gov`.
 - A region's `weather.yaml` and the committed weather fixture were written with the platform's line ends, so their SHA-256 differed between Windows and Linux; `data.cache` now writes them with `\n` (`write_yaml_lf`), found while building fire A's observations (WP 2.7).
 
 - `data.terrain.terrain_for_grid` returned aspects just below 360 deg that became 360.0 when stored as float32, so `Grid.validate` refused the grid (found building the Lake Fire region, WP 2.6); the aspect is now cast with `aspect_float32`, which wraps 360 to 0.
