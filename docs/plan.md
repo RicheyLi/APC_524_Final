@@ -372,7 +372,9 @@ within 20 m of the break and 0 otherwise. It gives 29 %, 55 % and 88 % for a 3 m
 trees at 2, 5 and 10 MW/m, as the paper states. Two limits follow from the paper and are part
 of the model, not footnotes. The fit must not be used below the intensities it was made on:
 its intercept gives a 47 % chance of crossing a 1.5 m break at zero intensity. And its use in
-other fuels, at other widths and for flank or backing fire is an extrapolation.
+other fuels, at other widths and for flank or backing fire is an extrapolation. As built (WP
+2.9), the intensity a break faces is the front-normal intensity of the adjacent cells (WP 1.12),
+so a flank meets it cooler than a head does.
 
 **Reproducibility of data.** Downloaded data is never committed. Every cached region has a
 manifest (source, version, access date, bounding box, CRS, SHA-256 of each file), and
@@ -866,7 +868,23 @@ cells. `suppression_cost(fleet, costs)` takes `ResourceUse` records (type, count
 and retardant) that the suppression model (Phase 4) will fill; a zero hourly cost uses the
 `costs.yaml` rate, as `ResourceConfig` does. `bootstrap_ci` and `paired_difference_ci` are seeded
 percentile bootstrap intervals (Efron & Tibshirani 1993); in a simulation test 95 % intervals
-from samples of 50 cover a known mean at the stated rate. The remaining WPs have not started.
+from samples of 50 cover a known mean at the stated rate.
+
+2.9 built (branch `wp-2.9-breaks`): `breaks.py` holds Wilson's breach model
+(`breach_probability`, coefficients and the fitted range in `configs/breach.yaml`), which
+reproduces the paper's 29, 55 and 88 % and 72 %; below the 0.18 MW/m floor nothing is breached.
+In a run (both engines), FUEL cells with `break_width_m > 0` and constructed lines given a width
+are held as barriers; each cell has one uniform number from a fourth child of the run's
+`SeedSequence` (the first three are unchanged). After each step a held cell is breached when an
+adjacent (8-neighbour) ignited cell burned with an intensity whose `p_b` reaches that number; the
+breach time is that neighbour's arrival, so it does not depend on dt, and the cell is ignited at
+that time plus the crossing time of their link, so the fire crosses even if the neighbour burned
+out within the step. Breaches are `"breach"` events and counted in `provenance["breaks"]`; held
+cells that never breach end as FUEL. A constructed line without a width stays an unconditional
+barrier, as before. Trees count as present when the cell or a neighbour has canopy cover above
+0.10 (a placeholder, section 13). The breached set is the same for dt and dt / 2, hooks do not
+change the draws, the engines agree, and grids without breaks are bit-identical (golden runs
+unchanged). The remaining WPs have not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
@@ -971,7 +989,8 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       placeholders: fuel model TL3, `ros_factor` 0.5, `residence_factor` 30; the factor was
       chosen to make a town flame for about an hour on a 120 s TL3 placeholder, and with the
       cited 15 s it gives 7.5 min); the minimum
-      intensity of the breach model (WP 2.9; placeholder 0.18 MW/m). All five are in the
+      intensity of the breach model (WP 2.9; placeholder 0.18 MW/m); the canopy cover above which trees
+      count as standing near a break (WP 2.9; placeholder 0.10). All six are in the
       sensitivity analysis (WP 3.2).
 - [ ] **Live fuel moisture and the diurnal wind** (WP 2.4). (1) The National Fuel Moisture
       Database is now served through FEMS, whose API is not published, so `data/weather.py`

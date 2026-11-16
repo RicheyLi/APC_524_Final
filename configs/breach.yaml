@@ -1,0 +1,36 @@
+# Break crossing: Wilson's (1988) logistic model (docs/plan.md section 3, WP 2.9).
+# Read by wildfire_sim.breaks (BreachParams).
+#
+#   p_b = e^b / (1 + e^b),   b = intercept + intensity_coef * I + (trees_width_coef * T + width_coef) * W
+#
+# with I the fireline intensity in MW/m, W the break width in m and T = 1 when trees stand within
+# 20 m of the break, else 0. Fitted to 113 experimental head fires in cured grass against breaks
+# 1.5 to 15 m wide, intensities up to 17 MW/m. Gives 29 %, 55 % and 88 % for a 3 m break without
+# trees at 2, 5 and 10 MW/m and 72 % with trees at 2 MW/m, as the paper states.
+intercept:
+  value: 1.36
+  units: dimensionless
+  source: "Wilson, A. A. G. (1988), Width of firebreak that is necessary to stop grass fires: some field experiments, Can. J. For. Res. 18, 682-687, eqs. 2 and 4 (coefficients checked against the paper, docs/plan.md section 13)"
+intensity_coef:
+  value: 0.36
+  units: "per MW/m"
+  source: "Wilson (1988), eq. 4"
+trees_width_coef:
+  value: 0.61
+  units: "per m"
+  source: "Wilson (1988), eq. 4 (multiplies T x W)"
+width_coef:
+  value: -0.99
+  units: "per m"
+  source: "Wilson (1988), eq. 4"
+fitted_width_m: [1.5, 15.0]
+fitted_intensity_mw_m: [0.0, 17.0]
+fitted_range_source: "Wilson (1988): breaks 1.5 to 15 m wide, head-fire intensities up to 17 MW/m; outside this range the model is an extrapolation"
+min_intensity_mw_m:
+  value: 0.18
+  units: MW/m
+  source: "PLACEHOLDER - team decision (docs/plan.md section 13): below it a break always holds; the lower bound implied by the paper's slowest spread (0.1 m/s) and lightest fuel (1 t/ha), I = 1.8 w r"
+tree_cover_min:
+  value: 0.10
+  units: fraction
+  source: "PLACEHOLDER - team assumption: trees are present (T = 1) when the break cell or one of its 8 neighbours (within about 40 m; Wilson counts trees within 20 m) has a canopy cover above this"

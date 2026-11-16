@@ -133,7 +133,7 @@ jobs:
         run: >-
           uv run --python=3.12 --extra fast pytest -q
           tests/test_sim_fast.py tests/test_dormant.py tests/test_edge.py
-          tests/test_intensity.py tests/test_urban.py
+          tests/test_intensity.py tests/test_urban.py tests/test_breaks.py
 
       # Fails on a slowdown of more than 20 % in run time normalised by a calibration loop
       # timed in the same process (machine-independent; see scripts/bench.py and docs/performance.md).

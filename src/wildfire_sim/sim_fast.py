@@ -513,6 +513,16 @@ class NumbaFireEngine(_FireEngine):
         self._pos = np.full(n, -1, dtype=np.int64)
         self._touched = np.empty(n, dtype=np.int64)
 
+    @property
+    def progress_kn(self) -> np.ndarray:
+        """Link progress as ``(K, H * W)``: a transposed view of the cell-major array."""
+        return self.progress.T
+
+    @property
+    def thresholds_kn(self) -> np.ndarray:
+        """Link thresholds as ``(K, H * W)``: a transposed view of the cell-major array."""
+        return self.thresholds.T
+
     def refresh(self, weather: Weather, changed: bool) -> None:
         """As the NumPy engine; also caches the per-cell flaming time and intensity of the new output."""
         before = self.out
