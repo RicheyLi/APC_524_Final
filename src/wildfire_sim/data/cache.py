@@ -53,9 +53,10 @@ from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import numpy as np
+import yaml
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from wildfire_sim.config import WeatherConfig, configs_dir, dump_yaml, load_costs, load_yaml
+from wildfire_sim.config import WeatherConfig, configs_dir, load_costs, load_yaml
 from wildfire_sim.data.landfire import (
     DEFAULT_CACHE,
     BBox,
@@ -113,6 +114,9 @@ class Region(BaseModel):
     weather_days: Annotated[int, Field(ge=1)]
     source: Annotated[str, Field(min_length=1)]
     note: str = ""
+    irwin_id: str | None = Field(
+        default=None, description="IRWIN record id of the incident (ignition and daily perimeters, WP 2.7)"
+    )
 
     @field_validator("mtbs_fire_id")
     @classmethod
@@ -175,6 +179,13 @@ class Perimeter:
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write_yaml_lf(model: BaseModel, path: Path) -> None:
+    """Write ``model`` as YAML with ``\\n`` line ends on every platform, so its SHA-256 does not
+    depend on the machine (``config.dump_yaml`` uses the platform's line ends)."""
+    text = yaml.safe_dump(model.model_dump(mode="json"), sort_keys=False)
+    path.write_text(text, encoding="utf-8", newline="\n")
 
 
 def fetch_mtbs_perimeter(
@@ -536,7 +547,7 @@ def build_region(
         canopy_base_height_m=canopy["canopy_base_height_m"],
         canopy_bulk_density_kg_m3=canopy["canopy_bulk_density_kg_m3"],
     )
-    dump_yaml(weather, directory / "weather.yaml")
+    write_yaml_lf(weather, directory / "weather.yaml")
     shutil.copyfile(perimeter.path, directory / "perimeter.geojson")
 
     n_hours = math.ceil(duration_s / 3600)
@@ -658,7 +669,7 @@ def write_crop(
     fixtures_dir.mkdir(parents=True, exist_ok=True)
     path = fixtures_dir / f"{name}_5km.npz"
     crop.save(path)
-    dump_yaml(weather, fixtures_dir / f"{name}_weather.yaml")
+    write_yaml_lf(weather, fixtures_dir / f"{name}_weather.yaml")
     return path
 
 

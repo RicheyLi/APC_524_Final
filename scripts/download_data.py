@@ -24,6 +24,7 @@ from pathlib import Path
 
 from wildfire_sim.data.cache import (
     FIXTURES_DIR,
+    Region,
     build_region,
     email_configured,
     fuel_summary,
@@ -31,6 +32,8 @@ from wildfire_sim.data.cache import (
     verify_region,
 )
 from wildfire_sim.data.landfire import DEFAULT_CACHE, EMAIL_ENV
+from wildfire_sim.data.validation import fetch_observations
+from wildfire_sim.grid import Grid
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -42,6 +45,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--fixtures", type=Path, default=FIXTURES_DIR, help="where to write the 5 km test crops")
     parser.add_argument("--no-fixtures", action="store_true", help="do not write the test crops")
     parser.add_argument("--verify", action="store_true", help="rebuild from the caches and compare file hashes")
+    parser.add_argument(
+        "--observations",
+        action="store_true",
+        help="also fetch the fire's observations (ignition, perimeters, VIIRS; needs a NASA Earthdata token)",
+    )
     args = parser.parse_args(argv)
 
     names = list(regions) if args.all else args.names
@@ -77,7 +85,25 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  wrote {built.directory}")
         if built.crop is not None:
             print(f"  crop {built.crop} ({built.crop.stat().st_size / 1e6:.2f} MB)")
+        if args.observations:
+            report_observations(name, region, args.cache_root, built.grid)
     return 0
+
+
+def report_observations(name: str, region: Region, cache_root: Path, grid: Grid) -> None:
+    """Fetch (or read) a region's observations (WP 2.7) and print what they contain."""
+    obs = fetch_observations(name, region, cache_root=cache_root, progress=print)
+    ign = obs.ignition
+    print(f"  ignition {ign.time_utc:%Y-%m-%d %H:%M} UTC at {ign.lat:.5f}, {ign.lon:.5f} ({ign.unique_fire_id})")
+    print(f"  daily perimeter versions {len(obs.daily)}; VIIRS overpasses over the region {len(obs.overpasses)}")
+    dets = obs.detections(grid)
+    widths = [d.t_detect - d.t_clear for d in dets]
+    print(
+        f"  first detections {len(dets)}; median interval {sorted(widths)[len(widths) // 2] / 3600:.1f} h"
+        if dets
+        else ""
+    )
+    print(f"  final perimeter {obs.observed_burn_mask(grid).sum() * grid.dx**2 / 1e4:,.0f} ha")
 
 
 if __name__ == "__main__":

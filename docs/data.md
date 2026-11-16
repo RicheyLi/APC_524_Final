@@ -62,6 +62,9 @@ hashes; it reports any file that differs.
 | Wind, temperature, humidity, radiation, 100-h fuel moisture | [gridMET](https://www.climatologylab.org/gridmet.html) daily, read at a point through the THREDDS NetCDF Subset Service of `thredds.northwestknowledge.net` (`data/weather.py`) | Stated variously as free of known copyright restrictions (Google Earth Engine catalogue) and CC BY 4.0 (UCAR GDEX); we attribute as CC BY 4.0 requires | Abatzoglou, J. T. (2013), Int. J. Climatol. 33, 121-131; Climatology Lab, UC Merced |
 | Roads, waterways, water bodies, buildings | [OpenStreetMap](https://www.openstreetmap.org) through the Overpass API with `osmnx` (`data/osm.py`); the public Overpass server asks automated clients to retry with backoff when busy, which the client does | [Open Database Licence (ODbL) 1.0](https://www.openstreetmap.org/copyright) | (c) OpenStreetMap contributors |
 | Fire perimeter and point of origin | [MTBS](https://www.mtbs.gov) Burned Area Boundaries through the USFS map service `EDW_MTBS_01` (`data/cache.py`) | Public domain | Monitoring Trends in Burn Severity, USDA Forest Service and USGS |
+| Ignition time and point of origin | IRWIN incident record through NIFC's WFIGS Incident Locations service (`FireDiscoveryDateTime`, the record's point geometry); public (`data/validation.py`) | Public domain | National Interagency Fire Center, IRWIN |
+| Daily perimeters | NIFC Operational Data Archive (`Operational_Data_Archive_<year>`, layer "Event Polygon", approved "Wildfire Daily Fire Perimeter" versions with the time each became current); public; the archive starts in 2022 | Public domain | National Interagency Fire Center |
+| Active fire detections, clear and cloudy views | VIIRS 375 m active fire products of Suomi NPP, NOAA-20 and NOAA-21 (VNP14IMG, VJ114IMG, VJ214IMG, collection 2; NASA LP DAAC) and their geolocation (VNP03IMG, VJ103IMG, VJ203IMG; NASA LAADS DAAC), found through NASA's CMR catalogue and read from the Earthdata cloud: the fire mask whole (about 2 MB), the geolocation only in the rows over the region, by HTTP byte ranges. Needs a free NASA Earthdata token (`EARTHDATA_TOKEN`, or the git-ignored file `data/.earthdata_token`; valid 60 days), sent only to NASA's servers (`data/validation.py`) | NASA open data, no restrictions | Schroeder, W. & Giglio, L., NASA VIIRS Land Science Investigator Processing System; cite the product DOIs, e.g. 10.5067/VIIRS/VNP14IMG.002 |
 | Hourly analysis coverage check | NOAA HRRR archive on AWS (`noaa-hrrr-bdp-pds`), listing only (`data/weather.py`, `hrrr_missing_hours`) | NOAA Open Data, no restrictions | NOAA |
 | Live fuel moisture | National Fuel Moisture Database, now in [FEMS](https://www.wildfire.gov/application/fems); no public API, so samples are passed in and a seasonal default is used until then (plan section 13) | Public domain | USDA Forest Service |
 
@@ -79,6 +82,37 @@ The price is one resampling of LANDFIRE's categorical layers on its server.
 10 and bulk density in kg/m^3 x 100, with -9999 for no data; the build converts them
 (`landfire_canopy`). gridMET's point service returns the packed integers of its files; the
 client applies each variable's `scale_factor` and `add_offset`.
+
+## Observations of the fire
+
+`uv run python scripts/download_data.py lake_2024 --observations` also fetches what was
+observed of the fire (WP 2.7, `wildfire_sim.data.validation`): the ignition record, the MTBS
+final perimeter, the daily perimeters and every VIIRS overpass from 12 hours before the
+ignition to the end of the weather window, cached under `data/cache/` (`irwin-<id>/`,
+`mtbs-<id>/`, `viirs-<region>/` with one small `.npz` per overpass and a manifest). The first
+build of the Lake Fire reads 100 overpasses in about an hour; later builds read the cache.
+
+On the grid (`FireObservations`):
+
+* `observed_burn_mask(grid)` is the MTBS perimeter; `observed_burn_mask(grid, until)` the cells
+  inside some approved daily perimeter posted by `until`, so burned by then. Burned ground stays
+  burned: the archive briefly replaced the Lake Fire's 4,674-acre perimeter of 6 July by a
+  1-acre placeholder, which must not un-burn anything.
+* `detections(grid)` gives each place's first VIIRS detection as `(t_clear, t_detect, row,
+  col)`, in seconds from the region's `weather_start_utc`: the fire arrived after `t_clear`, the
+  last earlier overpass that saw the cell clear (no cloud, no fire), or the ignition, and by
+  `t_detect`. Each overpass's fire-mask classes are put on the grid by nearest pixel within
+  600 m; bowtie-deleted pixels never decide; sun glint, cloud and unclassified views never count
+  as clear. On the Lake Fire whole overpasses are glint-flagged in daytime (Suomi NPP on 5 July
+  at 20:51 UTC, NOAA-20 on 6 July at 20:56 UTC), and the rule skips them.
+
+As built (2026-11-15), the Lake Fire has 97 overpasses over the region and 654 first detections
+between 6 and 13 July; 87 % lie inside the MTBS perimeter and 98 % within 1 km of it (a 375 m
+pixel's centre can fall just outside the mapped edge); their intervals are 0.4 to 14 h wide,
+median 9.7 h. The detections lead the mapped perimeters, as they should: 252 first detections
+by 12 UTC on 7 July, when the first infrared perimeter enclosed 4,959 ha. The ignition record
+gives 5 July 2024, 22:48 UTC (15:48 PDT), at 34.7868 N, 120.0520 W (IRWIN `2024-CALPF-001542`;
+the initially reported position, 34.785 N, 120.0448 W, is 660 m away and is kept in the cache).
 
 ## The LANDFIRE version must predate the fire
 
@@ -98,4 +132,5 @@ perimeter (plan section 13).
 Tests that call these services are marked `network` and run with `--run-network`. A scheduled
 CI job (`.github/workflows/network.yml`, Mondays) runs them so a changed service is noticed. The
 LANDFIRE tests and the full region build need the repository secret
-`WILDFIRE_SIM_LANDFIRE_EMAIL` and skip without it.
+`WILDFIRE_SIM_LANDFIRE_EMAIL`, and the VIIRS test the secret `EARTHDATA_TOKEN` (renewed every 60
+days); each skips without its secret.

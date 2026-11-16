@@ -15,6 +15,7 @@
 #   weather_start_utc  start of the hourly weather series; a scenario on this region sets
 #                      start_time_utc to this instant (WP 1.14) and ignition.time_s from it
 #   weather_days       length of the weather series, days
+#   irwin_id           IRWIN record of the incident: ignition and daily perimeters (WP 2.7)
 #
 # Fire B is added here when the team chooses it (section 13).
 regions:
@@ -23,6 +24,7 @@ regions:
     description: "2024 Lake Fire, Santa Barbara County, CA: chaparral and grass, grew 5-17 July 2024"
     mtbs_fire_id: CA3478712005220240705
     mtbs_year: 2024
+    irwin_id: "{748283A9-D659-4FC4-9938-55DDE2484A19}"  # IRWIN 2024-CALPF-001542 (WP 2.7)
     fire_date: 2024-07-05
     landfire_version: LF2023
     buffer_m: 3000

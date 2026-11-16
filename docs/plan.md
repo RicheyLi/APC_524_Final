@@ -839,7 +839,20 @@ the build refuses a grid rotated by more than 1 deg; (2) an aspect just below 36
 `docs/data.md` records each source's access method, licence and attribution; a weekly CI job
 (`.github/workflows/network.yml`) runs the `network` tests, the LANDFIRE ones only once the
 repository secret `WILDFIRE_SIM_LANDFIRE_EMAIL` is set. Fire B's region waits for its choice.
-The remaining WPs have not started.
+
+2.7 built (branch `wp-2.7-validation`): `data/validation.py` gets a region's observations and
+puts them on its grid. Ignition from the IRWIN record (WFIGS Incident Locations): the Lake Fire
+was discovered on 5 July 2024 at 22:48 UTC at 34.7868 N, 120.0520 W. Final perimeter from MTBS;
+daily perimeters from NIFC's Operational Data Archive (167 approved versions; it starts in 2022,
+so earlier fires have none); `observed_burn_mask(grid, until)` counts every cell inside some
+perimeter posted by `until`, because the archive briefly shows shrunken placeholders. VIIRS 375 m
+active fire masks of Suomi NPP, NOAA-20 and NOAA-21 (100 overpasses of the Lake Fire; whole
+fire masks and only the needed rows of the geolocation, by byte ranges; a NASA Earthdata token,
+live download succeeded, test marked `network`); `detections(grid)` returns each place's first
+detection with `t_clear` the last earlier overpass that saw it clear (no cloud, glint or fire)
+or the ignition, as section 7 requires: 654 for the Lake Fire, 98 % within 1 km of the MTBS
+perimeter, intervals 0.4-14 h (median 9.7 h). Details in `docs/data.md`. The remaining WPs have
+not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
