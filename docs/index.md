@@ -8,5 +8,6 @@ reactive suppression policies over Monte Carlo ensembles. APC 524 final project.
 - [Usage](usage.md)
 - [Project plan](plan.md) - model design, data sources, milestones and work packages
 - [Lattice study](lattice_study.md) - what each neighbour stencil can and cannot represent
+- [Sensitivity analysis](sensitivity.md) - Morris screening: which inputs drive burned area and head arrival time
 - [Performance](performance.md) - profile, engine timings and ensemble costs
 - [API Reference](api.md)

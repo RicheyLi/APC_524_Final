@@ -1,0 +1,160 @@
+# Morris screening of the simulator's inputs (WP 3.2, docs/plan.md section 7; docs/sensitivity.md).
+# Read by wildfire_sim.sensitivity (SensitivityStudy); run with scripts/sensitivity.py.
+#
+# Every input is applied to the whole run. Ranges are judgments unless a source says otherwise:
+# a screening ranks inputs over the ranges given here, so a range is part of the answer.
+# Relative paths are relative to this file.
+levels: 4            # p; Morris step delta = p / (2 (p - 1)) = 2/3. p = 4 and r = 10-20 are the usual choices (Saltelli et al. 2008, The Primer, ch. 3)
+trajectories: 20     # r; r (k + 1) runs per scenario and run seed
+design_seed: 20261116
+run_seeds: [1, 2]    # the whole screening is repeated with a second kernel seed to check the ranking
+
+inputs:
+  wind_speed:
+    target: wind_speed_factor
+    range: [0.7, 1.3]
+    units: "factor on the 10 m wind speed of every weather point, dimensionless"
+    source: "judgment: +-30 % about the analysis wind. No local verification of the HRRR 10 m wind (as Fovell & Gallagher 2020, Weather Forecast. 35, 2255-2278, did for HRRR v3 at surface stations) has been done for these fires; it would replace this range"
+  wind_direction:
+    target: wind_direction_offset_deg
+    range: [-30.0, 30.0]
+    units: "deg added to every wind direction"
+    source: "judgment: a 4 km analysis does not resolve terrain-channelled wind (docs/plan.md section 2.2); +-30 deg about the analysis direction"
+  moisture_1h:
+    target: weather_scale
+    fields: [moisture_1h]
+    range: [0.7, 1.3]
+    units: "factor on the 1-h dead fuel moisture of every weather point, dimensionless"
+    source: "judgment: the equilibrium model reproduces the Wood Handbook table within 1 percentage point (WP 2.1c), but fine fuel departs from equilibrium; a relative range, since the 1-h moisture of both scenarios is a few percent"
+  moisture_10h_100h:
+    target: weather_scale
+    fields: [moisture_10h, moisture_100h]
+    range: [0.7, 1.3]
+    units: "factor on the 10-h and 100-h dead fuel moistures of every weather point, dimensionless"
+    source: "judgment, as moisture_1h; the 10-h value is the NFDRS equilibrium rule without its time lag (docs/plan.md section 13), the 100-h value gridMET's"
+  live_herb:
+    target: weather_set
+    fields: [moisture_live_herb]
+    range: [0.30, 0.60]
+    units: "live herbaceous moisture, fraction"
+    source: "Scott & Burgan (2005), RMRS-GTR-153, live moisture scenarios L1 (0.30, fully cured) to L2 (0.60); fire A runs at L1 by the placeholder month mapping of configs/weather.yaml (docs/plan.md section 13)"
+  live_woody:
+    target: weather_set
+    fields: [moisture_live_woody]
+    range: [0.60, 0.90]
+    units: "live woody moisture, fraction"
+    source: "Scott & Burgan (2005), RMRS-GTR-153, live moisture scenarios L1 (0.60) to L2 (0.90); placeholder month mapping as live_herb"
+  ros_multiplier:
+    target: ros_multiplier
+    range: [0.3, 3.0]
+    scale: log
+    units: "factor on every directional rate of spread, dimensionless"
+    source: "the calibration bounds of the spread-rate multiplier in WP 3.1 (docs/plan.md section 12), log-uniform so 1/3 and 3 are equally far from 1"
+  arrival_shape:
+    target: arrival_shape
+    levels: [5.0, 20.0, 50.0, 200.0]
+    units: "gamma shape k of the cell-to-cell crossing time, dimensionless"
+    source: "the four shapes with a measured front-speed correction in configs/kernel_correction.yaml (another shape would run uncorrected); 200 is the default (docs/plan.md section 2.1)"
+  stencil:
+    target: stencil
+    levels: [8, 16]
+    units: "neighbours"
+    source: "the two stencils of the simulator; 16 is the default (docs/plan.md section 2.4)"
+  inert_temperature:
+    target: weather_shift
+    fields: [temperature_c]
+    range: [-5.0, 5.0]
+    units: "deg C added to the air temperature of every weather point"
+    inert: true
+    source: "deliberately inert: the engine and the spread rules never read Weather.temperature_c (fuel moistures are computed from it before a run, in data.weather), so its effects must be exactly 0"
+  apply_wind_limit:
+    target: spread_param
+    param: apply_wind_limit
+    levels: [false, true]
+    units: "switch"
+    source: "open decision (docs/plan.md section 13): Rothermel's (1972) wind limit, off by default, on in BehavePlus; Andrews et al. (2013) found it too restrictive"
+  canopy_height:
+    target: spread_param
+    param: canopy_height
+    range: [5.0, 25.0]
+    units: "m, uniform over the grid"
+    source: "judgment about the 15 m placeholder of configs/rothermel.yaml (docs/plan.md section 13), from tall shrub and oak woodland to conifer; used only for sheltered fuel"
+  crown_ratio:
+    target: spread_param
+    param: crown_ratio
+    range: [0.2, 0.6]
+    units: "fraction, uniform over the grid"
+    source: "judgment about the 0.4 placeholder of configs/rothermel.yaml (docs/plan.md section 13); it also sets which cells count as sheltered"
+  break_width:
+    target: break_width_scale
+    range: [0.5, 1.5]
+    units: "factor on the width of every road and stream break, dimensionless"
+    source: "judgment: the class default widths of configs/osm.yaml are placeholders (docs/plan.md section 13)"
+  holdover:
+    target: parameter_file
+    file: holdover.yaml
+    key: default.value
+    range: [21600.0, 86400.0]
+    units: "s, every fuel model"
+    source: "judgment about the 12 h placeholder of configs/holdover.yaml (docs/plan.md section 13): 6 h to 24 h"
+  urban_ros_factor:
+    target: parameter_file
+    file: urban.yaml
+    key: ros_factor.value
+    range: [0.25, 1.0]
+    units: "dimensionless"
+    source: "judgment about the 0.5 placeholder of configs/urban.yaml (docs/plan.md section 13): from four times slower than the surrogate fuel to as fast"
+  urban_residence_factor:
+    target: parameter_file
+    file: urban.yaml
+    key: residence_factor.value
+    range: [10.0, 60.0]
+    units: "dimensionless"
+    source: "judgment about the 30 placeholder of configs/urban.yaml (docs/plan.md section 13); it sets how long an urban cell flames, which enters spread only through a still-burning cell next to a breached break"
+  breach_floor:
+    target: parameter_file
+    file: breach.yaml
+    key: min_intensity_mw_m.value
+    range: [0.09, 0.36]
+    units: "MW/m"
+    source: "judgment: half to twice the 0.18 MW/m placeholder of configs/breach.yaml (docs/plan.md section 13)"
+  tree_cover_min:
+    target: parameter_file
+    file: breach.yaml
+    key: tree_cover_min.value
+    range: [0.05, 0.30]
+    units: "canopy cover fraction"
+    source: "judgment about the 0.10 placeholder of configs/breach.yaml (docs/plan.md section 13)"
+
+scenarios:
+  synthetic:
+    description: "flat, uniform grass-shrub (GS2) on 241 x 241 cells of 30 m, steady 6 m/s west wind, ignition at the centre"
+    scenario:
+      name: sensitivity synthetic
+      grid: {kind: synthetic, generator: flat_uniform, shape: [241, 241], dx: 30.0, fuel_model: 122}
+      weather:
+        series:
+          - {time_s: 0.0, wind_speed: 6.0, wind_direction: 270.0, moisture_1h: 0.04, moisture_10h: 0.05, moisture_100h: 0.06}
+      spread: {rule: rothermel}
+      ignition: {center: true}
+      dt_s: 60.0
+      duration_s: 64800.0
+    window_s: 3600.0
+    head_distance_m: 900.0
+    inputs: [wind_speed, wind_direction, moisture_1h, moisture_10h_100h, live_herb, live_woody, ros_multiplier,
+             arrival_shape, stencil, inert_temperature, apply_wind_limit]
+  lake_2024_crop:
+    description: "the committed 5 km crop of fire A (2024 Lake Fire): real fuels, terrain, urban cells, roads and streams, hourly HRRR weather; ignited at the crop centre at the recorded ignition time"
+    scenario:
+      name: sensitivity lake_2024 crop
+      grid: {kind: cached, path: ../tests/fixtures/lake_2024_5km.npz}
+      spread: {rule: rothermel}
+      ignition: {center: true, time_s: 56880.0}
+      dt_s: 60.0
+      duration_s: 100080.0
+    weather_file: ../tests/fixtures/lake_2024_weather.yaml
+    window_s: 2700.0
+    head_distance_m: 1200.0
+    inputs: [wind_speed, wind_direction, moisture_1h, moisture_10h_100h, live_herb, live_woody, ros_multiplier,
+             arrival_shape, stencil, inert_temperature, apply_wind_limit, canopy_height, crown_ratio, break_width,
+             holdover, urban_ros_factor, urban_residence_factor, breach_floor, tree_cover_min]
