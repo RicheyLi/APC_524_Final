@@ -542,6 +542,7 @@ def test_fetch_viirs_reads_a_cached_period_without_the_catalogue(
 
     monkeypatch.setattr(validation, "find_overpasses", find)
     monkeypatch.setattr(validation, "read_overpass", read)
+    monkeypatch.setattr(validation, "EarthdataHttp", lambda token: None)  # the real client needs requests
     first = fetch_viirs("x", box, start, end, cache_root=tmp_path, token="t")
     assert calls == {"list": 1, "read": 2} and [w.satellite for w in first] == ["Suomi NPP"]
 
