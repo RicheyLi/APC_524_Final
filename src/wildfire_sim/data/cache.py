@@ -57,6 +57,7 @@ import yaml
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from wildfire_sim.config import WeatherConfig, configs_dir, load_costs, load_yaml
+from wildfire_sim.data.hrrr import hrrr_cache_key
 from wildfire_sim.data.landfire import (
     DEFAULT_CACHE,
     BBox,
@@ -116,6 +117,9 @@ class Region(BaseModel):
     note: str = ""
     irwin_id: str | None = Field(
         default=None, description="IRWIN record id of the incident (ignition and daily perimeters, WP 2.7)"
+    )
+    weather_source: Literal["gridmet", "hrrr"] = Field(
+        default="gridmet", description="hourly weather from disaggregated gridMET or from HRRR analyses"
     )
 
     @field_validator("mtbs_fire_id")
@@ -179,6 +183,11 @@ class Perimeter:
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _read_manifest(directory: Path) -> dict[str, Any] | None:
+    path = directory / "manifest.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
 
 
 def write_yaml_lf(model: BaseModel, path: Path) -> None:
@@ -418,8 +427,12 @@ def _perimeter_source(region: Region, root: Path) -> Perimeter:
     return fetch_mtbs_perimeter(region.mtbs_fire_id, region.mtbs_year, cache_root=root)
 
 
-def _weather_source(lat: float, lon: float, start: dt.datetime, duration_s: float, root: Path) -> WeatherConfig:
-    return hourly_weather(lat, lon, start, duration_s, cache_root=root)
+def _weather_source(
+    lat: float, lon: float, start: dt.datetime, duration_s: float, root: Path, source: str = "gridmet"
+) -> WeatherConfig:
+    return hourly_weather(
+        lat, lon, start, duration_s, cache_root=root, source="hrrr" if source == "hrrr" else "gridmet"
+    )
 
 
 @dataclass
@@ -430,7 +443,7 @@ class RegionSources:
     landfire: Callable[[BBox, Region, Path], LandfireLayers] = _landfire_source
     dem: Callable[[BBox, Path], DemFile] = _dem_source
     osm: Callable[[BBox, Path], OsmFeatures] = _osm_source
-    weather: Callable[[float, float, dt.datetime, float, Path], WeatherConfig] = _weather_source
+    weather: Callable[[float, float, dt.datetime, float, Path, str], WeatherConfig] = _weather_source
 
 
 # ----------------------------------------------------------------------------- build
@@ -537,7 +550,7 @@ def build_region(
 
     lat, lon = float(terrain.metadata["centroid_lat"]), float(terrain.metadata["centroid_lon"])
     duration_s = region.weather_days * 86400.0
-    weather = src.weather(lat, lon, region.weather_start_utc, duration_s, root)
+    weather = src.weather(lat, lon, region.weather_start_utc, duration_s, root, region.weather_source)
 
     directory.mkdir(parents=True, exist_ok=True)
     grid.save(directory / "grid.npz")
@@ -575,6 +588,7 @@ def build_region(
         "fire": {**perimeter.properties, "fire_date": region.fire_date.isoformat()},
         "download_bbox_wgs84": {"west": bbox.west, "south": bbox.south, "east": bbox.east, "north": bbox.north},
         "weather": {
+            "source": region.weather_source,
             "point": {"lat": lat, "lon": lon},
             "start_utc": region.weather_start_utc.isoformat(),
             "days": region.weather_days,
@@ -585,6 +599,9 @@ def build_region(
             "dem": dem.manifest,
             "osm": osm.manifest,
             "gridmet": gridmet_manifest,
+            "hrrr": _read_manifest(root / hrrr_cache_key(lat, lon, region.weather_start_utc, n_hours))
+            if region.weather_source == "hrrr"
+            else None,
         },
         "sha256": {f: _sha256(directory / f) for f in OUTPUT_FILES},
     }

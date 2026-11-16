@@ -1,3361 +1,3361 @@
 series:
 - time_s: 0.0
-  wind_speed: 2.8993225773236073
-  wind_direction: 281.0
-  moisture_1h: 0.05383227322609973
-  moisture_10h: 0.06689835896058996
+  wind_speed: 5.242001479791292
+  wind_direction: 30.925878269441263
+  moisture_1h: 0.04482824816666037
+  moisture_10h: 0.055708890925558516
   moisture_100h: 0.051000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.359105824240967
-  relative_humidity: 0.2623302498145697
+  temperature_c: 28.820756961638267
+  relative_humidity: 0.2101600823959481
 - time_s: 3600.0
-  wind_speed: 2.764135384717637
-  wind_direction: 281.0
-  moisture_1h: 0.05543240205663785
-  moisture_10h: 0.06888686857523928
+  wind_speed: 4.937661604647322
+  wind_direction: 37.2367501555814
+  moisture_1h: 0.043864678038441525
+  moisture_10h: 0.05451144455262636
   moisture_100h: 0.051000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.831753663180987
-  relative_humidity: 0.27115677456464793
+  temperature_c: 28.663219398653403
+  relative_humidity: 0.2040552424150961
 - time_s: 7200.0
-  wind_speed: 3.5790961495693847
-  wind_direction: 351.0
-  moisture_1h: 0.05670911303692292
-  moisture_10h: 0.07047346086141879
+  wind_speed: 4.865658353502056
+  wind_direction: 57.99004788857282
+  moisture_1h: 0.047007605979888595
+  moisture_10h: 0.0584172190818033
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.41098985863412
-  relative_humidity: 0.2781992831746536
+  temperature_c: 28.64282266425187
+  relative_humidity: 0.22307976061314136
 - time_s: 10800.0
-  wind_speed: 3.5500001552202227
-  wind_direction: 351.0
-  moisture_1h: 0.05772777534465246
-  moisture_10h: 0.07173937130209238
+  wind_speed: 6.85852341661299
+  wind_direction: 60.65038984023
+  moisture_1h: 0.04671115821523653
+  moisture_10h: 0.05804881797621628
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.075270784570023
-  relative_humidity: 0.28381836077612577
+  temperature_c: 27.4139166489649
+  relative_humidity: 0.21923957872677846
 - time_s: 14400.0
-  wind_speed: 3.5788302456016434
-  wind_direction: 351.0
-  moisture_1h: 0.058540545747047784
-  moisture_10h: 0.07274941607400112
+  wind_speed: 6.843204155258457
+  wind_direction: 60.15484573920104
+  moisture_1h: 0.055999002874860815
+  moisture_10h: 0.0695909938639047
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.807407210107314
-  relative_humidity: 0.28830171107640185
+  temperature_c: 26.936861861223115
+  relative_humidity: 0.27476728775000064
 - time_s: 18000.0
-  wind_speed: 3.6636216976981295
-  wind_direction: 351.0
-  moisture_1h: 0.05918903909169925
-  moisture_10h: 0.0735553107158981
+  wind_speed: 6.763731830873531
+  wind_direction: 66.9560306146457
+  moisture_1h: 0.04713250297746469
+  moisture_10h: 0.05857243088461631
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.5936841896803
-  relative_humidity: 0.2918788871434702
+  temperature_c: 27.97745373535074
+  relative_humidity: 0.22273122222656194
 - time_s: 21600.0
-  wind_speed: 3.7985961141738054
-  wind_direction: 351.0
-  moisture_1h: 0.04379663238961085
-  moisture_10h: 0.05442688296961348
+  wind_speed: 7.756018194363962
+  wind_direction: 69.71073947017473
+  moisture_1h: 0.03574187298577276
+  moisture_10h: 0.044417084875523434
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.521539274147905
-  relative_humidity: 0.29534057581769346
+  temperature_c: 27.408866790027382
+  relative_humidity: 0.23439871184670633
 - time_s: 25200.0
-  wind_speed: 3.9745552116016234
-  wind_direction: 351.0
-  moisture_1h: 0.03858306014583643
-  moisture_10h: 0.047947880569583136
+  wind_speed: 7.851585602181054
+  wind_direction: 69.97419929943344
+  moisture_1h: 0.03608486044126931
+  moisture_10h: 0.044843321713422056
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.15084683834873
-  relative_humidity: 0.2590146160491295
+  temperature_c: 28.844752594432315
+  relative_humidity: 0.24035392906844005
 - time_s: 28800.0
-  wind_speed: 4.179507668278036
-  wind_direction: 351.0
-  moisture_1h: 0.03357517156077533
-  moisture_10h: 0.04172448504640041
+  wind_speed: 8.977627000565045
+  wind_direction: 71.97389720503855
+  moisture_1h: 0.03135457825021229
+  moisture_10h: 0.038964912776962846
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.67642406672594
-  relative_humidity: 0.22412177276233924
+  temperature_c: 31.42257436228237
+  relative_humidity: 0.20782137125545547
 - time_s: 32400.0
-  wind_speed: 4.399486312980493
-  wind_direction: 351.0
-  moisture_1h: 0.02892571387339107
-  moisture_10h: 0.03594651821159279
+  wind_speed: 8.574059922261952
+  wind_direction: 66.65228409620121
+  moisture_1h: 0.028011595961330613
+  moisture_10h: 0.034810527019906
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.021237506583596
-  relative_humidity: 0.19172632392220068
+  temperature_c: 33.34803935871331
+  relative_humidity: 0.1850597220119669
 - time_s: 36000.0
-  wind_speed: 4.6194999646044215
-  wind_direction: 351.0
-  moisture_1h: 0.024776501705227844
-  moisture_10h: 0.03079021571135111
+  wind_speed: 7.687825627014852
+  wind_direction: 60.240731586745355
+  moisture_1h: 0.026081941251263157
+  moisture_10h: 0.03241250951613286
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.11376724034779
-  relative_humidity: 0.16281637365309018
+  temperature_c: 35.225621493164184
+  relative_humidity: 0.17361900600862923
 - time_s: 39600.0
-  wind_speed: 4.824555056381401
-  wind_direction: 351.0
-  moisture_1h: 0.02125409152650172
-  moisture_10h: 0.026412851605749712
+  wind_speed: 7.47169465439553
+  wind_direction: 64.64776193582975
+  moisture_1h: 0.01669573744863932
+  moisture_10h: 0.020748100907046922
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 36.890188337840364
-  relative_humidity: 0.13827371375352182
+  temperature_c: 37.645482356523964
+  relative_humidity: 0.10136871595690332
 - time_s: 43200.0
-  wind_speed: 5.000677422676392
-  wind_direction: 351.0
-  moisture_1h: 0.01945494031955362
-  moisture_10h: 0.024177013212649156
+  wind_speed: 6.879169731977236
+  wind_direction: 57.863748913826285
+  moisture_1h: 0.014926165216268487
+  moisture_10h: 0.01854902085128511
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 38.29631760123857
-  relative_humidity: 0.11884692787762557
+  temperature_c: 38.75571319971958
+  relative_humidity: 0.09090884647923499
 - time_s: 46800.0
-  wind_speed: 5.1358646152823635
-  wind_direction: 351.0
-  moisture_1h: 0.017163771295673143
-  moisture_10h: 0.021329735202389927
+  wind_speed: 5.081845435675787
+  wind_direction: 60.360649541612695
+  moisture_1h: 0.014930557076773356
+  moisture_10h: 0.018554478697349414
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 39.28926622441949
-  relative_humidity: 0.10512855874157345
+  temperature_c: 39.14291657711311
+  relative_humidity: 0.09111283396508946
 - time_s: 50400.0
-  wind_speed: 5.2209038504306164
-  wind_direction: 351.0
-  moisture_1h: 0.015905286303332874
-  moisture_10h: 0.01976579268763697
+  wind_speed: 4.376798893335094
+  wind_direction: 49.23272052851671
+  moisture_1h: 0.013835053967171914
+  moisture_10h: 0.01719307677473791
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 39.83874795838868
-  relative_humidity: 0.09753703478542017
+  temperature_c: 39.67553909768251
+  relative_humidity: 0.08450105173305648
 - time_s: 54000.0
-  wind_speed: 5.2499998447797775
-  wind_direction: 351.0
-  moisture_1h: 0.01570149765466626
-  moisture_10h: 0.019512540774730885
+  wind_speed: 4.5935708991102535
+  wind_direction: 357.6776233824958
+  moisture_1h: 0.01565164256539214
+  moisture_10h: 0.01945058493563295
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 39.928002882013914
-  relative_humidity: 0.09630390755112428
+  temperature_c: 39.931244535902636
+  relative_humidity: 0.09599307519160051
 - time_s: 57600.0
-  wind_speed: 5.221169754398357
-  wind_direction: 351.0
-  moisture_1h: 0.016555904269070706
-  moisture_10h: 0.020574327635350005
+  wind_speed: 4.497122296495868
+  wind_direction: 4.414133933117913
+  moisture_1h: 0.01570995920765177
+  moisture_10h: 0.019523056102712877
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 39.55430860183212
-  relative_humidity: 0.10146678905363585
+  temperature_c: 40.191624713168366
+  relative_humidity: 0.09648502650242277
 - time_s: 61200.0
-  wind_speed: 5.136378302301871
-  wind_direction: 351.0
-  moisture_1h: 0.018453713900657795
-  moisture_10h: 0.022932770672662115
+  wind_speed: 5.163928225757195
+  wind_direction: 0.2709677441473986
+  moisture_1h: 0.021628718488863066
+  moisture_10h: 0.026878407442470605
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 38.72906328865815
-  relative_humidity: 0.11286820456459196
+  temperature_c: 38.39046125504615
+  relative_humidity: 0.1446274324040215
 - time_s: 64800.0
-  wind_speed: 5.001403885826194
-  wind_direction: 351.0
-  moisture_1h: 0.021360930013693376
-  moisture_10h: 0.026545621764589827
+  wind_speed: 5.354483360591474
+  wind_direction: 36.266070543226974
+  moisture_1h: 0.012278186918965341
+  moisture_10h: 0.01525832937502489
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 37.47743801826852
-  relative_humidity: 0.13016039580023808
+  temperature_c: 39.650416905515655
+  relative_humidity: 0.07474843128889612
 - time_s: 68400.0
-  wind_speed: 4.825444788398377
-  wind_direction: 351.0
-  moisture_1h: 0.023341218338663542
-  moisture_10h: 0.029006562595620712
+  wind_speed: 5.993208767132412
+  wind_direction: 50.85928508681301
+  moisture_1h: 0.010556885835851461
+  moisture_10h: 0.013119236766883369
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.83760902023019
-  relative_humidity: 0.1528159280099781
+  temperature_c: 38.07106297243673
+  relative_humidity: 0.06347340181170992
 - time_s: 72000.0
-  wind_speed: 4.620492331721964
-  wind_direction: 351.0
-  moisture_1h: 0.027263364323342296
-  moisture_10h: 0.03388068576104673
+  wind_speed: 6.081523254582155
+  wind_direction: 64.72958490517433
+  moisture_1h: 0.015322730819572153
+  moisture_10h: 0.0190418402417984
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.859593252302545
-  relative_humidity: 0.18014377743529422
+  temperature_c: 34.90048687288471
+  relative_humidity: 0.0916109644596652
 - time_s: 75600.0
-  wind_speed: 4.400513687019507
-  wind_direction: 351.0
-  moisture_1h: 0.04371033207134924
-  moisture_10h: 0.05431963597216216
+  wind_speed: 7.869740023713423
+  wind_direction: 80.89266317440081
+  moisture_1h: 0.029240672474080447
+  moisture_10h: 0.03633792307458541
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.846859043934824
-  relative_humidity: 0.20841079376386584
+  temperature_c: 32.27016729839841
+  relative_humidity: 0.12137171492896158
 - time_s: 79200.0
-  wind_speed: 4.180500035395578
-  wind_direction: 351.0
-  moisture_1h: 0.04790179809134833
-  moisture_10h: 0.05952844811352025
+  wind_speed: 7.323727091589604
+  wind_direction: 74.01557475615013
+  moisture_1h: 0.02983850775522578
+  moisture_10h: 0.03708086400649418
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.23220784613429
-  relative_humidity: 0.23114375625699182
+  temperature_c: 31.689721073700998
+  relative_humidity: 0.12403217885188215
 - time_s: 82800.0
-  wind_speed: 3.9754449436185992
-  wind_direction: 351.0
-  moisture_1h: 0.051246962383062644
-  moisture_10h: 0.06368554548574776
+  wind_speed: 7.6209650733929895
+  wind_direction: 75.86652187897812
+  moisture_1h: 0.023258535641517888
+  moisture_10h: 0.028903811282663006
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.943571959624762
-  relative_humidity: 0.2492866909757856
+  temperature_c: 32.302641023563964
+  relative_humidity: 0.09721040954712047
 - time_s: 86400.0
-  wind_speed: 3.7993225773236077
-  wind_direction: 351.0
-  moisture_1h: 0.05391670229868363
-  moisture_10h: 0.06700328052651947
+  wind_speed: 7.919135111736579
+  wind_direction: 77.999587680647
+  moisture_1h: 0.02106700692066767
+  moisture_10h: 0.026180358115004482
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.915125413236147
-  relative_humidity: 0.2637663735208981
+  temperature_c: 32.147059040979336
+  relative_humidity: 0.0878557996345469
 - time_s: 90000.0
-  wind_speed: 3.6641353847176372
-  wind_direction: 351.0
-  moisture_1h: 0.056047393229085495
-  moisture_10h: 0.06965112944973731
+  wind_speed: 7.998333609727524
+  wind_direction: 76.9644228417322
+  moisture_1h: 0.027798473804349286
+  moisture_10h: 0.034545676184045714
   moisture_100h: 0.046000000000000006
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.094333201990487
-  relative_humidity: 0.2753224536069964
+  temperature_c: 31.145510058227217
+  relative_humidity: 0.1107570780253248
 - time_s: 93600.0
-  wind_speed: 1.8790961495693845
-  wind_direction: 331.0
-  moisture_1h: 0.0577478749180821
-  moisture_10h: 0.07176434941276222
+  wind_speed: 8.17787289953639
+  wind_direction: 81.05924480177664
+  moisture_1h: 0.029571783889469065
+  moisture_10h: 0.03674940133836932
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.439267699162723
-  relative_humidity: 0.2845452377764874
+  temperature_c: 30.79268843729407
+  relative_humidity: 0.12092384281153373
 - time_s: 97200.0
-  wind_speed: 1.8500001552202225
-  wind_direction: 331.0
-  moisture_1h: 0.05910501120347817
-  moisture_10h: 0.07345088770917675
+  wind_speed: 7.809981807855431
+  wind_direction: 80.47575498844085
+  moisture_1h: 0.02752276407713161
+  moisture_10h: 0.034203046620124716
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.91646691339044
-  relative_humidity: 0.29190584338005515
+  temperature_c: 30.956217513550737
+  relative_humidity: 0.10877057921851295
 - time_s: 100800.0
-  wind_speed: 1.8788302456016432
-  wind_direction: 331.0
-  moisture_1h: 0.06018812718705895
-  moisture_10h: 0.074796895921782
+  wind_speed: 7.080575121127479
+  wind_direction: 80.41890635802423
+  moisture_1h: 0.027364561718657573
+  moisture_10h: 0.034006445630953105
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.49922518653374
-  relative_humidity: 0.29778026414667097
+  temperature_c: 31.365699894797867
+  relative_humidity: 0.10849185094709515
 - time_s: 104400.0
-  wind_speed: 1.9636216976981293
-  wind_direction: 331.0
-  moisture_1h: 0.061052550492597356
-  moisture_10h: 0.0758711307092472
+  wind_speed: 7.196284919921307
+  wind_direction: 75.7528181442584
+  moisture_1h: 0.026098439276955
+  moisture_10h: 0.032433011916992625
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.16622901788185
-  relative_humidity: 0.302468576658147
+  temperature_c: 31.916981699826046
+  relative_humidity: 0.10173048270378306
 - time_s: 108000.0
-  wind_speed: 2.098596114173805
-  wind_direction: 331.0
-  moisture_1h: 0.045888970389784574
-  moisture_10h: 0.057027069998955585
+  wind_speed: 6.806220204866969
+  wind_direction: 78.79306216875842
+  moisture_1h: 0.017559930585996853
+  moisture_10h: 0.021822049660267934
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.596084358257812
-  relative_humidity: 0.3102066462838706
+  temperature_c: 31.51556665651328
+  relative_humidity: 0.1035615972233675
 - time_s: 111600.0
-  wind_speed: 2.274555211601623
-  wind_direction: 331.0
-  moisture_1h: 0.040530814001111935
-  moisture_10h: 0.05036839021497405
+  wind_speed: 6.686874245462514
+  wind_direction: 76.88330468905458
+  moisture_1h: 0.0159159825816448
+  moisture_10h: 0.019779085150005187
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.192881555182765
-  relative_humidity: 0.272639646835023
+  temperature_c: 33.78040851953592
+  relative_humidity: 0.09471548460835784
 - time_s: 115200.0
-  wind_speed: 2.4795076682780355
-  wind_direction: 331.0
-  moisture_1h: 0.03538332586077648
-  moisture_10h: 0.043971511749314456
+  wind_speed: 6.548918551112321
+  wind_direction: 79.69985370725803
+  moisture_1h: 0.01659204737543673
+  moisture_10h: 0.020619243340348557
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.687579694693188
-  relative_humidity: 0.23654968041677224
+  temperature_c: 36.2249526667135
+  relative_humidity: 0.10001895670477685
 - time_s: 118800.0
-  wind_speed: 2.699486312980493
-  wind_direction: 331.0
-  moisture_1h: 0.030603721735626418
-  moisture_10h: 0.03803180953553574
+  wind_speed: 4.880310333727884
+  wind_direction: 77.89749732229681
+  moisture_1h: 0.016544517727346636
+  moisture_10h: 0.0205601773699065
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.00398513236189
-  relative_humidity: 0.20303901508516503
+  temperature_c: 38.027193342009966
+  relative_humidity: 0.10062315450182227
 - time_s: 122400.0
-  wind_speed: 2.9194999646044213
-  wind_direction: 331.0
-  moisture_1h: 0.026337981394294555
-  moisture_10h: 0.03273069532494857
+  wind_speed: 0.7226446225972551
+  wind_direction: 109.12052444854287
+  moisture_1h: 0.020603680688705002
+  moisture_10h: 0.025604574059749904
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.07134968047363
-  relative_humidity: 0.17313114128914853
+  temperature_c: 37.479350427474685
+  relative_humidity: 0.12547439797869417
 - time_s: 126000.0
-  wind_speed: 3.124555056381401
-  wind_direction: 331.0
-  moisture_1h: 0.02271639005952529
-  moisture_10h: 0.028230076967177057
+  wind_speed: 2.689426533854371
+  wind_direction: 241.89502209041677
+  moisture_1h: 0.03233566655359502
+  moisture_10h: 0.04018412930932197
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.826531415448386
-  relative_humidity: 0.14773951218984702
+  temperature_c: 35.54254442432455
+  relative_humidity: 0.2248840138553479
 - time_s: 129600.0
-  wind_speed: 3.3006774226763924
-  wind_direction: 331.0
-  moisture_1h: 0.0209805121869083
-  moisture_10h: 0.02607286951382779
+  wind_speed: 2.5367640125759663
+  wind_direction: 236.35605618235576
+  moisture_1h: 0.03939890607487288
+  moisture_10h: 0.048961747355181835
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 37.21592317299574
-  relative_humidity: 0.1276396447639954
+  temperature_c: 33.83335664789298
+  relative_humidity: 0.27820401211289864
 - time_s: 133200.0
-  wind_speed: 3.4358646152823633
-  wind_direction: 331.0
-  moisture_1h: 0.018594892556839028
-  moisture_10h: 0.023108215992965007
+  wind_speed: 3.0345712256745543
+  wind_direction: 232.20074411824754
+  moisture_1h: 0.05306725133052376
+  moisture_10h: 0.06594765213890331
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 38.19708983045774
-  relative_humidity: 0.11344543378604499
+  temperature_c: 32.66575158177803
+  relative_humidity: 0.3861278746375722
 - time_s: 136800.0
-  wind_speed: 3.5209038504306163
-  wind_direction: 331.0
-  moisture_1h: 0.017284320309949638
-  moisture_10h: 0.021479543686151008
+  wind_speed: 3.335200103998157
+  wind_direction: 227.72420519306593
+  moisture_1h: 0.07622785312685897
+  moisture_10h: 0.09472975922561114
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 38.740064370086465
-  relative_humidity: 0.10559040211274948
+  temperature_c: 29.299748465138336
+  relative_humidity: 0.5659266953438521
 - time_s: 140400.0
-  wind_speed: 3.549999844779778
-  wind_direction: 331.0
-  moisture_1h: 0.017072083078993407
-  moisture_10h: 0.02121579256418598
+  wind_speed: 2.8097053209432126
+  wind_direction: 260.1243696511754
+  moisture_1h: 0.059457910579026496
+  moisture_10h: 0.07388944227296497
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 38.82826313859325
-  relative_humidity: 0.10431445992835131
+  temperature_c: 30.264758616032864
+  relative_humidity: 0.4324767996451008
 - time_s: 144000.0
-  wind_speed: 3.521169754398357
-  wind_direction: 331.0
-  moisture_1h: 0.0179618851493671
-  moisture_10h: 0.02232156601086397
+  wind_speed: 2.096148462300491
+  wind_direction: 256.8978469422731
+  moisture_1h: 0.0701998451523782
+  moisture_10h: 0.0872386425194603
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 38.458992348902186
-  relative_humidity: 0.10965657735254877
+  temperature_c: 29.391358699239763
+  relative_humidity: 0.5173920167096624
 - time_s: 147600.0
-  wind_speed: 3.436378302301871
-  wind_direction: 331.0
-  moisture_1h: 0.01993807110528282
-  moisture_10h: 0.024777408752196122
+  wind_speed: 1.95206290149064
+  wind_direction: 269.9366814632008
+  moisture_1h: 0.09283131974190964
+  moisture_10h: 0.11536319346567413
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 37.64353035441461
-  relative_humidity: 0.12145359420613572
+  temperature_c: 27.57981773875236
+  relative_humidity: 0.6865092484709499
 - time_s: 151200.0
-  wind_speed: 3.3014038858261947
-  wind_direction: 331.0
-  moisture_1h: 0.021519115309408768
-  moisture_10h: 0.02674220154955653
+  wind_speed: 3.3271476932938975
+  wind_direction: 350.02638272657134
+  moisture_1h: 0.061503513711739
+  moisture_10h: 0.0764315510204135
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 36.40678318294519
-  relative_humidity: 0.1393452032867266
+  temperature_c: 30.535833246077228
+  relative_humidity: 0.44961665962119635
 - time_s: 154800.0
-  wind_speed: 3.1254447883983763
-  wind_direction: 331.0
-  moisture_1h: 0.024862311651641253
-  moisture_10h: 0.030896853314660976
+  wind_speed: 2.5722584842141654
+  wind_direction: 4.213726371771814
+  moisture_1h: 0.04444199638398813
+  moisture_10h: 0.05522888871019884
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.78652385109136
-  relative_humidity: 0.16278495495421194
+  temperature_c: 31.506392627312408
+  relative_humidity: 0.31382161895634125
 - time_s: 158400.0
-  wind_speed: 2.9204923317219644
-  wind_direction: 331.0
-  moisture_1h: 0.028894727245161705
-  moisture_10h: 0.03590801055709416
+  wind_speed: 3.190628728871764
+  wind_direction: 34.36147336251976
+  moisture_1h: 0.03440385744218004
+  moisture_10h: 0.04275430827766063
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.832238692071506
-  relative_humidity: 0.19105694692136585
+  temperature_c: 31.742992736236324
+  relative_humidity: 0.2331855123964823
 - time_s: 162000.0
-  wind_speed: 2.7005136870195074
-  wind_direction: 331.0
-  moisture_1h: 0.04629929780276993
-  moisture_10h: 0.05753699144421894
+  wind_speed: 4.249504420535777
+  wind_direction: 27.413804386560763
+  moisture_1h: 0.04681082924012035
+  moisture_10h: 0.05817268099743112
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.97272861979817
-  relative_humidity: 0.2226571563033957
+  temperature_c: 29.999280224805783
+  relative_humidity: 0.22414107745711667
 - time_s: 165600.0
-  wind_speed: 2.4805000353955786
-  wind_direction: 331.0
-  moisture_1h: 0.05093959281717425
-  moisture_10h: 0.06330357165629422
+  wind_speed: 4.423875314153427
+  wind_direction: 38.15737596474638
+  moisture_1h: 0.03845708857175346
+  moisture_10h: 0.04779133337072274
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.495820044839704
-  relative_humidity: 0.24834071602273633
+  temperature_c: 31.074178606399023
+  relative_humidity: 0.17527135611299444
 - time_s: 169200.0
-  wind_speed: 2.275444943618599
-  wind_direction: 331.0
-  moisture_1h: 0.05464399468942639
-  moisture_10h: 0.06790710019656872
+  wind_speed: 3.2841325294548795
+  wind_direction: 27.57680652555483
+  moisture_1h: 0.052960167216438515
+  moisture_10h: 0.06581457673499155
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.31678662708541
-  relative_humidity: 0.26884420263621367
+  temperature_c: 28.96291527110496
+  relative_humidity: 0.25970755421584585
 - time_s: 172800.0
-  wind_speed: 2.0993225773236075
-  wind_direction: 331.0
-  moisture_1h: 0.05760126210206882
-  moisture_10h: 0.07158215096179425
+  wind_speed: 3.943372394627378
+  wind_direction: 25.48187161910805
+  moisture_1h: 0.047313607124408484
+  moisture_10h: 0.05879749234877948
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.375550437011512
-  relative_humidity: 0.2852123762033875
+  temperature_c: 27.935402043387867
+  relative_humidity: 0.22375952710408664
 - time_s: 176400.0
-  wind_speed: 1.9641353847176368
-  wind_direction: 331.0
-  moisture_1h: 0.05996208332273188
-  moisture_10h: 0.07451598704184156
+  wind_speed: 4.057915635594068
+  wind_direction: 33.83414446856789
+  moisture_1h: 0.03352731786369811
+  moisture_10h: 0.04166501637430445
   moisture_100h: 0.044000000000000004
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.624150559650744
-  relative_humidity: 0.2982792809194383
+  temperature_c: 28.876169583638678
+  relative_humidity: 0.14172440482094223
 - time_s: 180000.0
-  wind_speed: 2.8790961495693845
-  wind_direction: 269.0
-  moisture_1h: 0.06184675456081681
-  moisture_10h: 0.07685810275518982
+  wind_speed: 4.012379063442475
+  wind_direction: 38.381521985253855
+  moisture_1h: 0.022811569714507075
+  moisture_10h: 0.02834835848016413
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.024299234710245
-  relative_humidity: 0.3087107440364211
+  temperature_c: 29.50100268065808
+  relative_humidity: 0.09411705984041104
 - time_s: 183600.0
-  wind_speed: 2.8500001552202225
-  wind_direction: 269.0
-  moisture_1h: 0.06335130968958978
-  moisture_10h: 0.07872784116764554
+  wind_speed: 3.5635802009705917
+  wind_direction: 54.202051569293516
+  moisture_1h: 0.028435398029807324
+  moisture_10h: 0.03533719366811007
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.545430894597224
-  relative_humidity: 0.31703830324999
+  temperature_c: 28.118095797024118
+  relative_humidity: 0.10958749624906265
 - time_s: 187200.0
-  wind_speed: 2.8788302456016432
-  wind_direction: 269.0
-  moisture_1h: 0.06455241367514071
-  moisture_10h: 0.08022047524677679
+  wind_speed: 1.3978121570496087
+  wind_direction: 56.27007680629107
+  moisture_1h: 0.03935342234799412
+  moisture_10h: 0.04890522388876939
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.163144688618864
-  relative_humidity: 0.3236862913296865
+  temperature_c: 25.77324967502913
+  relative_humidity: 0.17189602691089356
 - time_s: 190800.0
-  wind_speed: 2.9636216976981293
-  wind_direction: 269.0
-  moisture_1h: 0.06551126905804903
-  moisture_10h: 0.08141206251874054
+  wind_speed: 3.035093160987038
+  wind_direction: 42.31858097867582
+  moisture_1h: 0.03068070289923587
+  moisture_10h: 0.03812747544759409
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.85796113180482
-  relative_humidity: 0.3289934580966035
+  temperature_c: 27.544761468541033
+  relative_humidity: 0.12224988137526326
 - time_s: 194400.0
-  wind_speed: 3.098596114173805
-  wind_direction: 269.0
-  moisture_1h: 0.04969973483212824
-  moisture_10h: 0.06176277726711082
+  wind_speed: 3.1022152176343676
+  wind_direction: 55.670047799712655
+  moisture_1h: 0.018119903849560286
+  moisture_10h: 0.022517938764502105
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.214402224404232
-  relative_humidity: 0.34017161643709926
+  temperature_c: 28.192884018690407
+  relative_humidity: 0.10523841900510796
 - time_s: 198000.0
-  wind_speed: 3.274555211601623
-  wind_direction: 269.0
-  moisture_1h: 0.04481993649590389
-  moisture_10h: 0.05569856185898736
+  wind_speed: 2.2274149605468887
+  wind_direction: 65.49379476206776
+  moisture_1h: 0.028437099560045826
+  moisture_10h: 0.03533930819112491
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.224303539181125
-  relative_humidity: 0.3051716107832257
+  temperature_c: 26.459685324285907
+  relative_humidity: 0.1732346019044157
 - time_s: 201600.0
-  wind_speed: 3.4795076682780355
-  wind_direction: 269.0
-  moisture_1h: 0.040131301834863624
-  moisture_10h: 0.049871909076335375
+  wind_speed: 0.9222705428656617
+  wind_direction: 12.840357452151736
+  moisture_1h: 0.033889125993565104
+  moisture_10h: 0.04211464201142071
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.155467968616282
-  relative_humidity: 0.271542712960303
+  temperature_c: 28.554789161347777
+  relative_humidity: 0.22195836638187397
 - time_s: 205200.0
-  wind_speed: 3.699486312980493
-  wind_direction: 269.0
-  moisture_1h: 0.03577723603961407
-  moisture_10h: 0.04446103119486021
+  wind_speed: 0.3448101335216399
+  wind_direction: 231.5674356625188
+  moisture_1h: 0.04054220521696735
+  moisture_10h: 0.05038254628904681
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.948829489631155
-  relative_humidity: 0.24031348647366463
+  temperature_c: 29.414616810671873
+  relative_humidity: 0.2776553746102239
 - time_s: 208800.0
-  wind_speed: 3.9194999646044213
-  wind_direction: 269.0
-  moisture_1h: 0.03189091127655797
-  moisture_10h: 0.03963142372232447
+  wind_speed: 0.6545011167834429
+  wind_direction: 271.8136076213502
+  moisture_1h: 0.051072759463220464
+  moisture_10h: 0.06346906030380796
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.54953687807626
-  relative_humidity: 0.21243909919212045
+  temperature_c: 29.717125218903355
+  relative_humidity: 0.3634674893548504
 - time_s: 212400.0
-  wind_speed: 4.124555056381401
-  wind_direction: 269.0
-  moisture_1h: 0.028591193523468388
-  moisture_10h: 0.03553080360198013
+  wind_speed: 1.9607362059936968
+  wind_direction: 263.3596556210863
+  moisture_1h: 0.06223554659897469
+  moisture_10h: 0.07734126179290059
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.90863137202186
-  relative_humidity: 0.18877210886651602
+  temperature_c: 30.029326057316666
+  relative_humidity: 0.4544128180235154
 - time_s: 216000.0
-  wind_speed: 4.300677422676392
-  wind_direction: 269.0
-  moisture_1h: 0.02597900696990992
-  moisture_10h: 0.03228459118590747
+  wind_speed: 2.490151317079215
+  wind_direction: 251.91789080899414
+  moisture_1h: 0.05290625248381422
+  moisture_10h: 0.06574757590221574
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.98454410994495
-  relative_humidity: 0.1700363870509587
+  temperature_c: 31.383424506335224
+  relative_humidity: 0.38198437741290436
 - time_s: 219600.0
-  wind_speed: 4.435864615282363
-  wind_direction: 269.0
-  moisture_1h: 0.024134247179878155
-  moisture_10h: 0.029992074165285473
+  wind_speed: 3.113770978303588
+  wind_direction: 263.5437605798086
+  moisture_1h: 0.0425378765360255
+  moisture_10h: 0.05286260385059479
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.74436754361192
-  relative_humidity: 0.15680497898193033
+  temperature_c: 32.64479435102137
+  relative_humidity: 0.3009492466297845
 - time_s: 223200.0
-  wind_speed: 4.520903850430616
-  wind_direction: 269.0
-  moisture_1h: 0.023113337429750608
-  moisture_10h: 0.02872337078648619
+  wind_speed: 3.623985033048723
+  wind_direction: 297.1849153846347
+  moisture_1h: 0.033225746698058826
+  moisture_10h: 0.04129024832380126
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.16486193859907
-  relative_humidity: 0.14948257658646458
+  temperature_c: 33.555065286595266
+  relative_humidity: 0.22767600864019
 - time_s: 226800.0
-  wind_speed: 4.549999844779777
-  wind_direction: 269.0
-  moisture_1h: 0.0229475029626723
-  moisture_10h: 0.028517285235165578
+  wind_speed: 3.779342990338362
+  wind_direction: 283.85978023076245
+  moisture_1h: 0.03839475254377773
+  moisture_10h: 0.04771386723886941
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.23316617792423
-  relative_humidity: 0.14829314069476768
+  temperature_c: 32.21321907337779
+  relative_humidity: 0.26649480605196474
 - time_s: 230400.0
-  wind_speed: 4.5211697543983576
-  wind_direction: 269.0
-  moisture_1h: 0.023641815942520298
-  moisture_10h: 0.029380120782937846
+  wind_speed: 3.260779166362693
+  wind_direction: 308.26953041178206
+  moisture_1h: 0.03255361266264938
+  moisture_10h: 0.04045497495940894
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.94719112836042
-  relative_humidity: 0.15327305104062025
+  temperature_c: 33.208415547567206
+  relative_humidity: 0.2214734485082471
 - time_s: 234000.0
-  wind_speed: 4.436378302301871
-  wind_direction: 269.0
-  moisture_1h: 0.025175040318202134
-  moisture_10h: 0.03128548699737741
+  wind_speed: 3.1808973113231422
+  wind_direction: 321.14091021835895
+  moisture_1h: 0.035426095630294904
+  moisture_10h: 0.04402466253085192
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.31568353804568
-  relative_humidity: 0.16426999356161834
+  temperature_c: 32.536371359276195
+  relative_humidity: 0.24320874129915424
 - time_s: 237600.0
-  wind_speed: 4.301403885826194
-  wind_direction: 269.0
-  moisture_1h: 0.027500281343222785
-  moisture_10h: 0.03417510691196618
+  wind_speed: 2.597766386592271
+  wind_direction: 341.79460788747554
+  moisture_1h: 0.04444280754239539
+  moisture_10h: 0.05522989675171466
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.357958511036024
-  relative_humidity: 0.18094761903195902
+  temperature_c: 31.35762202547034
+  relative_humidity: 0.3134984841363924
 - time_s: 241200.0
-  wind_speed: 4.125444788398377
-  wind_direction: 269.0
-  moisture_1h: 0.030546419884507025
-  moisture_10h: 0.03796059946812524
+  wind_speed: 2.8433091313762495
+  wind_direction: 358.09831067058815
+  moisture_1h: 0.033286344085412256
+  moisture_10h: 0.04136555381488125
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.1033087412554
-  relative_humidity: 0.2027958305402079
+  temperature_c: 31.426728065525488
+  relative_humidity: 0.22344930475119015
 - time_s: 244800.0
-  wind_speed: 3.9204923317219644
-  wind_direction: 269.0
-  moisture_1h: 0.03422028765113282
-  moisture_10h: 0.04252618271208739
+  wind_speed: 3.3965360157053848
+  wind_direction: 30.794790759887267
+  moisture_1h: 0.028769018852483078
+  moisture_10h: 0.03575179041861975
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.590108574838084
-  relative_humidity: 0.22914638516230257
+  temperature_c: 30.379852373965193
+  relative_humidity: 0.18460579103963645
 - time_s: 248400.0
-  wind_speed: 3.7005136870195074
-  wind_direction: 269.0
-  moisture_1h: 0.05042355584649882
-  moisture_10h: 0.06266228299370727
+  wind_speed: 3.702724675690813
+  wind_direction: 41.177676042034484
+  moisture_1h: 0.03816531579929346
+  moisture_10h: 0.04742874196417052
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.12868862939119
-  relative_humidity: 0.2446013114815614
+  temperature_c: 29.300196443267424
+  relative_humidity: 0.17055355815435305
 - time_s: 252000.0
-  wind_speed: 3.4805000353955786
-  wind_direction: 269.0
-  moisture_1h: 0.052583075280598746
-  moisture_10h: 0.06534595763025863
+  wind_speed: 4.71783038687711
+  wind_direction: 39.156369095705244
+  moisture_1h: 0.0364683174770924
+  moisture_10h: 0.04531985084531871
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.964554760116222
-  relative_humidity: 0.25576154068818735
+  temperature_c: 29.435844954217963
+  relative_humidity: 0.16048857979577463
 - time_s: 255600.0
-  wind_speed: 3.275444943618599
-  wind_direction: 269.0
-  moisture_1h: 0.05430755315495676
-  moisture_10h: 0.06748899809548024
+  wind_speed: 4.031947390881723
+  wind_direction: 36.86457719507278
+  moisture_1h: 0.03476001004567205
+  moisture_10h: 0.043196905687825464
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.034939092548882
-  relative_humidity: 0.26467350880280255
+  temperature_c: 29.37238045707487
+  relative_humidity: 0.1500240806261235
 - time_s: 259200.0
-  wind_speed: 3.0993225773236075
-  wind_direction: 269.0
-  moisture_1h: 0.05568462987498627
-  moisture_10h: 0.06920031673784702
+  wind_speed: 4.31594501167867
+  wind_direction: 43.23117276461428
+  moisture_1h: 0.03091804229630935
+  moisture_10h: 0.038422421494442686
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.29259724321767
-  relative_humidity: 0.27179013465388846
+  temperature_c: 29.71378821200244
+  relative_humidity: 0.1272941995116125
 - time_s: 262800.0
-  wind_speed: 2.964135384717637
-  wind_direction: 269.0
-  moisture_1h: 0.05678429042792506
-  moisture_10h: 0.07056688519198454
+  wind_speed: 4.260337229650535
+  wind_direction: 47.40965368571832
+  moisture_1h: 0.0288873516533737
+  moisture_10h: 0.0358988447731246
   moisture_100h: 0.045
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.69980234905399
-  relative_humidity: 0.2774730952359945
+  temperature_c: 29.683026909202113
+  relative_humidity: 0.11492915447710086
 - time_s: 266400.0
-  wind_speed: 2.4790961495693846
-  wind_direction: 297.0
-  moisture_1h: 0.05766242111890335
-  moisture_10h: 0.07165815440019058
+  wind_speed: 4.329733126389738
+  wind_direction: 36.939680952916646
+  moisture_1h: 0.031153344657152263
+  moisture_10h: 0.038714836078791164
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.226427734833983
-  relative_humidity: 0.28201120664631174
+  temperature_c: 29.313764889015115
+  relative_humidity: 0.12805617673619007
 - time_s: 270000.0
-  wind_speed: 2.4500001552202226
-  wind_direction: 297.0
-  moisture_1h: 0.058363649792040055
-  moisture_10h: 0.07252958420758375
+  wind_speed: 4.593660660968888
+  wind_direction: 58.9156354236149
+  moisture_1h: 0.03187307582328452
+  moisture_10h: 0.039609259275538045
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.84841583291961
-  relative_humidity: 0.28563510212735677
+  temperature_c: 28.69920749027718
+  relative_humidity: 0.13139911004932162
 - time_s: 273600.0
-  wind_speed: 2.4788302456016433
-  wind_direction: 297.0
-  moisture_1h: 0.05892361388062148
-  moisture_10h: 0.07322546190989854
+  wind_speed: 5.3514579122963575
+  wind_direction: 66.59007404805091
+  moisture_1h: 0.02863749036819761
+  moisture_10h: 0.0355883375449446
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.54655554363399
-  relative_humidity: 0.2885289531746629
+  temperature_c: 29.294044241639043
+  relative_humidity: 0.11276749553872734
 - time_s: 277200.0
-  wind_speed: 2.5636216976981294
-  wind_direction: 297.0
-  moisture_1h: 0.05937077155188188
-  moisture_10h: 0.0737811529965134
+  wind_speed: 4.975928489753722
+  wind_direction: 68.01469109720558
+  moisture_1h: 0.027174469387496496
+  moisture_10h: 0.033770214384461664
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.305505899995413
-  relative_humidity: 0.2908398293927541
+  temperature_c: 29.554080278468614
+  relative_humidity: 0.10432807684189024
 - time_s: 280800.0
-  wind_speed: 2.6985961141738053
-  wind_direction: 297.0
-  moisture_1h: 0.04365629419049641
-  moisture_10h: 0.05425248210081107
+  wind_speed: 4.231881024790633
+  wind_direction: 76.9631463438537
+  moisture_1h: 0.02130747554994069
+  moisture_10h: 0.02647919291643115
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.97711641526199
-  relative_humidity: 0.2907832890484226
+  temperature_c: 28.87324738031389
+  relative_humidity: 0.12450042985759886
 - time_s: 284400.0
-  wind_speed: 2.8745552116016233
-  wind_direction: 297.0
-  moisture_1h: 0.03886764433568087
-  moisture_10h: 0.04830153859191409
+  wind_speed: 2.2365027125055907
+  wind_direction: 65.55664330192963
+  moisture_1h: 0.01623697036901714
+  moisture_10h: 0.02017798259450674
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.266303961333872
-  relative_humidity: 0.25713916905312373
+  temperature_c: 29.779345675623055
+  relative_humidity: 0.09481332484436568
 - time_s: 288000.0
-  wind_speed: 3.0795076682780356
-  wind_direction: 297.0
-  moisture_1h: 0.034265862971224845
-  moisture_10h: 0.04258282000307553
+  wind_speed: 1.8114959296391346
+  wind_direction: 57.843342232006734
+  moisture_1h: 0.01845071290786081
+  moisture_10h: 0.02292904128355518
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.466160060368736
-  relative_humidity: 0.22480795062791428
+  temperature_c: 32.382284644695964
+  relative_humidity: 0.10937451336942758
 - time_s: 291600.0
-  wind_speed: 3.299486312980493
-  wind_direction: 297.0
-  moisture_1h: 0.029991910639542714
-  moisture_10h: 0.03727150060059677
+  wind_speed: 1.3113210565807667
+  wind_direction: 1.4622185729886084
+  moisture_1h: 0.0191225006240392
+  moisture_10h: 0.023763884270650654
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.509299305630694
-  relative_humidity: 0.19477999505360977
+  temperature_c: 33.821822068589796
+  relative_humidity: 0.11422772875050835
 - time_s: 295200.0
-  wind_speed: 3.5194999646044214
-  wind_direction: 297.0
-  moisture_1h: 0.026176705911338537
-  moisture_10h: 0.03253027530729449
+  wind_speed: 1.872491814393088
+  wind_direction: 291.401806887742
+  moisture_1h: 0.025589045764189033
+  moisture_10h: 0.03179997920209899
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.333136799352815
-  relative_humidity: 0.16797511067617862
+  temperature_c: 33.576562846053605
+  relative_humidity: 0.16597933501744755
 - time_s: 298800.0
-  wind_speed: 3.724555056381401
-  wind_direction: 297.0
-  moisture_1h: 0.022937115122780176
-  moisture_10h: 0.028504376074911283
+  wind_speed: 3.0758998037831007
+  wind_direction: 288.2167022386049
+  moisture_1h: 0.03205629708072269
+  moisture_10h: 0.039836951711966065
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.8818052366743
-  relative_humidity: 0.14521437758221117
+  temperature_c: 34.19212977429279
+  relative_humidity: 0.21963257541077813
 - time_s: 302400.0
-  wind_speed: 3.9006774226763925
-  wind_direction: 297.0
-  moisture_1h: 0.021124084568614195
-  moisture_10h: 0.02625128956099628
+  wind_speed: 3.5796416131478948
+  wind_direction: 259.0217746214678
+  moisture_1h: 0.038866944413720135
+  moisture_10h: 0.048300668785982305
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.10786621805907
-  relative_humidity: 0.12719499649216232
+  temperature_c: 33.81152668114886
+  relative_humidity: 0.2738546137039402
 - time_s: 306000.0
-  wind_speed: 4.035864615282364
-  wind_direction: 297.0
-  moisture_1h: 0.01896419947218088
-  moisture_10h: 0.023567160509117984
+  wind_speed: 3.989731625296733
+  wind_direction: 299.6553420023136
+  moisture_1h: 0.03266057809407792
+  moisture_10h: 0.04058790287419393
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.9737633697289
-  relative_humidity: 0.11446893229337846
+  temperature_c: 35.50287277431843
+  relative_humidity: 0.2274230741540214
 - time_s: 309600.0
-  wind_speed: 4.120903850430616
-  wind_direction: 297.0
-  moisture_1h: 0.017776478340808845
-  moisture_10h: 0.02209115754974303
+  wind_speed: 4.282411677847495
+  wind_direction: 285.69753225807244
+  moisture_1h: 0.03088177441790281
+  moisture_10h: 0.038377350732927765
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 36.45297276051288
-  relative_humidity: 0.1074260063985231
+  temperature_c: 35.65392194501406
+  relative_humidity: 0.21337581939354222
 - time_s: 313200.0
-  wind_speed: 4.149999844779778
-  wind_direction: 297.0
-  moisture_1h: 0.017584057512340823
-  moisture_10h: 0.02185203263669539
+  wind_speed: 4.919591991249401
+  wind_direction: 304.5616255427001
+  moisture_1h: 0.031189166577615578
+  moisture_10h: 0.03875935264014363
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 36.53081537585008
-  relative_humidity: 0.10628195583977926
+  temperature_c: 34.189167698703415
+  relative_humidity: 0.21261508070435872
 - time_s: 316800.0
-  wind_speed: 4.121169754398357
-  wind_direction: 297.0
-  moisture_1h: 0.01839063296813398
-  moisture_10h: 0.022854378834185916
+  wind_speed: 3.951762925072504
+  wind_direction: 317.36032653525854
+  moisture_1h: 0.025141299628890838
+  moisture_10h: 0.031243556820369195
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 36.20490676145818
-  relative_humidity: 0.11107182486947842
+  temperature_c: 32.45795356872367
+  relative_humidity: 0.15988024430323575
 - time_s: 320400.0
-  wind_speed: 4.036378302301872
-  wind_direction: 297.0
-  moisture_1h: 0.020180614395149947
-  moisture_10h: 0.025078821772613526
+  wind_speed: 4.464809492292047
+  wind_direction: 324.1517727856981
+  moisture_1h: 0.024708854007574284
+  moisture_10h: 0.030706148669606876
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.485230063302566
-  relative_humidity: 0.12164889149388666
+  temperature_c: 33.77753859498159
+  relative_humidity: 0.15930818763883414
 - time_s: 324000.0
-  wind_speed: 3.901403885826195
-  wind_direction: 297.0
-  moisture_1h: 0.02186603276540887
-  moisture_10h: 0.027173322271576067
+  wind_speed: 3.174145685697577
+  wind_direction: 328.4509421271267
+  moisture_1h: 0.022646419786577963
+  moisture_10h: 0.028143123618271645
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.39383022652526
-  relative_humidity: 0.13768916182228047
+  temperature_c: 33.85009214897396
+  relative_humidity: 0.1427937654087369
 - time_s: 327600.0
-  wind_speed: 3.7254447883983763
-  wind_direction: 297.0
-  moisture_1h: 0.024856740990370454
-  moisture_10h: 0.03088993055113998
+  wind_speed: 3.0081088609382425
+  wind_direction: 342.1618907941195
+  moisture_1h: 0.021358324564025075
+  moisture_10h: 0.026542383924225334
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.96413872055055
-  relative_humidity: 0.15870129456160573
+  temperature_c: 33.093860987914205
+  relative_humidity: 0.12736674775335538
 - time_s: 331200.0
-  wind_speed: 3.5204923317219645
-  wind_direction: 297.0
-  moisture_1h: 0.02846349596924946
-  moisture_10h: 0.03537211149576632
+  wind_speed: 2.9401289362547005
+  wind_direction: 6.881685905203233
+  moisture_1h: 0.025225885534387447
+  moisture_10h: 0.031348673285452364
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.239949475208324
-  relative_humidity: 0.18404165165224157
+  temperature_c: 29.706977158517923
+  relative_humidity: 0.15446765067417145
 - time_s: 334800.0
-  wind_speed: 3.3005136870195075
-  wind_direction: 297.0
-  moisture_1h: 0.04532300287694778
-  moisture_10h: 0.05632373173057588
+  wind_speed: 4.765761910203644
+  wind_direction: 30.079730726618415
+  moisture_1h: 0.038420788416449796
+  moisture_10h: 0.04774622249811237
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.47865363821328
-  relative_humidity: 0.21425371090261275
+  temperature_c: 28.91547968813067
+  relative_humidity: 0.1714632867858252
 - time_s: 338400.0
-  wind_speed: 3.0805000353955787
-  wind_direction: 297.0
-  moisture_1h: 0.04978344171434468
-  moisture_10h: 0.061866801353748724
+  wind_speed: 4.346365304890762
+  wind_direction: 34.89005674530204
+  moisture_1h: 0.03528243045880375
+  moisture_10h: 0.04384612717210563
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.06445398635207
-  relative_humidity: 0.23895086746258637
+  temperature_c: 28.86619375192725
+  relative_humidity: 0.1523506617756899
 - time_s: 342000.0
-  wind_speed: 2.875444943618599
-  wind_direction: 297.0
-  moisture_1h: 0.05334641833839535
-  moisture_10h: 0.066294578129268
+  wind_speed: 5.227335761020392
+  wind_direction: 22.530581397687566
+  moisture_1h: 0.03820355242603306
+  moisture_10h: 0.047476259325555645
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.934798254033435
-  relative_humidity: 0.258678834757181
+  temperature_c: 28.293397193555876
+  relative_humidity: 0.1691120320289674
 - time_s: 345600.0
-  wind_speed: 2.6993225773236076
-  wind_direction: 297.0
-  moisture_1h: 0.05619250655668828
-  moisture_10h: 0.0698314644587971
+  wind_speed: 5.087567748713452
+  wind_direction: 45.93714295785059
+  moisture_1h: 0.02989524799451796
+  moisture_10h: 0.037151376148527177
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.03243480635413
-  relative_humidity: 0.2744374380859283
+  temperature_c: 28.786709007916098
+  relative_humidity: 0.11955118341828545
 - time_s: 349200.0
-  wind_speed: 2.5641353847176367
-  wind_direction: 297.0
-  moisture_1h: 0.0584659478393585
-  moisture_10h: 0.07265671187803775
+  wind_speed: 4.77043316689296
+  wind_direction: 53.83421847016054
+  moisture_1h: 0.028433254027168176
+  moisture_10h: 0.035334529276480835
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.311631318696524
-  relative_humidity: 0.2870253329848036
+  temperature_c: 28.88246032207013
+  relative_humidity: 0.11084493668907289
 - time_s: 352800.0
-  wind_speed: 2.0790961495693847
-  wind_direction: 313.0
-  moisture_1h: 0.060281961563925776
-  moisture_10h: 0.0749135056328398
+  wind_speed: 4.675613334681097
+  wind_direction: 51.92809000946897
+  moisture_1h: 0.03582928069947673
+  moisture_10h: 0.04452570805371866
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.735857034891517
-  relative_humidity: 0.2970804815712314
+  temperature_c: 27.8832851304401
+  relative_humidity: 0.15403302909678765
 - time_s: 356400.0
-  wind_speed: 2.0500001552202227
-  wind_direction: 313.0
-  moisture_1h: 0.061732584402947724
-  moisture_10h: 0.07671622139395445
+  wind_speed: 5.91066915251304
+  wind_direction: 68.04461772029426
+  moisture_1h: 0.03555585903465988
+  moisture_10h: 0.04418592190715014
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.275931366428814
-  relative_humidity: 0.3051124848495695
+  temperature_c: 28.975595105482608
+  relative_humidity: 0.15419054166695545
 - time_s: 360000.0
-  wind_speed: 2.0788302456016434
-  wind_direction: 313.0
-  moisture_1h: 0.06289133479818139
-  moisture_10h: 0.07815622188511862
+  wind_speed: 6.486585097573908
+  wind_direction: 74.01757479979165
+  moisture_1h: 0.039650634482239405
+  moisture_10h: 0.04927457489054994
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.908545002604168
-  relative_humidity: 0.31152840959784345
+  temperature_c: 28.288367173923554
+  relative_humidity: 0.17787864115016383
 - time_s: 363600.0
-  wind_speed: 2.1636216976981295
-  wind_direction: 313.0
-  moisture_1h: 0.06381693891962172
-  moisture_10h: 0.0793064872010833
+  wind_speed: 5.462503582019707
+  wind_direction: 70.01164449377744
+  moisture_1h: 0.035079526362769814
+  moisture_10h: 0.043593974509073166
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.61507858057245
-  relative_humidity: 0.31665341875795316
+  temperature_c: 29.087902740752593
+  relative_humidity: 0.15148877038081138
 - time_s: 367200.0
-  wind_speed: 2.2985961141738054
-  wind_direction: 313.0
-  moisture_1h: 0.04840128171931541
-  moisture_10h: 0.06014916563177061
+  wind_speed: 4.5903436916591325
+  wind_direction: 68.22044306555013
+  moisture_1h: 0.026602017213608425
+  moisture_10h: 0.03305881750817358
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.070417046079125
-  relative_humidity: 0.32713814695411614
+  temperature_c: 28.179497570960223
+  relative_humidity: 0.1622088864393934
 - time_s: 370800.0
-  wind_speed: 2.4745552116016234
-  wind_direction: 313.0
-  moisture_1h: 0.04319065480754774
-  moisture_10h: 0.053673823450156415
+  wind_speed: 2.6867920468276827
+  wind_direction: 44.58953771693556
+  moisture_1h: 0.028696546861694414
+  moisture_10h: 0.03566172813880471
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.39649028163858
-  relative_humidity: 0.29016399776201424
+  temperature_c: 27.797786769879977
+  relative_humidity: 0.17829767793910725
 - time_s: 374400.0
-  wind_speed: 2.6795076682780357
-  wind_direction: 313.0
-  moisture_1h: 0.03818253082828906
-  moisture_10h: 0.047450135398262136
+  wind_speed: 2.1704088601364995
+  wind_direction: 49.59734804475001
+  moisture_1h: 0.02842136079380897
+  moisture_10h: 0.03531974933599561
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.632164288965512
-  relative_humidity: 0.25462679152614587
+  temperature_c: 30.64096674517858
+  relative_humidity: 0.1823735636063344
 - time_s: 378000.0
-  wind_speed: 2.899486312980493
-  wind_direction: 313.0
-  moisture_1h: 0.03353056056580937
-  moisture_10h: 0.04166904614003495
+  wind_speed: 1.2153822101303837
+  wind_direction: 39.45359632209835
+  moisture_1h: 0.028085928324230968
+  moisture_10h: 0.03490290121846178
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.70884790178276
-  relative_humidity: 0.2216168206656925
+  temperature_c: 31.606408669540258
+  relative_humidity: 0.18180105555070014
 - time_s: 381600.0
-  wind_speed: 3.1194999646044215
-  wind_direction: 313.0
-  moisture_1h: 0.029377467898788874
-  moisture_10h: 0.036507921272281314
+  wind_speed: 1.5441603363723344
+  wind_direction: 312.1789612088808
+  moisture_1h: 0.03358782071622262
+  moisture_10h: 0.041740204385208694
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.562827828024957
-  relative_humidity: 0.19214684124109632
+  temperature_c: 31.502843982432893
+  relative_humidity: 0.22605548784081872
 - time_s: 385200.0
-  wind_speed: 3.324555056381401
-  wind_direction: 313.0
-  moisture_1h: 0.025850670987815537
-  moisture_10h: 0.03212510569359601
+  wind_speed: 3.0764144866760645
+  wind_direction: 290.22844256095
+  moisture_1h: 0.0347499844689934
+  moisture_10h: 0.043184446718749075
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.1372233932384
-  relative_humidity: 0.16712100128658408
+  temperature_c: 32.658699541194046
+  relative_humidity: 0.23801333567617444
 - time_s: 388800.0
-  wind_speed: 3.5006774226763926
-  wind_direction: 313.0
-  moisture_1h: 0.023058373047022355
-  moisture_10h: 0.028655065534163703
+  wind_speed: 3.7009117885130562
+  wind_direction: 288.77621028978996
+  moisture_1h: 0.03400707717479011
+  moisture_10h: 0.04226122212012751
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.38373165717077
-  relative_humidity: 0.14730710127034563
+  temperature_c: 33.36207567000716
+  relative_humidity: 0.23356554022869339
 - time_s: 392400.0
-  wind_speed: 3.6358646152823635
-  wind_direction: 313.0
-  moisture_1h: 0.022107408722195254
-  moisture_10h: 0.027473284625640703
+  wind_speed: 3.956063407527847
+  wind_direction: 308.4879265730694
+  moisture_1h: 0.030144704312422287
+  moisture_10h: 0.03746138011640828
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.26410936283691
-  relative_humidity: 0.13331303773998077
+  temperature_c: 35.41764353734823
+  relative_humidity: 0.20689283352553628
 - time_s: 396000.0
-  wind_speed: 3.7209038504306164
-  wind_direction: 313.0
-  moisture_1h: 0.02079321793920685
-  moisture_10h: 0.025840115497266766
+  wind_speed: 4.799418016662509
+  wind_direction: 310.5511886715931
+  moisture_1h: 0.03090789964565609
+  moisture_10h: 0.03840981703537844
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.75134625140744
-  relative_humidity: 0.12556815286941933
+  temperature_c: 34.118290944333744
+  relative_humidity: 0.21018390783386906
 - time_s: 399600.0
-  wind_speed: 3.749999844779778
-  wind_direction: 313.0
-  moisture_1h: 0.020580311502798654
-  moisture_10h: 0.025575532741342017
+  wind_speed: 4.8111390349334995
+  wind_direction: 320.6057380580856
+  moisture_1h: 0.026269807688986322
+  moisture_10h: 0.032645974603788826
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.83049374525844
-  relative_humidity: 0.12431006210895201
+  temperature_c: 33.69549453691647
+  relative_humidity: 0.17174700336997908
 - time_s: 403200.0
-  wind_speed: 3.7211697543983573
-  wind_direction: 313.0
-  moisture_1h: 0.021472763666561544
-  moisture_10h: 0.02668459950795998
+  wind_speed: 3.4360729258372924
+  wind_direction: 305.50405930292254
+  moisture_1h: 0.030840371455858957
+  moisture_10h: 0.03832589850825191
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.4991235749314
-  relative_humidity: 0.12957736407012058
+  temperature_c: 32.935471072492234
+  relative_humidity: 0.2070166600054118
 - time_s: 406800.0
-  wind_speed: 3.636378302301871
-  wind_direction: 313.0
-  moisture_1h: 0.02219891409372215
-  moisture_10h: 0.027587000038800342
+  wind_speed: 3.924246414532214
+  wind_direction: 314.30974692184606
+  moisture_1h: 0.030502056036207707
+  moisture_10h: 0.03790546769548142
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.76740227918722
-  relative_humidity: 0.14120845630844236
+  temperature_c: 32.12390962167807
+  relative_humidity: 0.20248279358461413
 - time_s: 410400.0
-  wind_speed: 3.501403885826195
-  wind_direction: 313.0
-  moisture_1h: 0.0246845758983972
-  moisture_10h: 0.0306759778154839
+  wind_speed: 4.498419242214653
+  wind_direction: 328.6256068663235
+  moisture_1h: 0.028091265425588326
+  moisture_10h: 0.034909533732769955
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.657779292469556
-  relative_humidity: 0.1588464933361186
+  temperature_c: 32.104355950796034
+  relative_humidity: 0.18294771704343354
 - time_s: 414000.0
-  wind_speed: 3.3254447883983764
-  wind_direction: 313.0
-  moisture_1h: 0.027940512829306968
-  moisture_10h: 0.03472219070049798
+  wind_speed: 5.237914871577585
+  wind_direction: 338.33750003246195
+  moisture_1h: 0.02968913999893087
+  moisture_10h: 0.03689524194041894
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.20429818935033
-  relative_humidity: 0.18195033475137204
+  temperature_c: 31.024512132864913
+  relative_humidity: 0.19347380388243063
 - time_s: 417600.0
-  wind_speed: 3.1204923317219646
-  wind_direction: 313.0
-  moisture_1h: 0.03186683173982807
-  moisture_10h: 0.039601499637844595
+  wind_speed: 4.652001083662296
+  wind_direction: 0.8100808687353851
+  moisture_1h: 0.029919082710558664
+  moisture_10h: 0.03718099598982048
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.45155221718941
-  relative_humidity: 0.20981114759243755
+  temperature_c: 28.276226926765336
+  relative_humidity: 0.1892424142769741
 - time_s: 421200.0
-  wind_speed: 2.9005136870195076
-  wind_direction: 313.0
-  moisture_1h: 0.04833867743388086
-  moisture_10h: 0.060071366131424754
+  wind_speed: 4.438268976191926
+  wind_direction: 14.339129733947688
+  moisture_1h: 0.03739718954019416
+  moisture_10h: 0.04647417729266847
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.071820498393134
-  relative_humidity: 0.2318642850508971
+  temperature_c: 27.748204551625125
+  relative_humidity: 0.16331616493681922
 - time_s: 424800.0
-  wind_speed: 2.680500035395579
-  wind_direction: 313.0
-  moisture_1h: 0.05145300167435324
-  moisture_10h: 0.06394159431375936
+  wind_speed: 4.629320121936138
+  wind_direction: 27.089479155076603
+  moisture_1h: 0.037805844927016614
+  moisture_10h: 0.04698202088017599
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.002430289000888
-  relative_humidity: 0.2489718331284148
+  temperature_c: 26.87172363552694
+  relative_humidity: 0.16433742392734135
 - time_s: 428400.0
-  wind_speed: 2.4754449436185992
-  wind_direction: 313.0
-  moisture_1h: 0.05394151979215771
-  moisture_10h: 0.06703412168345813
+  wind_speed: 4.364107430182894
+  wind_direction: 38.36799118357848
+  moisture_1h: 0.029536462424427805
+  moisture_10h: 0.036705506702201546
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.147928090260127
-  relative_humidity: 0.2626417146355684
+  temperature_c: 28.27425874918712
+  relative_humidity: 0.11652380380219879
 - time_s: 432000.0
-  wind_speed: 2.2993225773236077
-  wind_direction: 313.0
-  moisture_1h: 0.05592998404458303
-  moisture_10h: 0.0695052228903556
+  wind_speed: 4.813208992006819
+  wind_direction: 55.31647740749475
+  moisture_1h: 0.02987991684386646
+  moisture_10h: 0.03713232384480492
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.465133352436812
-  relative_humidity: 0.27356470953658485
+  temperature_c: 28.067849318505214
+  relative_humidity: 0.11826340835566153
 - time_s: 435600.0
-  wind_speed: 2.1641353847176372
-  wind_direction: 313.0
-  moisture_1h: 0.05751887747271765
-  moisture_10h: 0.07147977006318311
+  wind_speed: 5.267584602195068
+  wind_direction: 56.3038948185763
+  moisture_1h: 0.03230339723494229
+  moisture_10h: 0.040144027631772945
   moisture_100h: 0.043
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.919542416935144
-  relative_humidity: 0.2822927894065672
+  temperature_c: 28.047736268236733
+  relative_humidity: 0.13292573579628386
 - time_s: 439200.0
-  wind_speed: 1.1790961495693844
-  wind_direction: 298.0
-  moisture_1h: 0.05878849160980369
-  moisture_10h: 0.07305754297140653
+  wind_speed: 4.194255563517532
+  wind_direction: 55.10105623761872
+  moisture_1h: 0.03189250101395829
+  moisture_10h: 0.0396333993183171
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.483584943316455
-  relative_humidity: 0.28926701020472045
+  temperature_c: 28.06762365809707
+  relative_humidity: 0.13046715436763393
 - time_s: 442800.0
-  wind_speed: 1.1500001552202224
-  wind_direction: 298.0
-  moisture_1h: 0.05980298385235838
-  moisture_10h: 0.07431827119516381
+  wind_speed: 5.090853193656941
+  wind_direction: 37.856793103170006
+  moisture_1h: 0.03987462799244484
+  moisture_10h: 0.04955293575760135
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.13523069760445
-  relative_humidity: 0.2948398001500412
+  temperature_c: 25.245399451290975
+  relative_humidity: 0.17417923513280492
 - time_s: 446400.0
-  wind_speed: 1.178830245601643
-  wind_direction: 298.0
-  moisture_1h: 0.060613619525150916
-  moisture_10h: 0.07532566309921668
+  wind_speed: 5.244878648745929
+  wind_direction: 61.586738081525304
+  moisture_1h: 0.031323931608978166
+  moisture_10h: 0.038926827630574805
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.85687629872627
-  relative_humidity: 0.2992927689724351
+  temperature_c: 27.08900006075169
+  relative_humidity: 0.12539284397654893
 - time_s: 450000.0
-  wind_speed: 1.2636216976981292
-  wind_direction: 298.0
-  moisture_1h: 0.06126136247126651
-  moisture_10h: 0.0761306252070108
+  wind_speed: 6.347212843173202
+  wind_direction: 69.98911786772112
+  moisture_1h: 0.032149083646679726
+  moisture_10h: 0.03995225928907772
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.63445566706017
-  relative_humidity: 0.3028509384939441
+  temperature_c: 27.298313321817464
+  relative_humidity: 0.13074438546901418
 - time_s: 453600.0
-  wind_speed: 1.398596114173805
-  wind_direction: 298.0
-  moisture_1h: 0.04568679569874818
-  moisture_10h: 0.056775823780968605
+  wind_speed: 5.431571625342271
+  wind_direction: 72.58297324453159
+  moisture_1h: 0.02524923771717817
+  moisture_10h: 0.03137769347377481
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.33537338582727
-  relative_humidity: 0.30799425560265736
+  temperature_c: 27.73285626831523
+  relative_humidity: 0.1502815731451298
 - time_s: 457200.0
-  wind_speed: 1.574555211601623
-  wind_direction: 298.0
-  moisture_1h: 0.04076942667875602
-  moisture_10h: 0.05066491859107544
+  wind_speed: 3.2209112624954686
+  wind_direction: 60.05259768160262
+  moisture_1h: 0.02593758976472666
+  moisture_10h: 0.032233121261019536
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.594253744021678
-  relative_humidity: 0.2732422500919742
+  temperature_c: 27.985821477653317
+  relative_humidity: 0.15640764330714496
 - time_s: 460800.0
-  wind_speed: 1.7795076682780353
-  wind_direction: 298.0
-  moisture_1h: 0.03604233646262192
-  moisture_10h: 0.04479047638073404
+  wind_speed: 1.7472933748843837
+  wind_direction: 64.24299496945137
+  moisture_1h: 0.02268088262241206
+  moisture_10h: 0.02818595122008489
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.765726171091078
-  relative_humidity: 0.23983498198321418
+  temperature_c: 30.645453521327877
+  relative_humidity: 0.13597054734778552
 - time_s: 464400.0
-  wind_speed: 1.9994863129804925
-  wind_direction: 298.0
-  moisture_1h: 0.03165079520315907
-  moisture_10h: 0.039333027048586024
+  wind_speed: 0.7991238383785907
+  wind_direction: 17.42338942980612
+  moisture_1h: 0.025518895177258208
+  moisture_10h: 0.031712801773680105
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.783058255152724
-  relative_humidity: 0.20879910376688118
+  temperature_c: 31.377839337601216
+  relative_humidity: 0.16053952225695162
 - time_s: 468000.0
-  wind_speed: 2.219499964604421
-  wind_direction: 298.0
-  moisture_1h: 0.027729761160243747
-  moisture_10h: 0.03446028571370097
+  wind_speed: 0.32315518931950515
+  wind_direction: 254.72637714868603
+  moisture_1h: 0.029241385353812554
+  moisture_10h: 0.036338808983378705
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.58425453457434
-  relative_humidity: 0.18108839177577937
+  temperature_c: 32.71529781902394
+  relative_humidity: 0.19360059503107901
 - time_s: 471600.0
-  wind_speed: 2.4245550563814007
-  wind_direction: 298.0
-  moisture_1h: 0.024399733243047585
-  moisture_10h: 0.03032199859330185
+  wind_speed: 1.7810319493577398
+  wind_direction: 273.9943429883545
+  moisture_1h: 0.035379383054121694
+  moisture_10h: 0.043966611950753166
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.11396170599289
-  relative_humidity: 0.15755443529241697
+  temperature_c: 34.05196685226794
+  relative_humidity: 0.24618979881801242
 - time_s: 475200.0
-  wind_speed: 2.6006774226763922
-  wind_direction: 298.0
-  moisture_1h: 0.021763047908520804
-  moisture_10h: 0.02704534109020061
+  wind_speed: 2.675849077383114
+  wind_direction: 244.61021595283196
+  moisture_1h: 0.035121386487322215
+  moisture_10h: 0.043645994858031494
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.325169709436835
-  relative_humidity: 0.1389204660086641
+  temperature_c: 33.46802245536871
+  relative_humidity: 0.24280975326483897
 - time_s: 478800.0
-  wind_speed: 2.735864615282363
-  wind_direction: 298.0
-  moisture_1h: 0.020780944953634764
-  moisture_10h: 0.025824863631701455
+  wind_speed: 3.8408575302201493
+  wind_direction: 253.90977355705013
+  moisture_1h: 0.04388660382656542
+  moisture_10h: 0.05453869213398421
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 36.18065641380565
-  relative_humidity: 0.1257591320952977
+  temperature_c: 32.97480779781236
+  relative_humidity: 0.3125853359096654
 - time_s: 482400.0
-  wind_speed: 2.820903850430616
-  wind_direction: 298.0
-  moisture_1h: 0.01955144926956748
-  moisture_10h: 0.02429694666509357
+  wind_speed: 4.414525541383885
+  wind_direction: 271.167787858578
+  moisture_1h: 0.032738985645476955
+  moisture_10h: 0.04068534138467039
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 36.654131505483335
-  relative_humidity: 0.11847489991564106
+  temperature_c: 34.11875496197584
+  relative_humidity: 0.2249896471502604
 - time_s: 486000.0
-  wind_speed: 2.8499998447797776
-  wind_direction: 298.0
-  moisture_1h: 0.01935224918884239
-  moisture_10h: 0.024049397050211904
+  wind_speed: 4.396241520310129
+  wind_direction: 275.48540218100675
+  moisture_1h: 0.03223048822073782
+  moisture_10h: 0.04005342225489748
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 36.731044426774474
-  relative_humidity: 0.11729162420346956
+  temperature_c: 33.15774677169211
+  relative_humidity: 0.21874863223175495
 - time_s: 489600.0
-  wind_speed: 2.821169754398357
-  wind_direction: 298.0
-  moisture_1h: 0.020187220110349572
-  moisture_10h: 0.0250870308167451
+  wind_speed: 3.7316386489541693
+  wind_direction: 276.5365335638395
+  moisture_1h: 0.031888108701942315
+  moisture_10h: 0.03962794091115161
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 36.409031535074774
-  relative_humidity: 0.1222456686911573
+  temperature_c: 31.91463744520731
+  relative_humidity: 0.2132255457217669
 - time_s: 493200.0
-  wind_speed: 2.736378302301871
-  wind_direction: 298.0
-  moisture_1h: 0.02204001778217854
-  moisture_10h: 0.027389536661348086
+  wind_speed: 3.004848077616072
+  wind_direction: 265.44180704895115
+  moisture_1h: 0.031064547725587113
+  moisture_10h: 0.0386044864939335
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.697988740943615
-  relative_humidity: 0.1331847886008674
+  temperature_c: 30.148114557585593
+  relative_humidity: 0.20265206088872875
 - time_s: 496800.0
-  wind_speed: 2.6014038858261945
-  wind_direction: 298.0
-  moisture_1h: 0.023298642073938405
-  moisture_10h: 0.028953652286059377
+  wind_speed: 1.172198670892607
+  wind_direction: 263.7531132661886
+  moisture_1h: 0.032318317249443694
+  moisture_10h: 0.0401625690090174
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.61976739280833
-  relative_humidity: 0.14977280934141038
+  temperature_c: 29.70364347906729
+  relative_humidity: 0.2118040478079984
 - time_s: 500400.0
-  wind_speed: 2.425444788398376
-  wind_direction: 298.0
-  moisture_1h: 0.0263730086984339
-  moisture_10h: 0.03277422440193727
+  wind_speed: 2.252861231696568
+  wind_direction: 357.0331159871516
+  moisture_1h: 0.01227594417986561
+  moisture_10h: 0.01525554228177474
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.20750275419221
-  relative_humidity: 0.17149995762781212
+  temperature_c: 31.982493867010042
+  relative_humidity: 0.07195942693981233
 - time_s: 504000.0
-  wind_speed: 2.2204923317219643
-  wind_direction: 298.0
-  moisture_1h: 0.030080076366334692
-  moisture_10h: 0.03738106577563923
+  wind_speed: 1.617612258314379
+  wind_direction: 341.6741412353576
+  moisture_1h: 0.015746421990006018
+  moisture_10h: 0.019568369074958937
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.504595710308813
-  relative_humidity: 0.1976985275337106
+  temperature_c: 29.553311968850643
+  relative_humidity: 0.09178953375750386
 - time_s: 507600.0
-  wind_speed: 2.0005136870195073
-  wind_direction: 298.0
-  moisture_1h: 0.04485863968540106
-  moisture_10h: 0.05574665902651782
+  wind_speed: 2.3098283402660886
+  wind_direction: 37.83045071414621
+  moisture_1h: 0.04012084017794956
+  moisture_10h: 0.049858908182306254
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.049813879457286
-  relative_humidity: 0.21238717504891846
+  temperature_c: 26.787234216020465
+  relative_humidity: 0.17823490846196854
 - time_s: 511200.0
-  wind_speed: 1.7805000353955784
-  wind_direction: 298.0
-  moisture_1h: 0.04694634751602872
-  moisture_10h: 0.05834109205875414
+  wind_speed: 2.497296016170998
+  wind_direction: 28.677215257362224
+  moisture_1h: 0.034520935308316014
+  moisture_10h: 0.0428998031015966
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.906022108884162
-  relative_humidity: 0.22314575581543003
+  temperature_c: 27.80612384397252
+  relative_humidity: 0.14597109683829906
 - time_s: 514800.0
-  wind_speed: 1.5754449436185987
-  wind_direction: 298.0
-  moisture_1h: 0.04861511130979245
-  moisture_10h: 0.06041489560828576
+  wind_speed: 3.7073798867927756
+  wind_direction: 38.021826903256816
+  moisture_1h: 0.032926662625459104
+  moisture_10h: 0.040918571029696746
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.991757063586384
-  relative_humidity: 0.23174539307886813
+  temperature_c: 28.135010216051796
+  relative_humidity: 0.13685021551565243
 - time_s: 518400.0
-  wind_speed: 1.3993225773236073
-  wind_direction: 298.0
-  moisture_1h: 0.049949001310357996
-  moisture_10h: 0.06207254531772644
+  wind_speed: 4.607290155297468
+  wind_direction: 39.848139076364255
+  moisture_1h: 0.029395579496820156
+  moisture_10h: 0.03653042888925223
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.26095920810391
-  relative_humidity: 0.23861932586495738
+  temperature_c: 28.160610401737486
+  relative_humidity: 0.11548060937345321
 - time_s: 522000.0
-  wind_speed: 1.2641353847176366
-  wind_direction: 298.0
-  moisture_1h: 0.051015217236337465
-  moisture_10h: 0.0633975515170019
+  wind_speed: 4.729206355805031
+  wind_direction: 60.368887099184946
+  moisture_1h: 0.031021129805013738
+  moisture_10h: 0.03855053024312387
   moisture_100h: 0.042
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.676811855731003
-  relative_humidity: 0.24411385435496277
+  temperature_c: 28.517016620546723
+  relative_humidity: 0.1259301721933922
 - time_s: 525600.0
-  wind_speed: 1.8790961495693845
-  wind_direction: 244.0
-  moisture_1h: 0.05186747371950343
-  moisture_10h: 0.06445666636986834
+  wind_speed: 5.024104693939925
+  wind_direction: 68.38782816686955
+  moisture_1h: 0.030143046692079643
+  moisture_10h: 0.03745932016103101
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.209886389647103
-  relative_humidity: 0.24850578605795762
+  temperature_c: 28.447210439929513
+  relative_humidity: 0.12048953475111024
 - time_s: 529200.0
-  wind_speed: 1.8500001552202225
-  wind_direction: 244.0
-  moisture_1h: 0.05254870638110637
-  moisture_10h: 0.06530324676487005
+  wind_speed: 4.706607079437217
+  wind_direction: 72.17590176487317
+  moisture_1h: 0.028056537683965398
+  moisture_10h: 0.03486637692764632
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.836659685816233
-  relative_humidity: 0.25201638102872864
+  temperature_c: 28.87295061241573
+  relative_humidity: 0.10854475824351757
 - time_s: 532800.0
-  wind_speed: 1.8788302456016432
-  wind_direction: 244.0
-  moisture_1h: 0.053093234875053005
-  moisture_10h: 0.0659799423689979
+  wind_speed: 4.6189575596559695
+  wind_direction: 74.27310640704944
+  moisture_1h: 0.02998536601543388
+  moisture_10h: 0.037263367475490645
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.538329047265396
-  relative_humidity: 0.2548224986740461
+  temperature_c: 27.77065265518323
+  relative_humidity: 0.11840887506232203
 - time_s: 536400.0
-  wind_speed: 1.9636216976981293
-  wind_direction: 244.0
-  moisture_1h: 0.05352849186936988
-  moisture_10h: 0.06652084426484801
+  wind_speed: 5.123031192727718
+  wind_direction: 77.38842742933771
+  moisture_1h: 0.031621077549757334
+  moisture_10h: 0.03929609637251397
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.299864947605258
-  relative_humidity: 0.2570655077095295
+  temperature_c: 27.745096154963445
+  relative_humidity: 0.1282851987671755
 - time_s: 540000.0
-  wind_speed: 2.098596114173805
-  wind_direction: 244.0
-  moisture_1h: 0.039337537906329115
-  moisture_10h: 0.04888548400009832
+  wind_speed: 4.811745768326873
+  wind_direction: 72.97680113233605
+  moisture_1h: 0.023978617420957783
+  moisture_10h: 0.029798670193034914
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.961746005120922
-  relative_humidity: 0.2580473019334283
+  temperature_c: 27.151497855584807
+  relative_humidity: 0.13871998505710897
 - time_s: 543600.0
-  wind_speed: 2.274555211601623
-  wind_direction: 244.0
-  moisture_1h: 0.034754623784384195
-  moisture_10h: 0.04319021208156482
+  wind_speed: 4.686940944188093
+  wind_direction: 73.6818414360428
+  moisture_1h: 0.0215913539337871
+  moisture_10h: 0.02683197382062863
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.396914656692427
-  relative_humidity: 0.22639010946299876
+  temperature_c: 29.431725568772976
+  relative_humidity: 0.1265225324928323
 - time_s: 547200.0
-  wind_speed: 2.4795076682780355
-  wind_direction: 244.0
-  moisture_1h: 0.030348237235144737
-  moisture_10h: 0.037714314233966276
+  wind_speed: 2.917678706387471
+  wind_direction: 76.87722441585758
+  moisture_1h: 0.02025314299433496
+  moisture_10h: 0.02516895440072694
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.738283948347508
-  relative_humidity: 0.19595230867148267
+  temperature_c: 32.5308373654033
+  relative_humidity: 0.12034206098790774
 - time_s: 550800.0
-  wind_speed: 2.699486312980493
-  wind_direction: 244.0
-  moisture_1h: 0.026254029001881556
-  moisture_10h: 0.032626366138260574
+  wind_speed: 0.6088028387141036
+  wind_direction: 136.58500204979933
+  moisture_1h: 0.018437932444376665
+  moisture_10h: 0.022913158765827314
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.913774755584654
-  relative_humidity: 0.16767092817739981
+  temperature_c: 32.919823620649225
+  relative_humidity: 0.10958315651212416
 - time_s: 554400.0
-  wind_speed: 2.9194999646044213
-  wind_direction: 244.0
-  moisture_1h: 0.022598039408960498
-  moisture_10h: 0.02808300043055285
+  wind_speed: 2.1630215790771627
+  wind_direction: 227.43015098018836
+  moisture_1h: 0.026992100678224017
+  moisture_10h: 0.033543581425365766
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.85641452806521
-  relative_humidity: 0.14241661113515258
+  temperature_c: 32.611759890980665
+  relative_humidity: 0.17518520853075883
 - time_s: 558000.0
-  wind_speed: 3.124555056381401
-  wind_direction: 244.0
-  moisture_1h: 0.02006726944056335
-  moisture_10h: 0.0249379659067195
+  wind_speed: 3.2251152741394256
+  wind_direction: 250.91522625276406
+  moisture_1h: 0.034812532913010646
+  moisture_10h: 0.04326217682393556
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 35.50639904160238
-  relative_humidity: 0.12096681245916935
+  temperature_c: 33.16381238500135
+  relative_humidity: 0.23963844250072047
 - time_s: 561600.0
-  wind_speed: 3.3006774226763924
-  wind_direction: 244.0
-  moisture_1h: 0.01718713449285805
-  moisture_10h: 0.021358769078503207
+  wind_speed: 3.868238008473807
+  wind_direction: 257.1442158718246
+  moisture_1h: 0.03073538438415434
+  moisture_10h: 0.03819542913758986
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 36.812933473012706
-  relative_humidity: 0.1039818648508351
+  temperature_c: 34.57298526208989
+  relative_humidity: 0.2097967423269634
 - time_s: 565200.0
-  wind_speed: 3.4358646152823633
-  wind_direction: 244.0
-  moisture_1h: 0.015174265140748548
-  moisture_10h: 0.01885733920403703
+  wind_speed: 4.183274889620946
+  wind_direction: 260.0731183656354
+  moisture_1h: 0.02356938605596172
+  moisture_10h: 0.029290110826826213
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 37.73579612028498
-  relative_humidity: 0.09198465043629558
+  temperature_c: 35.85475506888528
+  relative_humidity: 0.15469870910786057
 - time_s: 568800.0
-  wind_speed: 3.5209038504306163
-  wind_direction: 244.0
-  moisture_1h: 0.01406784521717848
-  moisture_10h: 0.0174823707553286
+  wind_speed: 4.59184653100086
+  wind_direction: 253.05900170655164
+  moisture_1h: 0.0434060817343881
+  moisture_10h: 0.0539415384660357
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 38.24657662889392
-  relative_humidity: 0.08534450382437941
+  temperature_c: 33.902818665403515
+  relative_humidity: 0.2741292800144591
 - time_s: 572400.0
-  wind_speed: 3.549999844779778
-  wind_direction: 244.0
-  moisture_1h: 0.013888627063375843
-  moisture_10h: 0.017259653049632114
+  wind_speed: 3.847101456710184
+  wind_direction: 248.68312026394528
+  moisture_1h: 0.04943169530626864
+  moisture_10h: 0.06142967960390666
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 38.329550605424004
-  relative_humidity: 0.08426584212948823
+  temperature_c: 31.50818011346313
+  relative_humidity: 0.31335657243755877
 - time_s: 576000.0
-  wind_speed: 3.521169754398357
-  wind_direction: 244.0
-  moisture_1h: 0.014639918905270072
-  moisture_10h: 0.018193297280335623
+  wind_speed: 2.7322331686741674
+  wind_direction: 250.48161167429063
+  moisture_1h: 0.04624341311402079
+  moisture_10h: 0.05746754251062778
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 37.982163693496695
-  relative_humidity: 0.08878187198454326
+  temperature_c: 31.705043307803145
+  relative_humidity: 0.2904574890177289
 - time_s: 579600.0
-  wind_speed: 3.436378302301871
-  wind_direction: 244.0
-  moisture_1h: 0.016307752933940683
-  moisture_10h: 0.020265945393635024
+  wind_speed: 1.9381985820177567
+  wind_direction: 280.7225592695789
+  moisture_1h: 0.04184279631543045
+  moisture_10h: 0.05199881483859318
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 37.2151102097088
-  relative_humidity: 0.09875356727378598
+  temperature_c: 32.280661991195586
+  relative_humidity: 0.2594596611742701
 - time_s: 583200.0
-  wind_speed: 3.3014038858261947
-  wind_direction: 244.0
-  moisture_1h: 0.018860195933038774
-  moisture_10h: 0.023437913392514203
+  wind_speed: 1.8370176713881614
+  wind_direction: 309.5774852092122
+  moisture_1h: 0.0342329055756302
+  moisture_10h: 0.04254186323961811
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 36.05200391877239
-  relative_humidity: 0.11387394905595924
+  temperature_c: 31.826013573666685
+  relative_humidity: 0.23198731498366498
 - time_s: 586800.0
-  wind_speed: 3.1254447883983763
-  wind_direction: 244.0
-  moisture_1h: 0.02133291044175093
-  moisture_10h: 0.02651080132567106
+  wind_speed: 1.832042244421713
+  wind_direction: 27.13021597136549
+  moisture_1h: 0.032615391674160416
+  moisture_10h: 0.04053174887662654
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.528651083053575
-  relative_humidity: 0.13367753592030385
+  temperature_c: 30.77306021500205
+  relative_humidity: 0.18902606931162308
 - time_s: 590400.0
-  wind_speed: 2.9204923317219644
-  wind_direction: 244.0
-  moisture_1h: 0.024789530061224304
-  moisture_10h: 0.030806406289676805
+  wind_speed: 2.4519647479902735
+  wind_direction: 53.68511003551784
+  moisture_1h: 0.023381659617034325
+  moisture_10h: 0.029056819718256247
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.69194816570187
-  relative_humidity: 0.15755467384587607
+  temperature_c: 29.64397541533772
+  relative_humidity: 0.1394170814152539
 - time_s: 594000.0
-  wind_speed: 2.7005136870195074
-  wind_direction: 244.0
-  moisture_1h: 0.04207978391985624
-  moisture_10h: 0.05229332370622911
+  wind_speed: 2.6668915576405627
+  wind_direction: 35.35786814288695
+  moisture_1h: 0.03517518809449138
+  moisture_10h: 0.04371285510771744
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.269646225155373
-  relative_humidity: 0.19590183590823662
+  temperature_c: 28.810914324196943
+  relative_humidity: 0.15160847486708853
 - time_s: 597600.0
-  wind_speed: 2.4805000353955786
-  wind_direction: 244.0
-  moisture_1h: 0.0478821640876274
-  moisture_10h: 0.059504048574915605
+  wind_speed: 2.497818124688438
+  wind_direction: 48.63885431854357
+  moisture_1h: 0.027683364986688056
+  moisture_10h: 0.034402628332971565
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.28187597819103
-  relative_humidity: 0.22778307337881032
+  temperature_c: 29.715569189122988
+  relative_humidity: 0.10768238074031697
 - time_s: 601200.0
-  wind_speed: 2.275444943618599
-  wind_direction: 244.0
-  moisture_1h: 0.052521821473025254
-  moisture_10h: 0.06526983639366245
+  wind_speed: 3.6522233786389386
+  wind_direction: 47.41505592196919
+  moisture_1h: 0.0358031678095887
+  moisture_10h: 0.044493257083760715
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.69242946828666
-  relative_humidity: 0.25327571857079006
+  temperature_c: 28.715674657931956
+  relative_humidity: 0.15525818803212632
 - time_s: 604800.0
-  wind_speed: 2.0993225773236075
-  wind_direction: 244.0
-  moisture_1h: 0.05623175085225545
-  moisture_10h: 0.06988023406882231
+  wind_speed: 4.10675215621513
+  wind_direction: 45.39137576962702
+  moisture_1h: 0.033492640860816665
+  moisture_10h: 0.04162192262315081
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.42148771246486
-  relative_humidity: 0.27365996367683404
+  temperature_c: 30.05901374210559
+  relative_humidity: 0.14348011838505362
 - time_s: 608400.0
-  wind_speed: 1.9641353847176368
-  wind_direction: 244.0
-  moisture_1h: 0.05919825782800601
-  moisture_10h: 0.07356676700956087
+  wind_speed: 4.357352964904574
+  wind_direction: 37.07005015118191
+  moisture_1h: 0.03201083086227178
+  moisture_10h: 0.03978045000359988
   moisture_100h: 0.04
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.405226431178594
-  relative_humidity: 0.2899594667458213
+  temperature_c: 28.61193461539375
+  relative_humidity: 0.13208938840702822
 - time_s: 612000.0
-  wind_speed: 3.479096149569384
-  wind_direction: 268.0
-  moisture_1h: 0.061570314742739704
-  moisture_10h: 0.07651456589389012
+  wind_speed: 3.0508224505512884
+  wind_direction: 33.01700333772634
+  moisture_1h: 0.03778945613304554
+  moisture_10h: 0.04696165422359057
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.592610914290653
-  relative_humidity: 0.3029927578446
+  temperature_c: 28.561395546211248
+  relative_humidity: 0.16704642803733438
 - time_s: 615600.0
-  wind_speed: 3.450000155220222
-  wind_direction: 268.0
-  moisture_1h: 0.06346704178661002
-  moisture_10h: 0.07887166357947653
+  wind_speed: 2.5410138181329733
+  wind_direction: 65.28398831798079
+  moisture_1h: 0.03195571972197273
+  moisture_10h: 0.03971196237293698
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.942833154922244
-  relative_humidity: 0.3134143440823244
+  temperature_c: 27.848723731168704
+  relative_humidity: 0.13048667561946564
 - time_s: 619200.0
-  wind_speed: 3.478830245601643
-  wind_direction: 268.0
-  moisture_1h: 0.06498368898702211
-  moisture_10h: 0.08075642903241584
+  wind_speed: 3.163190153889477
+  wind_direction: 50.3705739197235
+  moisture_1h: 0.032109427491916004
+  moisture_10h: 0.03990297785403154
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.42326254890334
-  relative_humidity: 0.321747577713583
+  temperature_c: 27.770912476222257
+  relative_humidity: 0.13128941588646714
 - time_s: 622800.0
-  wind_speed: 3.563621697698129
-  wind_direction: 268.0
-  moisture_1h: 0.06619641948398607
-  moisture_10h: 0.08226351159174967
+  wind_speed: 3.8468500300057267
+  wind_direction: 75.60903369638514
+  moisture_1h: 0.02820890650874665
+  moisture_10h: 0.03505572847688904
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.00780724784588
-  relative_humidity: 0.3284109378939909
+  temperature_c: 29.284585372353966
+  relative_humidity: 0.11015288185511826
 - time_s: 626400.0
-  wind_speed: 3.698596114173805
-  wind_direction: 268.0
-  moisture_1h: 0.05668093463253152
-  moisture_10h: 0.07043844303848577
+  wind_speed: 3.592755319535821
+  wind_direction: 82.1679778678952
+  moisture_1h: 0.0170551224053537
+  moisture_10h: 0.021194715222187122
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.954926585513828
-  relative_humidity: 0.345185806444811
+  temperature_c: 27.98815968212545
+  relative_humidity: 0.09884243175502602
 - time_s: 630000.0
-  wind_speed: 3.874555211601623
-  wind_direction: 268.0
-  moisture_1h: 0.05046893140857888
-  moisture_10h: 0.0627186720417291
+  wind_speed: 0.8597192278198375
+  wind_direction: 122.48419271680076
+  moisture_1h: 0.021767162302556264
+  moisture_10h: 0.027050454123565066
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.44497448014614
-  relative_humidity: 0.3047878266158113
+  temperature_c: 25.92157959422451
+  relative_humidity: 0.1254623363586987
 - time_s: 633600.0
-  wind_speed: 4.079507668278035
-  wind_direction: 268.0
-  moisture_1h: 0.04449505681446987
-  moisture_10h: 0.05529482788594314
+  wind_speed: 1.886428200617858
+  wind_direction: 51.45071491833772
+  moisture_1h: 0.02122250231376396
+  moisture_10h: 0.026373595108366864
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.839569801426983
-  relative_humidity: 0.26593844797684935
+  temperature_c: 29.800634149302
+  relative_humidity: 0.124547071382296
 - time_s: 637200.0
-  wind_speed: 4.299486312980492
-  wind_direction: 268.0
-  moisture_1h: 0.03894355201488768
-  moisture_10h: 0.04839587046510314
+  wind_speed: 0.6639805302559978
+  wind_direction: 222.88814905628612
+  moisture_1h: 0.030129437776048377
+  moisture_10h: 0.0374424081100407
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.064860474963535
-  relative_humidity: 0.22983583005653613
+  temperature_c: 28.76117313780488
+  relative_humidity: 0.1920178767284115
 - time_s: 640800.0
-  wind_speed: 4.519499964604421
-  wind_direction: 268.0
-  moisture_1h: 0.033985631804168207
-  moisture_10h: 0.04223457156246146
+  wind_speed: 1.3919210350129354
+  wind_direction: 258.5478240128481
+  moisture_1h: 0.04479223731910903
+  moisture_10h: 0.0556641395810287
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.052215976463366
-  relative_humidity: 0.1975934191231123
+  temperature_c: 27.99514814511231
+  relative_humidity: 0.23875007712824925
 - time_s: 644400.0
-  wind_speed: 4.7245550563814005
-  wind_direction: 268.0
-  moisture_1h: 0.029774204145081497
-  moisture_10h: 0.03700095272398477
+  wind_speed: 1.5950952136475665
+  wind_direction: 254.6805996335372
+  moisture_1h: 0.058788026446437436
+  moisture_10h: 0.0730569649043106
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.740343976054547
-  relative_humidity: 0.17020560822065406
+  temperature_c: 28.622480704307492
+  relative_humidity: 0.3759344328290496
 - time_s: 648000.0
-  wind_speed: 4.900677422676392
-  wind_direction: 268.0
-  moisture_1h: 0.026439154311358286
-  moisture_10h: 0.0328564247752802
+  wind_speed: 2.189389547628906
+  wind_direction: 249.3348755479983
+  moisture_1h: 0.05407435270524184
+  moisture_10h: 0.06719919559486365
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.07718066424806
-  relative_humidity: 0.14851706894366828
+  temperature_c: 30.36707907504706
+  relative_humidity: 0.3449903397081075
 - time_s: 651600.0
-  wind_speed: 5.035864615282363
-  wind_direction: 268.0
-  moisture_1h: 0.02408333907643122
-  moisture_10h: 0.02992880972605045
+  wind_speed: 2.1687930545270526
+  wind_direction: 242.05731299282468
+  moisture_1h: 0.07918681878221807
+  moisture_10h: 0.0984069204283875
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.02149645971545
-  relative_humidity: 0.13319670079342813
+  temperature_c: 30.102228365884873
+  relative_humidity: 0.4252540537239477
 - time_s: 655200.0
-  wind_speed: 5.120903850430616
-  wind_direction: 268.0
-  moisture_1h: 0.022779414492218326
-  moisture_10h: 0.028308398592271317
+  wind_speed: 3.5194396087907545
+  wind_direction: 247.97160769136838
+  moisture_1h: 0.06581295737518113
+  moisture_10h: 0.08178697615556489
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.544167577006455
-  relative_humidity: 0.12471700154786783
+  temperature_c: 31.4214796627068
+  relative_humidity: 0.38349196310251016
 - time_s: 658800.0
-  wind_speed: 5.149999844779777
-  wind_direction: 268.0
-  moisture_1h: 0.022567595092900013
-  moisture_10h: 0.028045166717390307
+  wind_speed: 3.028830865475188
+  wind_direction: 262.5209227125205
+  moisture_1h: 0.07646399605065797
+  moisture_10h: 0.09502321839305068
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.62907423759561
-  relative_humidity: 0.12333949488656132
+  temperature_c: 29.816867359980332
+  relative_humidity: 0.4082688175811796
 - time_s: 662400.0
-  wind_speed: 5.121169754398357
-  wind_direction: 268.0
-  moisture_1h: 0.023454413632423156
-  moisture_10h: 0.02914723247524431
+  wind_speed: 1.6914211008444704
+  wind_direction: 330.6368264116929
+  moisture_1h: 0.052972040112885484
+  moisture_10h: 0.0658293314024208
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 34.27359782239577
-  relative_humidity: 0.12910666469959362
+  temperature_c: 30.135106558800235
+  relative_humidity: 0.3364724135517257
 - time_s: 666000.0
-  wind_speed: 5.036378302301871
-  wind_direction: 268.0
-  moisture_1h: 0.02541251960685428
-  moisture_10h: 0.03158060689007134
+  wind_speed: 4.2715920601475075
+  wind_direction: 319.1682861576835
+  moisture_1h: 0.030679056903434816
+  moisture_10h: 0.03812542993824909
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.48870163298318
-  relative_humidity: 0.1418406448355182
+  temperature_c: 33.198568005665294
+  relative_humidity: 0.20629545215287867
 - time_s: 669600.0
-  wind_speed: 4.901403885826194
-  wind_direction: 268.0
-  moisture_1h: 0.02838152277538422
-  moisture_10h: 0.03527024189562311
+  wind_speed: 3.5623383111928972
+  wind_direction: 315.4067037868822
+  moisture_1h: 0.024943507032260476
+  moisture_10h: 0.03099775631193535
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.29859277076489
-  relative_humidity: 0.1611487046980806
+  temperature_c: 33.04398166353459
+  relative_humidity: 0.159579757430102
 - time_s: 673200.0
-  wind_speed: 4.725444788398376
-  wind_direction: 268.0
-  moisture_1h: 0.03226985566482605
-  moisture_10h: 0.0401023449038615
+  wind_speed: 1.445101521055948
+  wind_direction: 288.1780469552684
+  moisture_1h: 0.036573932362806184
+  moisture_10h: 0.04545110041203099
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.739975562124176
-  relative_humidity: 0.18643536150959428
+  temperature_c: 29.313860524315324
+  relative_humidity: 0.24534777574785038
 - time_s: 676800.0
-  wind_speed: 4.5204923317219645
-  wind_direction: 268.0
-  moisture_1h: 0.036957597615825316
-  moisture_10h: 0.04592788829927806
+  wind_speed: 1.0505900341953835
+  wind_direction: 44.97216041896444
+  moisture_1h: 0.03828698187694547
+  moisture_10h: 0.047579938643194375
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.860919554771037
-  relative_humidity: 0.21692074568483397
+  temperature_c: 26.982540884887616
+  relative_humidity: 0.2540316578700896
 - time_s: 680400.0
-  wind_speed: 4.300513687019507
-  wind_direction: 268.0
-  moisture_1h: 0.05479593247043375
-  moisture_10h: 0.06809591607976233
+  wind_speed: 3.0491972013545148
+  wind_direction: 39.08560212151218
+  moisture_1h: 0.037099190162140694
+  moisture_10h: 0.046103847968485524
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.037082682512253
-  relative_humidity: 0.2676385578651965
+  temperature_c: 27.12157281102413
+  relative_humidity: 0.16046760734550372
 - time_s: 684000.0
-  wind_speed: 4.080500035395578
-  wind_direction: 268.0
-  moisture_1h: 0.062136893034140064
-  moisture_10h: 0.07721866318805756
+  wind_speed: 2.1818047259627775
+  wind_direction: 72.92263743076718
+  moisture_1h: 0.040009032813993706
+  moisture_10h: 0.04971996310865238
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.579002839502913
-  relative_humidity: 0.3097299944368189
+  temperature_c: 27.12088708449013
+  relative_humidity: 0.17811147971333238
 - time_s: 687600.0
-  wind_speed: 3.8754449436185987
-  wind_direction: 268.0
-  moisture_1h: 0.06800899327436553
-  moisture_10h: 0.08451603047688144
+  wind_speed: 1.836665238620127
+  wind_direction: 4.669861980507868
+  moisture_1h: 0.040703899272975005
+  moisture_10h: 0.05058348647515341
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.412671686774278
-  relative_humidity: 0.34339931232222515
+  temperature_c: 25.303837172492138
+  relative_humidity: 0.17930498682980647
 - time_s: 691200.0
-  wind_speed: 3.699322577323607
-  wind_direction: 268.0
-  moisture_1h: 0.0727061389587781
-  moisture_10h: 0.09035326006527765
+  wind_speed: 4.059546491453173
+  wind_direction: 16.09734312946955
+  moisture_1h: 0.038565016858676894
+  moisture_10h: 0.047925457843792645
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.47971292985345
-  relative_humidity: 0.37033170188178727
+  temperature_c: 25.01506816350006
+  relative_humidity: 0.1658550454357919
 - time_s: 694800.0
-  wind_speed: 3.5641353847176367
-  wind_direction: 268.0
-  moisture_1h: 0.07646342794874747
-  moisture_10h: 0.09502251240232695
+  wind_speed: 3.904365421290485
+  wind_direction: 60.80765625637678
+  moisture_1h: 0.034282886524057275
+  moisture_10h: 0.0426039754862071
   moisture_100h: 0.04100000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.73343084686276
-  relative_humidity: 0.39187516200939543
+  temperature_c: 26.508209601207
+  relative_humidity: 0.14237034309552793
 - time_s: 698400.0
-  wind_speed: 2.2790961495693844
-  wind_direction: 269.0
-  moisture_1h: 0.07946891713359282
-  moisture_10h: 0.09875748925339689
+  wind_speed: 3.6322396176755047
+  wind_direction: 67.17368176258405
+  moisture_1h: 0.030724071002059365
+  moisture_10h: 0.03818136978896698
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.13647311077692
-  relative_humidity: 0.4091079691185981
+  temperature_c: 28.81392672371067
+  relative_humidity: 0.1246223264187734
 - time_s: 702000.0
-  wind_speed: 2.2500001552202225
-  wind_direction: 269.0
-  moisture_1h: 0.08187303490689617
-  moisture_10h: 0.10174513075808456
+  wind_speed: 2.107066882711649
+  wind_direction: 140.84975401919536
+  moisture_1h: 0.06394027926675273
+  moisture_10h: 0.0794597645256733
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.658961259970255
-  relative_humidity: 0.42289264619015265
+  temperature_c: 22.580155833880468
+  relative_humidity: 0.31568120984683906
 - time_s: 705600.0
-  wind_speed: 2.278830245601643
-  wind_direction: 269.0
-  moisture_1h: 0.08379611029078264
-  moisture_10h: 0.10413497201184639
+  wind_speed: 2.5867307088859968
+  wind_direction: 139.04068732385704
+  moisture_1h: 0.06947189516120168
+  moisture_10h: 0.0863340056372215
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.276995244828413
-  relative_humidity: 0.43391913309753344
+  temperature_c: 22.56071761354095
+  relative_humidity: 0.34919210021831587
 - time_s: 709200.0
-  wind_speed: 2.3636216976981292
-  wind_direction: 269.0
-  moisture_1h: 0.08533439555000628
-  moisture_10h: 0.10604662747961946
+  wind_speed: 2.6352923386149567
+  wind_direction: 176.9671492969849
+  moisture_1h: 0.08392192981533497
+  moisture_10h: 0.10429133025595025
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.971457201161282
-  relative_humidity: 0.44273931893776125
+  temperature_c: 20.560320073025625
+  relative_humidity: 0.43349091331256046
 - time_s: 712800.0
-  wind_speed: 2.498596114173805
-  wind_direction: 269.0
-  moisture_1h: 0.073479127954349
-  moisture_10h: 0.09131386774909389
+  wind_speed: 3.3786623935825726
+  wind_direction: 160.23074958847496
+  moisture_1h: 0.06011696615726004
+  moisture_10h: 0.0747084627973717
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.281030505474032
-  relative_humidity: 0.4665624198820978
+  temperature_c: 22.10924298132696
+  relative_humidity: 0.32912488026820597
 - time_s: 716400.0
-  wind_speed: 2.674555211601623
-  wind_direction: 269.0
-  moisture_1h: 0.0661769065286002
-  moisture_10h: 0.08223926248214394
+  wind_speed: 3.1107398349592805
+  wind_direction: 141.76839552840715
+  moisture_1h: 0.05810907383195596
+  moisture_10h: 0.07221321796592585
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.54726509291221
-  relative_humidity: 0.41775121338342935
+  temperature_c: 22.766186748583515
+  relative_humidity: 0.285247440923374
 - time_s: 720000.0
-  wind_speed: 2.8795076682780354
-  wind_direction: 269.0
-  moisture_1h: 0.059153193833740035
-  moisture_10h: 0.07351076515260897
+  wind_speed: 1.468910798421315
+  wind_direction: 135.16658032940646
+  moisture_1h: 0.05287383356794042
+  moisture_10h: 0.06570728831744052
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.727064870715914
-  relative_humidity: 0.3708016797076572
+  temperature_c: 25.612807922442382
+  relative_humidity: 0.2877135327424879
 - time_s: 723600.0
-  wind_speed: 3.099486312980493
-  wind_direction: 269.0
-  moisture_1h: 0.052625020880252914
-  moisture_10h: 0.06539808420070264
+  wind_speed: 0.7337571254267485
+  wind_direction: 331.49298274916293
+  moisture_1h: 0.03916951770849314
+  moisture_10h: 0.048676682200845846
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.75307455700174
-  relative_humidity: 0.32716454800303946
+  temperature_c: 28.448062163474066
+  relative_humidity: 0.20250783842556125
 - time_s: 727200.0
-  wind_speed: 3.319499964604421
-  wind_direction: 269.0
-  moisture_1h: 0.04679410662138544
-  moisture_10h: 0.05815189949065375
+  wind_speed: 1.1475037021340688
+  wind_direction: 238.5358588268611
+  moisture_1h: 0.070463099429695
+  moisture_10h: 0.08756579346602875
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.562690946233168
-  relative_humidity: 0.2881881950042087
+  temperature_c: 25.605382859029625
+  relative_humidity: 0.3648800851225558
 - time_s: 730800.0
-  wind_speed: 3.5245550563814008
-  wind_direction: 269.0
-  moisture_1h: 0.041840624886653154
-  moisture_10h: 0.05199611636399615
+  wind_speed: 2.572989668831299
+  wind_direction: 183.34951826251265
+  moisture_1h: 0.10413346807443534
+  moisture_10h: 0.12940858168473518
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.099997333014286
-  relative_humidity: 0.2550769805196923
+  temperature_c: 25.031235967624465
+  relative_humidity: 0.5814926375389188
 - time_s: 734400.0
-  wind_speed: 3.7006774226763923
-  wind_direction: 269.0
-  moisture_1h: 0.03791763705441964
-  moisture_10h: 0.0471209470190846
+  wind_speed: 0.9768128946044836
+  wind_direction: 225.70242854058574
+  moisture_1h: 0.076699117504841
+  moisture_10h: 0.09531540816135581
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.31749132465876
-  relative_humidity: 0.22885403300734977
+  temperature_c: 30.043740917333587
+  relative_humidity: 0.4100716558867052
 - time_s: 738000.0
-  wind_speed: 3.835864615282363
-  wind_direction: 269.0
-  moisture_1h: 0.03514636249260842
-  moisture_10h: 0.04367703300052308
+  wind_speed: 3.058072283626683
+  wind_direction: 237.16218378141036
+  moisture_1h: 0.07884305894187744
+  moisture_10h: 0.09797972373359526
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.17755265354679
-  relative_humidity: 0.2103296351543768
+  temperature_c: 27.186792870120918
+  relative_humidity: 0.5195797222589692
 - time_s: 741600.0
-  wind_speed: 3.9209038504306157
-  wind_direction: 269.0
-  moisture_1h: 0.033612432909777265
-  moisture_10h: 0.041770790412150385
+  wind_speed: 2.1230326266556463
+  wind_direction: 266.9959452387469
+  moisture_1h: 0.10045786037836238
+  moisture_10h: 0.12484083619835325
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.6536056342259
-  relative_humidity: 0.20007618633974983
+  temperature_c: 24.72977905941252
+  relative_humidity: 0.5503525405563504
 - time_s: 745200.0
-  wind_speed: 3.9499998447797777
-  wind_direction: 269.0
-  moisture_1h: 0.0333632463561934
-  moisture_10h: 0.04146112168536655
+  wind_speed: 4.140433897242194
+  wind_direction: 227.93304803609936
+  moisture_1h: 0.08093315871530635
+  moisture_10h: 0.10057712927727391
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.73094034561454
-  relative_humidity: 0.1984105156329175
+  temperature_c: 28.330440599841225
+  relative_humidity: 0.47756793932627667
 - time_s: 748800.0
-  wind_speed: 3.921169754398357
-  wind_direction: 269.0
-  moisture_1h: 0.034406502635632
-  moisture_10h: 0.04275759550835821
+  wind_speed: 3.3679649560205345
+  wind_direction: 225.48668149047455
+  moisture_1h: 0.07711492422026663
+  moisture_10h: 0.0958321388368362
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.407167163978464
-  relative_humidity: 0.2053840918527715
+  temperature_c: 29.706300401498552
+  relative_humidity: 0.4120322126997687
 - time_s: 752400.0
-  wind_speed: 3.836378302301871
-  wind_direction: 269.0
-  moisture_1h: 0.03670996538331602
-  moisture_10h: 0.045620151155965544
+  wind_speed: 2.9843216083748456
+  wind_direction: 212.97949250618663
+  moisture_1h: 0.12843005702249247
+  moisture_10h: 0.15960240095999062
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.692290601721716
-  relative_humidity: 0.2207814331936861
+  temperature_c: 25.0362311519999
+  relative_humidity: 0.6990386166004134
 - time_s: 756000.0
-  wind_speed: 3.7014038858261946
-  wind_direction: 269.0
-  moisture_1h: 0.04020245816173129
-  moisture_10h: 0.04996033635632626
+  wind_speed: 1.2486082391779016
+  wind_direction: 355.4522796334473
+  moisture_1h: 0.08227966527612567
+  moisture_10h: 0.10225045781887461
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.60840017039162
-  relative_humidity: 0.24412676556079588
+  temperature_c: 27.99637144161489
+  relative_humidity: 0.4858395008668579
 - time_s: 759600.0
-  wind_speed: 3.525444788398376
-  wind_direction: 269.0
-  moisture_1h: 0.044776063795198974
-  moisture_10h: 0.055644040444519115
+  wind_speed: 2.5658265155174287
+  wind_direction: 38.20635723956928
+  moisture_1h: 0.09738755058553136
+  moisture_10h: 0.12102530558201956
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.188987820155518
-  relative_humidity: 0.2746987238735735
+  temperature_c: 26.402202276282914
+  relative_humidity: 0.5217072373395064
 - time_s: 763200.0
-  wind_speed: 3.3204923317219643
-  wind_direction: 269.0
-  moisture_1h: 0.050289458984302954
-  moisture_10h: 0.06249563834942503
+  wind_speed: 3.150716923429968
+  wind_direction: 168.07178664102383
+  moisture_1h: 0.07689563274014032
+  moisture_10h: 0.0955596212693006
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.477913046703076
-  relative_humidity: 0.31155264207101074
+  temperature_c: 23.588609065647397
+  relative_humidity: 0.55866927369254
 - time_s: 766800.0
-  wind_speed: 3.1005136870195074
-  wind_direction: 269.0
-  moisture_1h: 0.06808996862173548
-  moisture_10h: 0.08461666003477808
+  wind_speed: 1.1667574540524541
+  wind_direction: 125.10564788054356
+  moisture_1h: 0.08600294198813425
+  moisture_10h: 0.1068774424706911
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.738715787262056
-  relative_humidity: 0.3460943418323387
+  temperature_c: 24.05847240451567
+  relative_humidity: 0.4519242140489667
 - time_s: 770400.0
-  wind_speed: 2.8805000353955785
-  wind_direction: 269.0
-  moisture_1h: 0.07301615549043944
-  moisture_10h: 0.09073852332792473
+  wind_speed: 1.288288013698668
+  wind_direction: 76.10142935367962
+  moisture_1h: 0.08307329335383859
+  moisture_10h: 0.10323671407078971
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.342485652483276
-  relative_humidity: 0.3736456175675943
+  temperature_c: 23.369266163711345
+  relative_humidity: 0.4330135785765894
 - time_s: 774000.0
-  wind_speed: 2.675444943618599
-  wind_direction: 269.0
-  moisture_1h: 0.07695817148068636
-  moisture_10h: 0.09563733931580441
+  wind_speed: 0.44611879008495386
+  wind_direction: 138.53320581356897
+  moisture_1h: 0.10148073033704835
+  moisture_10h: 0.12611197556448728
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.225199267687508
-  relative_humidity: 0.3956926028717986
+  temperature_c: 21.004154621736852
+  relative_humidity: 0.5374409000823234
 - time_s: 777600.0
-  wind_speed: 2.4993225773236074
-  wind_direction: 269.0
-  moisture_1h: 0.08011263770000195
-  moisture_10h: 0.09955745267573057
+  wind_speed: 0.4205975933775376
+  wind_direction: 104.94872803248347
+  moisture_1h: 0.10070221255003206
+  moisture_10h: 0.1251444971495544
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.33112827283122
-  relative_humidity: 0.41333496417929366
+  temperature_c: 21.44342795433835
+  relative_humidity: 0.5304101573524878
 - time_s: 781200.0
-  wind_speed: 2.3641353847176365
-  wind_direction: 269.0
-  moisture_1h: 0.08263689360191163
-  moisture_10h: 0.10269439204897757
+  wind_speed: 1.8317377001517896
+  wind_direction: 168.63067787878646
+  moisture_1h: 0.08937384990767659
+  moisture_10h: 0.11106653192410296
   moisture_100h: 0.047
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.615677914963097
-  relative_humidity: 0.42745267270994003
+  temperature_c: 21.152300267499378
+  relative_humidity: 0.4675347673399054
 - time_s: 784800.0
-  wind_speed: 2.0790961495693847
-  wind_direction: 256.0
-  moisture_1h: 0.08465684481245535
-  moisture_10h: 0.10520462267955616
+  wind_speed: 2.481882378387875
+  wind_direction: 157.28092523847954
+  moisture_1h: 0.10077323705016906
+  moisture_10h: 0.12523276060603533
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.043162737176907
-  relative_humidity: 0.438749895949077
+  temperature_c: 19.942832614752216
+  relative_humidity: 0.5250303520804848
 - time_s: 788400.0
-  wind_speed: 2.0500001552202227
-  wind_direction: 256.0
-  moisture_1h: 0.08627324309041531
-  moisture_10h: 0.10721335063663262
+  wind_speed: 1.8726455955200456
+  wind_direction: 143.32396395605463
+  moisture_1h: 0.06752710733144367
+  moisture_10h: 0.08391718192645425
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.58502664822135
-  relative_humidity: 0.44779012033378124
+  temperature_c: 21.733404134581757
+  relative_humidity: 0.33602402156747807
 - time_s: 792000.0
-  wind_speed: 2.0788302456016434
-  wind_direction: 256.0
-  moisture_1h: 0.08756671165507864
-  moisture_10h: 0.10882076788203947
+  wind_speed: 1.8556309055713824
+  wind_direction: 158.31110476190187
+  moisture_1h: 0.058366607890674174
+  moisture_10h: 0.07253326029132325
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.218418592841765
-  relative_humidity: 0.45502425700576266
+  temperature_c: 20.612244972911984
+  relative_humidity: 0.27861214898054326
 - time_s: 795600.0
-  wind_speed: 2.1636216976981295
-  wind_direction: 256.0
-  moisture_1h: 0.08860176653640636
-  moisture_10h: 0.11010704967631081
+  wind_speed: 1.6843336230976187
+  wind_direction: 160.2069694678628
+  moisture_1h: 0.060807529699346746
+  moisture_10h: 0.07556663884967363
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 19.925052779693086
-  relative_humidity: 0.4608131324984387
+  temperature_c: 19.59800641427647
+  relative_humidity: 0.2917279149832516
 - time_s: 799200.0
-  wind_speed: 2.2985961141738054
-  wind_direction: 256.0
-  moisture_1h: 0.06748151240840258
-  moisture_10h: 0.0838605202745197
+  wind_speed: 2.8470428924050153
+  wind_direction: 150.78670367625784
+  moisture_1h: 0.04693149487184649
+  moisture_10h: 0.058322634403848064
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 19.253481840221884
-  relative_humidity: 0.47294700022637903
+  temperature_c: 18.746639466579555
+  relative_humidity: 0.30567261352084724
 - time_s: 802800.0
-  wind_speed: 2.4745552116016234
-  wind_direction: 256.0
-  moisture_1h: 0.060803425915017695
-  moisture_10h: 0.07556153900118703
+  wind_speed: 1.8854745445303331
+  wind_direction: 145.15736577505254
+  moisture_1h: 0.06851812285958395
+  moisture_10h: 0.08514873520414316
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.48746648608336
-  relative_humidity: 0.4239040560477013
+  temperature_c: 18.757780361092113
+  relative_humidity: 0.427267426246708
 - time_s: 806400.0
-  wind_speed: 2.6795076682780357
-  wind_direction: 256.0
-  moisture_1h: 0.054378696647267265
-  moisture_10h: 0.06757740942573019
+  wind_speed: 0.9895300358629183
+  wind_direction: 79.01553527932103
+  moisture_1h: 0.05004185710398368
+  moisture_10h: 0.062187938925338936
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.636696890958873
-  relative_humidity: 0.3767217323156686
+  temperature_c: 24.808771867694865
+  relative_humidity: 0.34425493938159746
 - time_s: 810000.0
-  wind_speed: 2.899486312980493
-  wind_direction: 256.0
-  moisture_1h: 0.048406239571013615
-  moisture_10h: 0.06015532684553148
+  wind_speed: 0.16983412110940072
+  wind_direction: 222.10992302439857
+  moisture_1h: 0.0601445955076975
+  moisture_10h: 0.07474279830082796
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.63463109256497
-  relative_humidity: 0.33286083304603475
+  temperature_c: 24.952148266116442
+  relative_humidity: 0.426255418787974
 - time_s: 813600.0
-  wind_speed: 3.1194999646044215
-  wind_direction: 256.0
-  moisture_1h: 0.04307096692861385
-  moisture_10h: 0.05352508511517061
+  wind_speed: 1.3409974175819872
+  wind_direction: 227.43104701836396
+  moisture_1h: 0.06855827341320413
+  moisture_10h: 0.08519863103776823
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.419411385005382
-  relative_humidity: 0.29367932818855386
+  temperature_c: 25.27086252851238
+  relative_humidity: 0.4949880622953727
 - time_s: 817200.0
-  wind_speed: 3.324555056381401
-  wind_direction: 256.0
-  moisture_1h: 0.03853806320198166
-  moisture_10h: 0.0478919620374141
+  wind_speed: 3.0345363992264653
+  wind_direction: 197.10156677744263
+  moisture_1h: 0.06809575891475947
+  moisture_10h: 0.08462385573873021
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.935779484833912
-  relative_humidity: 0.2603903097470057
+  temperature_c: 25.757450139907135
+  relative_humidity: 0.4923268719669883
 - time_s: 820800.0
-  wind_speed: 3.5006774226763926
-  wind_direction: 256.0
-  moisture_1h: 0.03494787086353313
-  moisture_10h: 0.04343036379157516
+  wind_speed: 3.6446591538084645
+  wind_direction: 221.4606642455853
+  moisture_1h: 0.06041765700530599
+  moisture_10h: 0.07508213686096278
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.13678737350506
-  relative_humidity: 0.23402443344102195
+  temperature_c: 26.936582544572715
+  relative_humidity: 0.43286091823366873
 - time_s: 824400.0
-  wind_speed: 3.6358646152823635
-  wind_direction: 256.0
-  moisture_1h: 0.03241154525642437
-  moisture_10h: 0.04027842517303222
+  wind_speed: 4.366190476497333
+  wind_direction: 234.95662173534458
+  moisture_1h: 0.045854902037535464
+  moisture_10h: 0.05698473262917029
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.985250847106215
-  relative_humidity: 0.21539800874712162
+  temperature_c: 28.739698770473918
+  relative_humidity: 0.3191139349372411
 - time_s: 828000.0
-  wind_speed: 3.7209038504306164
-  wind_direction: 256.0
-  moisture_1h: 0.031007613132605197
-  moisture_10h: 0.0385337328249851
+  wind_speed: 4.451558736772191
+  wind_direction: 234.22166216562965
+  moisture_1h: 0.04465326976219719
+  moisture_10h: 0.05549144203457515
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.454900770261673
-  relative_humidity: 0.20508772527784952
+  temperature_c: 29.346727663017642
+  relative_humidity: 0.3107437358047871
 - time_s: 831600.0
-  wind_speed: 3.749999844779778
-  wind_direction: 256.0
-  moisture_1h: 0.030779541399215894
-  moisture_10h: 0.038250303874753734
+  wind_speed: 4.902038832741325
+  wind_direction: 253.08969594889254
+  moisture_1h: 0.05779876063041009
+  moisture_10h: 0.0718275860261407
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.53119639042943
-  relative_humidity: 0.2034127979913542
+  temperature_c: 28.740903318142827
+  relative_humidity: 0.41568518425569595
 - time_s: 835200.0
-  wind_speed: 3.7211697543983573
-  wind_direction: 256.0
-  moisture_1h: 0.03173439134696158
-  moisture_10h: 0.0394369135185542
+  wind_speed: 3.613429495431479
+  wind_direction: 261.48300074474486
+  moisture_1h: 0.07371908072889516
+  moisture_10h: 0.09161206148833573
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.211775531703132
-  relative_humidity: 0.2104250840305799
+  temperature_c: 27.609183913922664
+  relative_humidity: 0.5418962584393694
 - time_s: 838800.0
-  wind_speed: 3.636378302301871
-  wind_direction: 256.0
-  moisture_1h: 0.03384260002667441
-  moisture_10h: 0.04205682333411966
+  wind_speed: 3.3100978095830964
+  wind_direction: 285.21956663292167
+  moisture_1h: 0.07354213398370597
+  moisture_10h: 0.09139216650402295
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.50652772974434
-  relative_humidity: 0.2259074771829565
+  temperature_c: 26.796883138771655
+  relative_humidity: 0.5386654528708321
 - time_s: 842400.0
-  wind_speed: 3.501403885826195
-  wind_direction: 256.0
-  moisture_1h: 0.037038895542827154
-  moisture_10h: 0.04602891873283374
+  wind_speed: 2.486688723394181
+  wind_direction: 252.79101102846965
+  moisture_1h: 0.08548588691557205
+  moisture_10h: 0.10623488859410894
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.437288043526706
-  relative_humidity: 0.249380629669453
+  temperature_c: 25.572013885396355
+  relative_humidity: 0.5648780094668485
 - time_s: 846000.0
-  wind_speed: 3.3254447883983764
-  wind_direction: 256.0
-  moisture_1h: 0.04122431792574869
-  moisture_10h: 0.051230220334910995
+  wind_speed: 0.613129685422125
+  wind_direction: 170.04492893095173
+  moisture_1h: 0.07979974290893181
+  moisture_10h: 0.09916861254702206
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.03716102373538
-  relative_humidity: 0.2801177931508094
+  temperature_c: 24.39429658337196
+  relative_humidity: 0.5839351067703078
 - time_s: 849600.0
-  wind_speed: 3.1204923317219646
-  wind_direction: 256.0
-  moisture_1h: 0.046269283014656236
-  moisture_10h: 0.05749969151335921
+  wind_speed: 1.2686221135004265
+  wind_direction: 138.4065532375673
+  moisture_1h: 0.07207391619686719
+  moisture_10h: 0.08956758517668932
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.34949576832266
-  relative_humidity: 0.3171673194610418
+  temperature_c: 23.94377823528047
+  relative_humidity: 0.5204717897658898
 - time_s: 853200.0
-  wind_speed: 2.9005136870195076
-  wind_direction: 256.0
-  moisture_1h: 0.06903453733568536
-  moisture_10h: 0.08579049299968666
+  wind_speed: 1.6021178724022502
+  wind_direction: 143.0007911951376
+  moisture_1h: 0.09910527999729767
+  moisture_10h: 0.12315995960829224
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.770284860833804
-  relative_humidity: 0.3502124997713493
+  temperature_c: 22.83047952037071
+  relative_humidity: 0.5155845095474586
 - time_s: 856800.0
-  wind_speed: 2.680500035395579
-  wind_direction: 256.0
-  moisture_1h: 0.07371507509237035
-  moisture_10h: 0.09160708360993597
+  wind_speed: 0.9959548145733567
+  wind_direction: 145.52792440550158
+  moisture_1h: 0.10326717564240638
+  moisture_10h: 0.12833202409930114
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.509609574503102
-  relative_humidity: 0.3764994865518224
+  temperature_c: 21.368981088529978
+  relative_humidity: 0.5559114702671858
 - time_s: 860400.0
-  wind_speed: 2.4754449436185992
-  wind_direction: 256.0
-  moisture_1h: 0.07746200963234649
-  moisture_10h: 0.09626346828097429
+  wind_speed: 0.9647320582549451
+  wind_direction: 115.38988898063019
+  moisture_1h: 0.07544401175294811
+  moisture_10h: 0.09375566509104231
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.50039481765166
-  relative_humidity: 0.39754314090093545
+  temperature_c: 22.04236215500581
+  relative_humidity: 0.38454490078616
 - time_s: 864000.0
-  wind_speed: 2.2993225773236077
-  wind_direction: 256.0
-  moisture_1h: 0.08046156207198109
-  moisture_10h: 0.09999106742925806
+  wind_speed: 1.4521645508992755
+  wind_direction: 115.06060792812197
+  moisture_1h: 0.05714893952750383
+  moisture_10h: 0.07102004135456787
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.692483029033045
-  relative_humidity: 0.41438932384549015
+  temperature_c: 21.51700112770368
+  relative_humidity: 0.27273210735540376
 - time_s: 867600.0
-  wind_speed: 2.1641353847176372
-  wind_direction: 256.0
-  moisture_1h: 0.08286280894248957
-  moisture_10h: 0.10297514121008412
+  wind_speed: 1.2814514739581546
+  wind_direction: 89.02269403577208
+  moisture_1h: 0.0679275227846664
+  moisture_10h: 0.08441478559647864
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.045721322708726
-  relative_humidity: 0.4278752837977533
+  temperature_c: 20.918731060912442
+  relative_humidity: 0.3370980444785704
 - time_s: 871200.0
-  wind_speed: 2.5790961495693847
-  wind_direction: 282.0
-  moisture_1h: 0.08478509123265324
-  moisture_10h: 0.10536399687164673
+  wind_speed: 0.8469671752129483
+  wind_direction: 81.61344904647775
+  moisture_1h: 0.06487387578633322
+  moisture_10h: 0.08061996214223933
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.527965906015563
-  relative_humidity: 0.438671267459609
+  temperature_c: 21.22296747127635
+  relative_humidity: 0.31908668417583724
 - time_s: 874800.0
-  wind_speed: 2.5500001552202227
-  wind_direction: 282.0
-  moisture_1h: 0.08632394558722209
-  moisture_10h: 0.10727635956470317
+  wind_speed: 0.23981118576882185
+  wind_direction: 141.13890930850053
+  moisture_1h: 0.06080576721456597
+  moisture_10h: 0.0755644485773247
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.113484546198187
-  relative_humidity: 0.44731383080990994
+  temperature_c: 20.285652772470016
+  relative_humidity: 0.29286015653046066
 - time_s: 878400.0
-  wind_speed: 2.5788302456016434
-  wind_direction: 282.0
-  moisture_1h: 0.08755585243914131
-  moisture_10h: 0.10880727293407852
+  wind_speed: 1.2764719713643045
+  wind_direction: 103.78976303487374
+  moisture_1h: 0.059282809186274064
+  moisture_10h: 0.07367184054216583
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 19.78167768895024
-  relative_humidity: 0.4542325057174937
+  temperature_c: 19.109765595553277
+  relative_humidity: 0.28167065378609885
 - time_s: 882000.0
-  wind_speed: 2.6636216976981295
-  wind_direction: 282.0
-  moisture_1h: 0.08854203705583344
-  moisture_10h: 0.1100328227489969
+  wind_speed: 0.408444498799966
+  wind_direction: 68.93751525771016
+  moisture_1h: 0.07402510027677138
+  moisture_10h: 0.09199235762550229
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 19.516054668978317
-  relative_humidity: 0.45977114749964065
+  temperature_c: 20.077303219306554
+  relative_humidity: 0.3726746532582571
 - time_s: 885600.0
-  wind_speed: 2.7985961141738054
-  wind_direction: 282.0
-  moisture_1h: 0.06740303385994226
-  moisture_10h: 0.08376299353468551
+  wind_speed: 0.726177577473398
+  wind_direction: 135.36119662715092
+  moisture_1h: 0.044693586291798953
+  moisture_10h: 0.05554154412961423
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 18.922014735569498
-  relative_humidity: 0.4715779146386265
+  temperature_c: 19.856886627982227
+  relative_humidity: 0.2900390960678939
 - time_s: 889200.0
-  wind_speed: 2.9745552116016234
-  wind_direction: 282.0
-  moisture_1h: 0.060839267205876325
-  moisture_10h: 0.07560607963448708
+  wind_speed: 1.2956467736117725
+  wind_direction: 174.83168235444185
+  moisture_1h: 0.03891221739450934
+  moisture_10h: 0.0483569303543417
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.106290350884642
-  relative_humidity: 0.42334910905246814
+  temperature_c: 21.0220896774416
+  relative_humidity: 0.245877753981798
 - time_s: 892800.0
-  wind_speed: 3.1795076682780357
-  wind_direction: 282.0
-  moisture_1h: 0.054523142440572284
-  moisture_10h: 0.0677569148776044
+  wind_speed: 0.6555091979898101
+  wind_direction: 229.7834044251071
+  moisture_1h: 0.04254653779277244
+  moisture_10h: 0.05287336735412497
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.208156251250802
-  relative_humidity: 0.37693990997238336
+  temperature_c: 22.43728514619577
+  relative_humidity: 0.2783982301022406
 - time_s: 896400.0
-  wind_speed: 3.399486312980493
-  wind_direction: 282.0
-  moisture_1h: 0.04865061330881474
-  moisture_10h: 0.06045901459736201
+  wind_speed: 1.0726802489038767
+  wind_direction: 184.76239359629653
+  moisture_1h: 0.05238230416294782
+  moisture_10h: 0.06509645565880894
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.162403386892038
-  relative_humidity: 0.3337901332174248
+  temperature_c: 23.20839670677058
+  relative_humidity: 0.3596313202868634
 - time_s: 900000.0
-  wind_speed: 3.6194999646044215
-  wind_direction: 282.0
-  moisture_1h: 0.04340387128361663
-  moisture_10h: 0.053938791498086676
+  wind_speed: 1.242128590182165
+  wind_direction: 245.57667075979435
+  moisture_1h: 0.057978971505015325
+  moisture_10h: 0.07205153740429089
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.908402486112045
-  relative_humidity: 0.2952384731066471
+  temperature_c: 25.691546352778055
+  relative_humidity: 0.41038449187216663
 - time_s: 903600.0
-  wind_speed: 3.824555056381401
-  wind_direction: 282.0
-  moisture_1h: 0.03894569319190252
-  moisture_10h: 0.04839853134527692
+  wind_speed: 2.1237252575258663
+  wind_direction: 234.58401849950087
+  moisture_1h: 0.061062803040318234
+  moisture_10h: 0.0758838717394246
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.391985039801874
-  relative_humidity: 0.2624809703211757
+  temperature_c: 26.71045756735205
+  relative_humidity: 0.43757593842941406
 - time_s: 907200.0
-  wind_speed: 4.000677422676392
-  wind_direction: 282.0
-  moisture_1h: 0.03541439116721151
-  moisture_10h: 0.044010117178670614
+  wind_speed: 3.4999675965213823
+  wind_direction: 230.60812207154171
+  moisture_1h: 0.06611814953083317
+  moisture_10h: 0.0821662440771519
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.567123844906646
-  relative_humidity: 0.23653390550446232
+  temperature_c: 26.068396554423668
+  relative_humidity: 0.4770265828824117
 - time_s: 910800.0
-  wind_speed: 4.1358646152823635
-  wind_direction: 282.0
-  moisture_1h: 0.032919521603917624
-  moisture_10h: 0.04090969675049957
+  wind_speed: 3.51139264093074
+  wind_direction: 239.55392132007097
+  moisture_1h: 0.053555620794417835
+  moisture_10h: 0.06655455788044158
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.397360969061427
-  relative_humidity: 0.21820226980312468
+  temperature_c: 27.916756603957065
+  relative_humidity: 0.3795521101720491
 - time_s: 914400.0
-  wind_speed: 4.2209038504306164
-  wind_direction: 282.0
-  moisture_1h: 0.03153848623992859
-  moisture_10h: 0.03919345862826077
+  wind_speed: 3.7814508640268194
+  wind_direction: 270.4652727396378
+  moisture_1h: 0.041954921429241565
+  moisture_10h: 0.052138154785853597
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.856938834703637
-  relative_humidity: 0.20805479052974474
+  temperature_c: 29.282132273298767
+  relative_humidity: 0.2887838775315691
 - time_s: 918000.0
-  wind_speed: 4.2499998447797775
-  wind_direction: 282.0
-  moisture_1h: 0.031314130817105004
-  moisture_10h: 0.038914648005722724
+  wind_speed: 3.5698519073984087
+  wind_direction: 278.8439228040095
+  moisture_1h: 0.050313854057915476
+  moisture_10h: 0.06252595455740952
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.931599331498372
-  relative_humidity: 0.20640628676051698
+  temperature_c: 28.447303425934393
+  relative_humidity: 0.35451750647802993
 - time_s: 921600.0
-  wind_speed: 4.221169754398357
-  wind_direction: 282.0
-  moisture_1h: 0.0322534158194301
-  moisture_10h: 0.04008191480472867
+  wind_speed: 3.4003855172597506
+  wind_direction: 286.75489298016305
+  moisture_1h: 0.05380396582892393
+  moisture_10h: 0.06686318083594431
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.61902616512308
-  relative_humidity: 0.21330790227408342
+  temperature_c: 28.49947020465235
+  relative_humidity: 0.38285139349045266
 - time_s: 925200.0
-  wind_speed: 4.136378302301871
-  wind_direction: 282.0
-  moisture_1h: 0.034327200528430954
-  moisture_10h: 0.042659045316885066
+  wind_speed: 3.6400440952515147
+  wind_direction: 289.7192135370831
+  moisture_1h: 0.05637946386926939
+  moisture_10h: 0.07006379975986875
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.92891671882245
-  relative_humidity: 0.2285455188484013
+  temperature_c: 27.53321021676318
+  relative_humidity: 0.4015334844789276
 - time_s: 928800.0
-  wind_speed: 4.001403885826194
-  wind_direction: 282.0
-  moisture_1h: 0.03747114709539409
-  moisture_10h: 0.04656608571078101
+  wind_speed: 2.9820513159487776
+  wind_direction: 306.6195337347976
+  moisture_1h: 0.054604060671943754
+  moisture_10h: 0.06785747345639612
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.882681198274597
-  relative_humidity: 0.25164639914209797
+  temperature_c: 26.578343408843846
+  relative_humidity: 0.38506288302217656
 - time_s: 932400.0
-  wind_speed: 3.8254447883983764
-  wind_direction: 282.0
-  moisture_1h: 0.04158771658211117
-  moisture_10h: 0.051681822548643
+  wind_speed: 2.7398710490096785
+  wind_direction: 351.9986579982945
+  moisture_1h: 0.05758300285439214
+  moisture_10h: 0.07155945985788538
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.512778393607316
-  relative_humidity: 0.2818938530691515
+  temperature_c: 25.341605482109188
+  relative_humidity: 0.40640749275611937
 - time_s: 936000.0
-  wind_speed: 3.6204923317219646
-  wind_direction: 282.0
-  moisture_1h: 0.046549195044263164
-  moisture_10h: 0.057847543355977527
+  wind_speed: 3.6470450314588923
+  wind_direction: 32.90116057549893
+  moisture_1h: 0.05076257069366756
+  moisture_10h: 0.0630835829979558
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.861708666124432
-  relative_humidity: 0.31834947265197355
+  temperature_c: 25.264565175331064
+  relative_humidity: 0.3510921503335534
 - time_s: 939600.0
-  wind_speed: 3.4005136870195076
-  wind_direction: 282.0
-  moisture_1h: 0.06966386632906188
-  moisture_10h: 0.0865725717487371
+  wind_speed: 3.9753878920653714
+  wind_direction: 45.366167910858756
+  moisture_1h: 0.06297369010140991
+  moisture_10h: 0.0782585663396162
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.361051907926417
-  relative_humidity: 0.35334851020894137
+  temperature_c: 24.423751231763077
+  relative_humidity: 0.31288412274673866
 - time_s: 943200.0
-  wind_speed: 3.180500035395579
-  wind_direction: 282.0
-  moisture_1h: 0.07461088746223694
-  moisture_10h: 0.09272032616666338
+  wind_speed: 3.107273644237272
+  wind_direction: 49.134155544365534
+  moisture_1h: 0.055839173466909704
+  moisture_10h: 0.06939237091033439
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.16403715739274
-  relative_humidity: 0.38135723655888787
+  temperature_c: 24.333561966198154
+  relative_humidity: 0.2694711824945047
 - time_s: 946800.0
-  wind_speed: 2.9754449436185992
-  wind_direction: 282.0
-  moisture_1h: 0.0785727803086634
-  moisture_10h: 0.09764384349037782
+  wind_speed: 3.749583634996588
+  wind_direction: 47.91513152184198
+  moisture_1h: 0.057145009224365655
+  moisture_10h: 0.07101515709435732
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.20539072158045
-  relative_humidity: 0.40378842688051675
+  temperature_c: 23.75319862728134
+  relative_humidity: 0.27642503246622413
 - time_s: 950400.0
-  wind_speed: 2.7993225773236077
-  wind_direction: 282.0
-  moisture_1h: 0.08174571903360695
-  moisture_10h: 0.1015869129738028
+  wind_speed: 3.7846141518382526
+  wind_direction: 57.28404220968632
+  moisture_1h: 0.06822682361297006
+  moisture_10h: 0.08478673225689481
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.437644970338972
-  relative_humidity: 0.42175276745632784
+  temperature_c: 22.543218782311598
+  relative_humidity: 0.3416130188704903
 - time_s: 954000.0
-  wind_speed: 2.6641353847176372
-  wind_direction: 282.0
-  moisture_1h: 0.08428681253171276
-  moisture_10h: 0.10474477673843917
+  wind_speed: 3.8381685126550997
+  wind_direction: 53.91644863614988
+  moisture_1h: 0.0674347567057551
+  moisture_10h: 0.08380241610035587
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.822784771072815
-  relative_humidity: 0.4361397673300064
+  temperature_c: 23.26792263490455
+  relative_humidity: 0.33801452158008544
 - time_s: 957600.0
-  wind_speed: 2.9790961495693846
-  wind_direction: 286.0
-  moisture_1h: 0.08632188371520394
-  moisture_10h: 0.10727379723831168
+  wind_speed: 2.6776635522924
+  wind_direction: 34.68182981019954
+  moisture_1h: 0.08187698445627836
+  moisture_10h: 0.10175003893595758
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.330365159462733
-  relative_humidity: 0.4476618025804365
+  temperature_c: 20.68521471138649
+  relative_humidity: 0.42129814296684936
 - time_s: 961200.0
-  wind_speed: 2.9500001552202226
-  wind_direction: 286.0
-  moisture_1h: 0.08795169966843949
-  moisture_10h: 0.10929919958796364
+  wind_speed: 1.9706867924933733
+  wind_direction: 26.684074192975462
+  moisture_1h: 0.09378543432491551
+  moisture_10h: 0.11654888925814744
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 19.936003849058146
-  relative_humidity: 0.4568893898104216
+  temperature_c: 19.703458615524486
+  relative_humidity: 0.4918780972226207
 - time_s: 964800.0
-  wind_speed: 2.9788302456016433
-  wind_direction: 286.0
-  moisture_1h: 0.08925696115657297
-  moisture_10h: 0.11092127211690622
+  wind_speed: 2.7377922720198624
+  wind_direction: 56.9287272161501
+  moisture_1h: 0.07984794773853936
+  moisture_10h: 0.09922851757799066
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 19.620173935957183
-  relative_humidity: 0.4642794354261739
+  temperature_c: 20.451084464427247
+  relative_humidity: 0.4086051100002053
 - time_s: 968400.0
-  wind_speed: 3.0636216976981294
-  wind_direction: 286.0
-  moisture_1h: 0.0903022985451426
-  moisture_10h: 0.1122203321726044
+  wind_speed: 2.8378050853232235
+  wind_direction: 54.710860669093
+  moisture_1h: 0.06965264948722193
+  moisture_10h: 0.08655863237246997
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 19.36723701902934
-  relative_humidity: 0.4701978594780685
+  temperature_c: 20.854977147181955
+  relative_humidity: 0.34745308587121765
 - time_s: 972000.0
-  wind_speed: 3.1985961141738053
-  wind_direction: 286.0
-  moisture_1h: 0.06899528918744158
-  moisture_10h: 0.08574171860186913
+  wind_speed: 2.4164388942189423
+  wind_direction: 51.856185605174275
+  moisture_1h: 0.0539137017743799
+  moisture_10h: 0.06699955171961774
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 18.779935824882834
-  relative_humidity: 0.48413676637033554
+  temperature_c: 20.074598143949608
+  relative_humidity: 0.36506812104600117
 - time_s: 975600.0
-  wind_speed: 3.3745552116016233
-  wind_direction: 286.0
-  moisture_1h: 0.06251696782572155
-  moisture_10h: 0.07769098914264426
+  wind_speed: 1.7676513990176645
+  wind_direction: 12.734381550790191
+  moisture_1h: 0.06473170719270355
+  moisture_10h: 0.0804432866084083
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.861979074782848
-  relative_humidity: 0.43637224475498215
+  temperature_c: 20.47555544178044
+  relative_humidity: 0.4534225126325275
 - time_s: 979200.0
-  wind_speed: 3.5795076682780356
-  wind_direction: 286.0
-  moisture_1h: 0.05628165084115657
-  moisture_10h: 0.06994224570551497
+  wind_speed: 1.0161048227454659
+  wind_direction: 73.64946403633193
+  moisture_1h: 0.052797483604920606
+  moisture_10h: 0.06561240680999843
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.8659240651335
-  relative_humidity: 0.3903993890939965
+  temperature_c: 23.383224956770107
+  relative_humidity: 0.3633755724193385
 - time_s: 982800.0
-  wind_speed: 3.799486312980493
-  wind_direction: 286.0
-  moisture_1h: 0.050483196299333906
-  moisture_10h: 0.06273639928460913
+  wind_speed: 1.0333464279899873
+  wind_direction: 247.5938054894828
+  moisture_1h: 0.05370789620748987
+  moisture_10h: 0.06674379334523013
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.72946748395653
-  relative_humidity: 0.34764751066217403
+  temperature_c: 24.862515990968976
+  relative_humidity: 0.3740147310348686
 - time_s: 986400.0
-  wind_speed: 4.019499964604421
-  wind_direction: 286.0
-  moisture_1h: 0.04530188006812941
-  moisture_10h: 0.05629748202641324
+  wind_speed: 2.1610761971099546
+  wind_direction: 224.11681530041398
+  moisture_1h: 0.05525544517867045
+  moisture_10h: 0.06866696099873609
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.394671150529895
-  relative_humidity: 0.3094457794878438
+  temperature_c: 24.782540328626308
+  relative_humidity: 0.38634975070583194
 - time_s: 990000.0
-  wind_speed: 4.224555056381401
-  wind_direction: 286.0
-  moisture_1h: 0.04089879098140085
-  moisture_10h: 0.05082568199630396
+  wind_speed: 3.119835553581335
+  wind_direction: 226.04904063299418
+  moisture_1h: 0.05052690593596404
+  moisture_10h: 0.06279071805634366
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.809763332572814
-  relative_humidity: 0.2769819000174474
+  temperature_c: 25.547176955934482
+  relative_humidity: 0.3498130528177292
 - time_s: 993600.0
-  wind_speed: 4.4006774226763925
-  wind_direction: 286.0
-  moisture_1h: 0.037410822533909545
-  moisture_10h: 0.046491119265440986
+  wind_speed: 4.021872957167813
+  wind_direction: 247.33064695434842
+  moisture_1h: 0.049899782178067204
+  moisture_10h: 0.062011379794102935
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.93074834651096
-  relative_humidity: 0.2512651849918075
+  temperature_c: 26.43064175660235
+  relative_humidity: 0.34670048907523
 - time_s: 997200.0
-  wind_speed: 4.535864615282364
-  wind_direction: 286.0
-  moisture_1h: 0.03494641681733005
-  moisture_10h: 0.04342855682153638
+  wind_speed: 4.5148188734456385
+  wind_direction: 272.5021317482758
+  moisture_1h: 0.04719963922259053
+  moisture_10h: 0.05865586233486979
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.72277439781772
-  relative_humidity: 0.2330951755794759
+  temperature_c: 27.657805246685427
+  relative_humidity: 0.3275888109736862
 - time_s: 1000800.0
-  wind_speed: 4.620903850430616
-  wind_direction: 286.0
-  moisture_1h: 0.033582193019784004
-  moisture_10h: 0.041733210743032545
+  wind_speed: 4.266518170843798
+  wind_direction: 289.8957353286114
+  moisture_1h: 0.05497727033703476
+  moisture_10h: 0.06832126799165485
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.161217134823218
-  relative_humidity: 0.22303678337758498
+  temperature_c: 27.85815397364931
+  relative_humidity: 0.390916571948477
 - time_s: 1004400.0
-  wind_speed: 4.649999844779778
-  wind_direction: 286.0
-  moisture_1h: 0.0333605653099616
-  moisture_10h: 0.04145778989975811
+  wind_speed: 4.873333991914808
+  wind_direction: 302.701199284082
+  moisture_1h: 0.05030479670362861
+  moisture_10h: 0.06251469881615983
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.23244522794517
-  relative_humidity: 0.22140272712361087
+  temperature_c: 27.734811907719454
+  relative_humidity: 0.35286531062778365
 - time_s: 1008000.0
-  wind_speed: 4.621169754398357
-  wind_direction: 286.0
-  moisture_1h: 0.03428842416660088
-  moisture_10h: 0.04261085721674672
+  wind_speed: 4.67881100636076
+  wind_direction: 304.85179338221855
+  moisture_1h: 0.04903250632592866
+  moisture_10h: 0.06093360009435795
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.934244172230205
-  relative_humidity: 0.2282438101664836
+  temperature_c: 28.09855516540415
+  relative_humidity: 0.34338467638011394
 - time_s: 1011600.0
-  wind_speed: 4.536378302301872
-  wind_direction: 286.0
-  moisture_1h: 0.03633692215122648
-  moisture_10h: 0.04515656345006787
+  wind_speed: 3.9784943788847116
+  wind_direction: 321.98446618998236
+  moisture_1h: 0.04705222057874846
+  moisture_10h: 0.058472662466794195
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.27588513704471
-  relative_humidity: 0.24334734097368022
+  temperature_c: 27.78714973997133
+  relative_humidity: 0.3266835432453397
 - time_s: 1015200.0
-  wind_speed: 4.401403885826195
-  wind_direction: 286.0
-  moisture_1h: 0.039442370784545135
-  moisture_10h: 0.04901576175166774
+  wind_speed: 3.609980438264167
+  wind_direction: 357.1373709822476
+  moisture_1h: 0.04393977067095888
+  moisture_10h: 0.05460476355225958
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.27783672235544
-  relative_humidity: 0.2662437457812577
+  temperature_c: 27.989266945921003
+  relative_humidity: 0.3019666542226197
 - time_s: 1018800.0
-  wind_speed: 4.225444788398376
-  wind_direction: 286.0
-  moisture_1h: 0.04350822064231324
-  moisture_10h: 0.05406846837103005
+  wind_speed: 3.245635575294216
+  wind_direction: 4.362774947085979
+  moisture_1h: 0.04211559055316764
+  moisture_10h: 0.0523378212699559
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.971128583192446
-  relative_humidity: 0.29622116779734997
+  temperature_c: 26.672061142450495
+  relative_humidity: 0.2842986952633163
 - time_s: 1022400.0
-  wind_speed: 4.0204923317219645
-  wind_direction: 286.0
-  moisture_1h: 0.04840806310884272
-  moisture_10h: 0.06015759298962979
+  wind_speed: 4.290110866788732
+  wind_direction: 33.676340479422976
+  moisture_1h: 0.0409965133401881
+  moisture_10h: 0.05094712337421434
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.396386707420085
-  relative_humidity: 0.33234759906506894
+  temperature_c: 24.456074453159882
+  relative_humidity: 0.27033983540993817
 - time_s: 1026000.0
-  wind_speed: 3.8005136870195075
-  wind_direction: 286.0
-  moisture_1h: 0.06735434174494379
-  moisture_10h: 0.08370248294517285
+  wind_speed: 3.0998845838468516
+  wind_direction: 54.4951202351496
+  moisture_1h: 0.04293189241303751
+  moisture_10h: 0.05335225464921167
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.202037550647145
-  relative_humidity: 0.33907947446141706
+  temperature_c: 24.98228209507328
+  relative_humidity: 0.1922808746499576
 - time_s: 1029600.0
-  wind_speed: 3.5805000353955787
-  wind_direction: 286.0
-  moisture_1h: 0.06833190680085571
-  moisture_10h: 0.08491732107290806
+  wind_speed: 3.173129928174198
+  wind_direction: 42.34265635762383
+  moisture_1h: 0.052207041592882954
+  moisture_10h: 0.06487865362999046
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.25735182334072
-  relative_humidity: 0.34343718573592824
+  temperature_c: 23.677929996645837
+  relative_humidity: 0.24635655814984644
 - time_s: 1033200.0
-  wind_speed: 3.375444943618599
-  wind_direction: 286.0
-  moisture_1h: 0.06911513590171867
-  moisture_10h: 0.08589065432446592
+  wind_speed: 3.7823341690336236
+  wind_direction: 40.245389075856735
+  moisture_1h: 0.06043124130640283
+  moisture_10h: 0.07509901832252001
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.500465774354375
-  relative_humidity: 0.3469286017421723
+  temperature_c: 22.847306330293556
+  relative_humidity: 0.29484676151970773
 - time_s: 1036800.0
-  wind_speed: 3.1993225773236076
-  wind_direction: 286.0
-  moisture_1h: 0.069742662244573
-  moisture_10h: 0.08667049288645964
+  wind_speed: 4.355920158542727
+  wind_direction: 31.73534621556449
+  moisture_1h: 0.050284814263716615
+  moisture_10h: 0.06248986626947308
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.894045591863
-  relative_humidity: 0.34972593845421157
+  temperature_c: 23.12371332218617
+  relative_humidity: 0.2337791953045117
 - time_s: 1040400.0
-  wind_speed: 3.0641353847176367
-  wind_direction: 286.0
-  moisture_1h: 0.07024543890409993
-  moisture_10h: 0.08729530271577467
+  wind_speed: 4.880332195436477
+  wind_direction: 45.77468745742296
+  moisture_1h: 0.03916006440529615
+  moisture_10h: 0.04866493440658163
   moisture_100h: 0.05800000000000001
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.408179273907514
-  relative_humidity: 0.35196717601127386
+  temperature_c: 24.46143936745209
+  relative_humidity: 0.16854317773797092
 - time_s: 1044000.0
-  wind_speed: 2.7790961495693844
-  wind_direction: 317.0
-  moisture_1h: 0.07064826560969326
-  moisture_10h: 0.08779590289359938
+  wind_speed: 4.63522391628936
+  wind_direction: 50.759559447034896
+  moisture_1h: 0.029430033765360974
+  moisture_10h: 0.03657324584433209
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.018901202795526
-  relative_humidity: 0.35376286466239965
+  temperature_c: 25.150511695188467
+  relative_humidity: 0.11068648643790985
 - time_s: 1047600.0
-  wind_speed: 2.7500001552202225
-  wind_direction: 317.0
-  moisture_1h: 0.07097101200546241
-  moisture_10h: 0.088196985793196
+  wind_speed: 5.267857174752558
+  wind_direction: 58.9421572434315
+  moisture_1h: 0.02126163001051642
+  moisture_10h: 0.026422219818894192
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.707010028107113
-  relative_humidity: 0.3552015777169893
+  temperature_c: 24.664030898432813
+  relative_humidity: 0.08576631686524028
 - time_s: 1051200.0
-  wind_speed: 2.778830245601643
-  wind_direction: 317.0
-  moisture_1h: 0.07122959773112464
-  moisture_10h: 0.0885183350445044
+  wind_speed: 6.207054847439912
+  wind_direction: 73.36252683927093
+  moisture_1h: 0.044258228748802406
+  moisture_10h: 0.05500051728006512
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.457121549748585
-  relative_humidity: 0.35635428047097106
+  temperature_c: 24.150427835155718
+  relative_humidity: 0.19894103803781113
 - time_s: 1054800.0
-  wind_speed: 2.8636216976981292
-  wind_direction: 317.0
-  moisture_1h: 0.07143677766680422
-  moisture_10h: 0.08877580137233922
+  wind_speed: 5.510435566936925
+  wind_direction: 73.55881844491068
+  moisture_1h: 0.034909988101672534
+  moisture_10h: 0.04338328618460276
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.25690988400099
-  relative_humidity: 0.3572778306082263
+  temperature_c: 25.812821032009467
+  relative_humidity: 0.145017230740636
 - time_s: 1058400.0
-  wind_speed: 2.998596114173805
-  wind_direction: 317.0
-  moisture_1h: 0.05256734987906632
-  moisture_10h: 0.06532641538369408
+  wind_speed: 5.05690827295514
+  wind_direction: 76.19952035705232
+  moisture_1h: 0.035504873254820865
+  moisture_10h: 0.04412256093802982
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 19.85637735822565
-  relative_humidity: 0.3536989830556077
+  temperature_c: 23.926311426640353
+  relative_humidity: 0.2247647662226045
 - time_s: 1062000.0
-  wind_speed: 3.174555211601623
-  wind_direction: 317.0
-  moisture_1h: 0.04740716006659288
-  moisture_10h: 0.058913752315765906
+  wind_speed: 2.8320404586914227
+  wind_direction: 72.26425986329217
+  moisture_1h: 0.042098168506128755
+  moisture_10h: 0.05231617057072312
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.923603270344223
-  relative_humidity: 0.31655899209212135
+  temperature_c: 24.51736178556711
+  relative_humidity: 0.279382766423773
 - time_s: 1065600.0
-  wind_speed: 3.3795076682780354
-  wind_direction: 317.0
-  moisture_1h: 0.042439362418755865
-  moisture_10h: 0.05274017853981311
+  wind_speed: 4.35508773729751
+  wind_direction: 68.5503275459421
+  moisture_1h: 0.03773788995975596
+  moisture_10h: 0.04689757198882294
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.913754872703173
-  relative_humidity: 0.28080372601584175
+  temperature_c: 26.864649018802297
+  relative_humidity: 0.24933087327815728
 - time_s: 1069200.0
-  wind_speed: 3.599486312980493
-  wind_direction: 317.0
-  moisture_1h: 0.0378187471476006
-  moisture_10h: 0.04699805470769783
+  wind_speed: 0.4653946171465074
+  wind_direction: 99.56472858370793
+  moisture_1h: 0.03663711355525654
+  moisture_10h: 0.04552961684536735
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.764821590321542
-  relative_humidity: 0.2475472731230371
+  temperature_c: 26.762005000431458
+  relative_humidity: 0.24020339593828338
 - time_s: 1072800.0
-  wind_speed: 3.819499964604421
-  wind_direction: 317.0
-  moisture_1h: 0.033689286706979585
-  moisture_10h: 0.04186629804362512
+  wind_speed: 2.0445552745055764
+  wind_direction: 230.9857348324647
+  moisture_1h: 0.050278785699510754
+  moisture_10h: 0.06248237446152793
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.419126555089594
-  relative_humidity: 0.21782586189161096
+  temperature_c: 25.349107775740062
+  relative_humidity: 0.34736800445107685
 - time_s: 1076400.0
-  wind_speed: 4.024555056381401
-  wind_direction: 317.0
-  moisture_1h: 0.03017964979528771
-  moisture_10h: 0.03750480751259055
+  wind_speed: 2.2938994487543107
+  wind_direction: 222.44800183770548
+  moisture_1h: 0.048524384859470325
+  moisture_10h: 0.060302148174875746
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.82512374310768
-  relative_humidity: 0.19256557342891303
+  temperature_c: 26.10093969976451
+  relative_humidity: 0.33484945715057557
 - time_s: 1080000.0
-  wind_speed: 4.200677422676392
-  wind_direction: 317.0
-  moisture_1h: 0.0273991922036167
-  moisture_10h: 0.03404948157342658
+  wind_speed: 2.058273694625906
+  wind_direction: 256.8160285813791
+  moisture_1h: 0.044304919214954996
+  moisture_10h: 0.05505854038363339
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.939004082771774
-  relative_humidity: 0.17255348597054113
+  temperature_c: 28.7448971693032
+  relative_humidity: 0.30659352183420013
 - time_s: 1083600.0
-  wind_speed: 4.335864615282363
-  wind_direction: 317.0
-  moisture_1h: 0.025434549429365502
-  moisture_10h: 0.0316079837568814
+  wind_speed: 3.8792724809388317
+  wind_direction: 251.55174500482374
+  moisture_1h: 0.05318048381179794
+  moisture_10h: 0.06608836823213725
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.726060489334817
-  relative_humidity: 0.15841315053059485
+  temperature_c: 28.296690096740182
+  relative_humidity: 0.3773610271162906
 - time_s: 1087200.0
-  wind_speed: 4.420903850430616
-  wind_direction: 317.0
-  moisture_1h: 0.02434693722510247
-  moisture_10h: 0.030256388007894333
+  wind_speed: 3.7153212452604567
+  wind_direction: 270.76422451723863
+  moisture_1h: 0.05434643289009584
+  moisture_10h: 0.06753731465953658
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.161769293215276
-  relative_humidity: 0.1505851618507086
+  temperature_c: 28.762441877091273
+  relative_humidity: 0.38782012871025384
 - time_s: 1090800.0
-  wind_speed: 4.449999844779778
-  wind_direction: 317.0
-  moisture_1h: 0.0241702441941193
-  moisture_10h: 0.03003680831890554
+  wind_speed: 3.275895649937354
+  wind_direction: 279.07268734981574
+  moisture_1h: 0.05452753223594842
+  moisture_10h: 0.06776237015729512
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.23255436613183
-  relative_humidity: 0.14931343003220782
+  temperature_c: 28.95970035662981
+  relative_humidity: 0.38972150263419914
 - time_s: 1094400.0
-  wind_speed: 4.421169754398357
-  wind_direction: 317.0
-  moisture_1h: 0.02490997586495631
-  moisture_10h: 0.030956086511790364
+  wind_speed: 3.6436007382320863
+  wind_direction: 294.5362021848063
+  moisture_1h: 0.052460763075608985
+  moisture_10h: 0.0651939579968733
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.936210135872585
-  relative_humidity: 0.15463758060974678
+  temperature_c: 29.730455638003235
+  relative_humidity: 0.37471932891376875
 - time_s: 1098000.0
-  wind_speed: 4.336378302301871
-  wind_direction: 317.0
-  moisture_1h: 0.026543083146184573
-  moisture_10h: 0.03298557905545267
+  wind_speed: 3.726619995215044
+  wind_direction: 295.49775285797915
+  moisture_1h: 0.048018820824933924
+  moisture_10h: 0.05967387442321886
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.28197030910033
-  relative_humidity: 0.1663917198704009
+  temperature_c: 29.767888562119783
+  relative_humidity: 0.3388882580955865
 - time_s: 1101600.0
-  wind_speed: 4.201403885826195
-  wind_direction: 317.0
-  moisture_1h: 0.029018680506573965
-  moisture_10h: 0.036062049561567645
+  wind_speed: 3.5598195241316755
+  wind_direction: 343.4313928914283
+  moisture_1h: 0.03913560166081567
+  moisture_10h: 0.04863453410276122
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.290220160879283
-  relative_humidity: 0.1842096038892876
+  temperature_c: 30.48976191924519
+  relative_humidity: 0.2686653408169652
 - time_s: 1105200.0
-  wind_speed: 4.025444788398376
-  wind_direction: 317.0
-  moisture_1h: 0.03225963150307298
-  moisture_10h: 0.04008963914944992
+  wind_speed: 3.8065149591379916
+  wind_direction: 346.90323924295467
+  moisture_1h: 0.0481134115941737
+  moisture_10h: 0.05979142411703139
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.99186135561319
-  relative_humidity: 0.20753605022118704
+  temperature_c: 27.7766765545474
+  relative_humidity: 0.3352402834164194
 - time_s: 1108800.0
-  wind_speed: 3.8204923317219643
-  wind_direction: 317.0
-  moisture_1h: 0.03616495225357955
-  moisture_10h: 0.044942853286001776
+  wind_speed: 3.6064163289988937
+  wind_direction: 35.48300859821567
+  moisture_1h: 0.041264681943961316
+  moisture_10h: 0.0512803814449228
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.427349090760707
-  relative_humidity: 0.235644236674469
+  temperature_c: 26.993186208033908
+  relative_humidity: 0.2781305732794382
 - time_s: 1112400.0
-  wind_speed: 3.6005136870195074
-  wind_direction: 317.0
-  moisture_1h: 0.05397301343514639
-  moisture_10h: 0.06707325941455086
+  wind_speed: 5.987417928257043
+  wind_direction: 60.41452551888852
+  moisture_1h: 0.04241090186967605
+  moisture_10h: 0.052704810090471205
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.09718722729767
-  relative_humidity: 0.25942417636361
+  temperature_c: 26.935988486943145
+  relative_humidity: 0.19236886988962407
 - time_s: 1116000.0
-  wind_speed: 3.3805000353955785
-  wind_direction: 317.0
-  moisture_1h: 0.05739165778014811
-  moisture_10h: 0.07132167180445591
+  wind_speed: 6.790260469795679
+  wind_direction: 70.88676168625885
+  moisture_1h: 0.036914149433066014
+  moisture_10h: 0.045873894441091745
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.036058833323644
-  relative_humidity: 0.27839082479519695
+  temperature_c: 26.793360057811373
+  relative_humidity: 0.15880001913599795
 - time_s: 1119600.0
-  wind_speed: 3.175444943618599
-  wind_direction: 317.0
-  moisture_1h: 0.06013188552420104
-  moisture_10h: 0.0747270033698809
+  wind_speed: 6.932572846997179
+  wind_direction: 70.27839618471727
+  moisture_1h: 0.04033589036467061
+  moisture_10h: 0.05012615501628969
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 23.18550721937139
-  relative_humidity: 0.2935936160185427
+  temperature_c: 25.54873015504981
+  relative_humidity: 0.1774804492339307
 - time_s: 1123200.0
-  wind_speed: 2.9993225773236074
-  wind_direction: 317.0
-  moisture_1h: 0.06232832578867483
-  moisture_10h: 0.07745656020340173
+  wind_speed: 6.8628279230751765
+  wind_direction: 67.57794060703412
+  moisture_1h: 0.035728574135193376
+  moisture_10h: 0.04440055814858982
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.503744246949704
-  relative_humidity: 0.30577947277727946
+  temperature_c: 26.177024167692757
+  relative_humidity: 0.15058639727743856
 - time_s: 1126800.0
-  wind_speed: 2.8641353847176365
-  wind_direction: 317.0
-  moisture_1h: 0.0640888910722984
-  moisture_10h: 0.0796444471578077
+  wind_speed: 6.843715563404068
+  wind_direction: 73.04441149416618
+  moisture_1h: 0.03293166327126273
+  moisture_10h: 0.04092478542448183
   moisture_100h: 0.055
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.957274470229788
-  relative_humidity: 0.31554709391756175
+  temperature_c: 26.68154764633983
+  relative_humidity: 0.1344647555705823
 - time_s: 1130400.0
-  wind_speed: 1.9790961495693846
-  wind_direction: 295.0
-  moisture_1h: 0.06550007906044206
-  moisture_10h: 0.08139815650229693
+  wind_speed: 6.872750122319762
+  wind_direction: 76.28035525983204
+  moisture_1h: 0.041625187011571994
+  moisture_10h: 0.05172838774253607
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.519249483616687
-  relative_humidity: 0.32337636884086063
+  temperature_c: 25.37224813699893
+  relative_humidity: 0.18500529408513905
 - time_s: 1134000.0
-  wind_speed: 1.9500001552202226
-  wind_direction: 295.0
-  moisture_1h: 0.06663122231108154
-  moisture_10h: 0.08280384908561589
+  wind_speed: 6.127762876773456
+  wind_direction: 86.62287382433331
+  moisture_1h: 0.050371535785408095
+  moisture_10h: 0.06259763670419646
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 21.16814884260952
-  relative_humidity: 0.32965195477363207
+  temperature_c: 24.597276315390367
+  relative_humidity: 0.23675425852707657
 - time_s: 1137600.0
-  wind_speed: 1.9788302456016433
-  wind_direction: 295.0
-  moisture_1h: 0.06753789460720157
-  moisture_10h: 0.08393058747302719
+  wind_speed: 4.132801802696003
+  wind_direction: 91.36192225285085
+  moisture_1h: 0.04914427098808661
+  moisture_10h: 0.06107249210169987
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.886722750758445
-  relative_humidity: 0.3346821752200237
+  temperature_c: 24.235944321529907
+  relative_humidity: 0.22871167450357568
 - time_s: 1141200.0
-  wind_speed: 2.0636216976981294
-  wind_direction: 295.0
-  moisture_1h: 0.06826464133188642
-  moisture_10h: 0.0848337290338006
+  wind_speed: 4.4490926290987876
+  wind_direction: 76.48698228816346
+  moisture_1h: 0.06031780326066742
+  moisture_10h: 0.07495804677053816
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.661144566260194
-  relative_humidity: 0.33871416809054783
+  temperature_c: 23.25315057363976
+  relative_humidity: 0.294833432922579
 - time_s: 1144800.0
-  wind_speed: 2.1985961141738053
-  wind_direction: 295.0
-  moisture_1h: 0.051726713621155544
-  moisture_10h: 0.06428174119910592
+  wind_speed: 4.29554559904196
+  wind_direction: 79.00494780026922
+  moisture_1h: 0.04162180848495259
+  moisture_10h: 0.0517241891851838
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 20.191326890940022
-  relative_humidity: 0.3476445518176663
+  temperature_c: 23.4043111871295
+  relative_humidity: 0.273064645181487
 - time_s: 1148400.0
-  wind_speed: 2.3745552116016233
-  wind_direction: 295.0
-  moisture_1h: 0.04619582246911534
-  moisture_10h: 0.0574084007383181
+  wind_speed: 2.9626029940414838
+  wind_direction: 108.1887914918614
+  moisture_1h: 0.039424682452139474
+  moisture_10h: 0.0489937801346976
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 22.55953717963244
-  relative_humidity: 0.3081743803394594
+  temperature_c: 23.94556591493192
+  relative_humidity: 0.25649990874425116
 - time_s: 1152000.0
-  wind_speed: 2.5795076682780356
-  wind_direction: 295.0
-  moisture_1h: 0.040869846824285815
-  moisture_10h: 0.05078971255833577
+  wind_speed: 1.2689135748702167
+  wind_direction: 98.4477296039266
+  moisture_1h: 0.03571899885959136
+  moisture_10h: 0.0443886587769679
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.840006994113946
-  relative_humidity: 0.27016655009810087
+  temperature_c: 26.24825545540258
+  relative_humidity: 0.23164171814477613
 - time_s: 1155600.0
-  wind_speed: 2.799486312980493
-  wind_direction: 295.0
-  moisture_1h: 0.03591511430535831
-  moisture_10h: 0.044632375059086064
+  wind_speed: 0.9896118580753879
+  wind_direction: 86.74882066770914
+  moisture_1h: 0.03659899460733304
+  moisture_10h: 0.04548224572561776
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.961518375641447
-  relative_humidity: 0.23480802707264256
+  temperature_c: 27.612840339479
+  relative_humidity: 0.2417807478045583
 - time_s: 1159200.0
-  wind_speed: 3.0194999646044214
-  wind_direction: 295.0
-  moisture_1h: 0.031486358789481875
-  moisture_10h: 0.03912867888401631
+  wind_speed: 2.373460920455578
+  wind_direction: 194.02487772824503
+  moisture_1h: 0.04063572806950939
+  moisture_10h: 0.05049876886307963
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 28.857817559712906
-  relative_humidity: 0.20320304067145156
+  temperature_c: 27.49177916304859
+  relative_humidity: 0.2741502912503775
 - time_s: 1162800.0
-  wind_speed: 3.224555056381401
-  wind_direction: 295.0
-  moisture_1h: 0.027721888148837075
-  moisture_10h: 0.03445050177719559
+  wind_speed: 2.9491724093286624
+  wind_direction: 211.67216929180387
+  moisture_1h: 0.04262540655121008
+  moisture_10h: 0.05297137901509602
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 30.469684048780778
-  relative_humidity: 0.17633859918698708
+  temperature_c: 28.36745299682972
+  relative_humidity: 0.2921778519568049
 - time_s: 1166400.0
-  wind_speed: 3.4006774226763925
-  wind_direction: 295.0
-  moisture_1h: 0.02473926496332413
-  moisture_10h: 0.030743940925296004
+  wind_speed: 3.692813444692879
+  wind_direction: 243.65632763774445
+  moisture_1h: 0.04984280566429178
+  moisture_10h: 0.061940574029411145
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.74678003947276
-  relative_humidity: 0.1550536660087873
+  temperature_c: 27.95227754641401
+  relative_humidity: 0.3496119465349945
 - time_s: 1170000.0
-  wind_speed: 3.5358646152823634
-  wind_direction: 295.0
-  moisture_1h: 0.022631635098598977
-  moisture_10h: 0.028124750413792903
+  wind_speed: 4.364380554815563
+  wind_direction: 258.7216851518667
+  moisture_1h: 0.0540674793928794
+  moisture_10h: 0.06719065400280158
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.64922244761098
-  relative_humidity: 0.14001295920648366
+  temperature_c: 28.891729234180133
+  relative_humidity: 0.3858512477252078
 - time_s: 1173600.0
-  wind_speed: 3.620903850430616
-  wind_direction: 295.0
-  moisture_1h: 0.022065562108276225
-  moisture_10h: 0.027421281066595696
+  wind_speed: 3.5490041581375764
+  wind_direction: 244.7267746248915
+  moisture_1h: 0.05164739993995191
+  moisture_10h: 0.06418317662440626
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.14882843745576
-  relative_humidity: 0.13168619270907064
+  temperature_c: 29.57103677851545
+  relative_humidity: 0.36778982786113196
 - time_s: 1177200.0
-  wind_speed: 3.649999844779778
-  wind_direction: 295.0
-  moisture_1h: 0.021833801430626597
-  moisture_10h: 0.027133267797283537
+  wind_speed: 4.259755058095388
+  wind_direction: 259.1015254571231
+  moisture_1h: 0.06468239965441398
+  moisture_10h: 0.08038201122101932
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 33.229995557904
-  relative_humidity: 0.13033340736826676
+  temperature_c: 28.91927265869391
+  relative_humidity: 0.47173612440157053
 - time_s: 1180800.0
-  wind_speed: 3.621169754398357
-  wind_direction: 295.0
-  moisture_1h: 0.022068864226564313
-  moisture_10h: 0.027425384669905167
+  wind_speed: 4.099269593971612
+  wind_direction: 260.4994019759686
+  moisture_1h: 0.0564932490218021
+  moisture_10h: 0.07020520266787057
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.89018899941833
-  relative_humidity: 0.13599685000969453
+  temperature_c: 28.684949348048413
+  relative_humidity: 0.40500585088040497
 - time_s: 1184400.0
-  wind_speed: 3.536378302301871
-  wind_direction: 295.0
-  moisture_1h: 0.023820861895862105
-  moisture_10h: 0.029602624491945142
+  wind_speed: 4.1031461815292944
+  wind_direction: 280.79894840447344
+  moisture_1h: 0.04539574917793527
+  moisture_10h: 0.05641413490073509
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 32.14002075489128
-  relative_humidity: 0.14849965408514532
+  temperature_c: 28.673758834881163
+  relative_humidity: 0.3152554579314016
 - time_s: 1188000.0
-  wind_speed: 3.401403885826195
-  wind_direction: 295.0
-  moisture_1h: 0.026476534165284393
-  moisture_10h: 0.03290287740928546
+  wind_speed: 3.122383115000603
+  wind_direction: 325.845174436127
+  moisture_1h: 0.03751466658226246
+  moisture_10h: 0.04662016817989899
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 31.002918212289067
-  relative_humidity: 0.16745136312851558
+  temperature_c: 29.61831461618167
+  relative_humidity: 0.25362851367887246
 - time_s: 1191600.0
-  wind_speed: 3.2254447883983763
-  wind_direction: 295.0
-  moisture_1h: 0.029952945686633217
-  moisture_10h: 0.03722307813484516
+  wind_speed: 3.9595246284661276
+  wind_direction: 10.597225902232864
+  moisture_1h: 0.028302837547343668
+  moisture_10h: 0.035172458311262034
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 29.51439252876512
-  relative_humidity: 0.19226012452058128
+  temperature_c: 30.50616071212954
+  relative_humidity: 0.18111653244475825
 - time_s: 1195200.0
-  wind_speed: 3.0204923317219645
-  wind_direction: 295.0
-  moisture_1h: 0.03414152982564348
-  moisture_10h: 0.042428308909537533
+  wind_speed: 3.1534692043772847
+  wind_direction: 16.050326092697212
+  moisture_1h: 0.036676449421224035
+  moisture_10h: 0.04557850025161821
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 27.720929634562452
-  relative_humidity: 0.2221511727572925
+  temperature_c: 26.55136743152411
+  relative_humidity: 0.24005463689086656
 - time_s: 1198800.0
-  wind_speed: 2.8005136870195075
-  wind_direction: 295.0
-  moisture_1h: 0.05266901587176601
-  moisture_10h: 0.06545275758821407
+  wind_speed: 2.6926467391354847
+  wind_direction: 20.654967133018147
+  moisture_1h: 0.05775600615075733
+  moisture_10h: 0.07177445424560135
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 26.21712826234246
-  relative_humidity: 0.2533782988997404
+  temperature_c: 25.296590344495662
+  relative_humidity: 0.2826953139408675
 - time_s: 1202400.0
-  wind_speed: 2.5805000353955787
-  wind_direction: 295.0
-  moisture_1h: 0.057134712922211235
-  moisture_10h: 0.07100236168973824
+  wind_speed: 4.156320474817144
+  wind_direction: 48.23919192945511
+  moisture_1h: 0.05826540496474722
+  moisture_10h: 0.07240749354842373
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 25.01531239894699
-  relative_humidity: 0.2784603414167811
+  temperature_c: 24.78823461186372
+  relative_humidity: 0.28493932822261564
 - time_s: 1206000.0
-  wind_speed: 2.375444943618599
-  wind_direction: 295.0
-  moisture_1h: 0.060715815923498916
-  moisture_10h: 0.07545266444862002
+  wind_speed: 5.0709252139679535
+  wind_direction: 68.58719671990858
+  moisture_1h: 0.036952302874230694
+  moisture_10h: 0.045921308426228435
   moisture_100h: 0.052000000000000005
   moisture_live_herb: 0.3
   moisture_live_woody: 0.6
-  temperature_c: 24.05155996639637
-  relative_humidity: 0.2985739713208171
+  temperature_c: 26.03136676125768
+  relative_humidity: 0.15776487773528186

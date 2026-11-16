@@ -8,12 +8,14 @@ This module builds it for the centroid of the study area.
 and disaggregated gridMET for both otherwise (section 13). The HRRR archive misses 2-14 of the
 24 analysis hours on every day of the 2016 Chimney Fire (checked with
 :func:`hrrr_missing_hours`), fire A when this module was written, so it implements gridMET
-(Abatzoglou 2013), a 1/24 degree (about 4 km) daily dataset. Fire A is now the 2024 Lake Fire,
-which HRRR covers completely; whether to add an HRRR reader is decided with fire B.
-:func:`fetch_gridmet` reads gridMET at a point through the THREDDS NetCDF Subset
-Service of the University of Idaho and caches it with a SHA-256 manifest. The service returns the
-packed integers stored in the files, so the client applies each variable's ``scale_factor`` and
-``add_offset`` from the dataset's attributes.
+(Abatzoglou 2013), a 1/24 degree (about 4 km) daily dataset. Fire A is now the 2024 Lake Fire
+and fire B the 2020 Silverado Fire, which HRRR covers completely, so both now use HRRR
+(``source="hrrr"``, :mod:`wildfire_sim.data.hrrr`, :func:`hourly_from_hrrr`); gridMET remains
+the alternative and supplies the 100-h moisture in either case. :func:`fetch_gridmet` reads
+gridMET at a point through the THREDDS NetCDF Subset Service of the University of Idaho and
+caches it with a SHA-256 manifest. The service returns the packed integers stored in the
+files, so the client applies each variable's ``scale_factor`` and ``add_offset`` from the
+dataset's attributes.
 
 **From days to hours** (:func:`disaggregate`). Hours are placed in local solar time, UTC +
 longitude / 15 h (the equation of time, at most 16 minutes, is neglected), and an hour belongs to
@@ -346,7 +348,16 @@ def state_of_weather_code(srad_w_m2: float, sun: SunDay, params: WeatherParams) 
         return 3
     rs = srad_w_m2 * 0.0864  # W/m^2 averaged over the day -> MJ m^-2 day^-1
     sunshine = (rs / sun.ra_mj_m2 - params.angstrom_a.value) / params.angstrom_b.value
-    tenths = round(10 * (1 - min(1.0, max(0.0, sunshine))))
+    return state_of_weather_from_cloud(1 - min(1.0, max(0.0, sunshine)))
+
+
+def state_of_weather_from_cloud(cloud_fraction: float) -> int:
+    """NFDRS state-of-weather code (0-3) of a cloud cover fraction (Deeming et al. 1977).
+
+    Cover rounded to tenths: 0 -> 0 (clear), 1-5 -> 1 (scattered), 6-9 -> 2 (broken), 10 -> 3
+    (overcast).
+    """
+    tenths = round(10 * min(1.0, max(0.0, cloud_fraction)))
     if tenths == 0:
         return 0
     if tenths <= 5:
@@ -809,19 +820,68 @@ def bbox_centroid(bbox: BBox) -> tuple[float, float]:
     return (bbox.south + bbox.north) / 2, (bbox.west + bbox.east) / 2
 
 
+def hourly_from_hrrr(
+    hrrr: Sequence[Any],
+    days: Sequence[DailyWeather],
+    lat_deg: float,
+    lon_deg: float,
+) -> list[HourlyWeather]:
+    """Hourly weather from HRRR analyses (:mod:`wildfire_sim.data.hrrr`), with gridMET's 100-h moisture.
+
+    Temperature, humidity and the 10 m wind are the hour's analysis at the site. The cloudiness
+    code for the 1-h moisture comes from the hour's total cloud cover (an observation of that
+    hour, better than :func:`state_of_weather_code`'s daily estimate) in daylight, none at night.
+    The 100-h moisture is gridMET's for the hour's local solar day (HRRR has no fuel moisture).
+
+    Args:
+        hrrr: :class:`~wildfire_sim.data.hrrr.HrrrHour` records, one per hour.
+        days: gridMET days covering the hours' local solar dates.
+        lat_deg, lon_deg: The site, degrees.
+
+    Raises:
+        ValueError: A needed gridMET day is missing.
+    """
+    by_date = {d.date: d for d in days}
+    out = []
+    for h in hrrr:
+        date, tau = _local_solar(h.time_utc, lon_deg)
+        if date not in by_date:
+            raise ValueError(f"no gridMET day {date.isoformat()} for the 100-h moisture")
+        sun = sun_day(lat_deg, date)
+        daylight = sun.sunrise_lst <= tau <= sun.sunset_lst
+        out.append(
+            HourlyWeather(
+                time_utc=h.time_utc,
+                wind_speed=h.wind_speed,
+                wind_direction=h.wind_from_deg % 360.0,
+                temperature_c=h.temperature_c,
+                relative_humidity=h.relative_humidity,
+                moisture_100h=by_date[date].moisture_100h,
+                state_of_weather=state_of_weather_from_cloud(h.cloud_fraction) if daylight else None,
+            )
+        )
+    return out
+
+
 def hourly_weather(
     lat_deg: float,
     lon_deg: float,
     start_time_utc: dt.datetime,
     duration_s: float,
     *,
+    source: Literal["gridmet", "hrrr"] = "gridmet",
     samples: Sequence[NfmdSample] = (),
     cache_root: str | Path = DEFAULT_CACHE,
     http: GetBytes | None = None,
+    hrrr_get: Any = None,
     params: WeatherParams | None = None,
     moisture_params: FuelMoistureParams | None = None,
 ) -> WeatherConfig:
-    """The ``WeatherConfig`` of a run: gridMET at the site, one point per hour.
+    """The ``WeatherConfig`` of a run at the site, one point per hour.
+
+    With ``source="gridmet"`` the hours are gridMET's days disaggregated (:func:`disaggregate`);
+    with ``source="hrrr"`` they are HRRR analyses (:func:`hourly_from_hrrr`), the 100-h moisture
+    still from gridMET.
 
     Args:
         lat_deg: Latitude of the site, the grid centroid (``Grid.metadata["centroid_lat"]``,
@@ -829,12 +889,16 @@ def hourly_weather(
         lon_deg: Longitude of the site (``Grid.metadata["centroid_lon"]``).
         start_time_utc: ``ScenarioConfig.start_time_utc`` (timezone-aware).
         duration_s: ``ScenarioConfig.duration_s``.
+        source: ``"gridmet"`` or ``"hrrr"``.
         samples: NFMD samples for the live fuel moisture; none uses the seasonal default.
-        cache_root: Directory holding ``gridmet-<key>/``.
-        http: HTTP client; None uses :class:`~wildfire_sim.data.landfire.UrllibHttp`.
+        cache_root: Directory holding ``gridmet-<key>/`` (and ``hrrr-<key>/``).
+        http: HTTP client for gridMET; None uses :class:`~wildfire_sim.data.landfire.UrllibHttp`.
+        hrrr_get: Download function for HRRR (:data:`wildfire_sim.data.hrrr.Get`); None uses urllib.
         params: Parameters; None loads ``configs/weather.yaml``.
         moisture_params: Fuel moisture parameters; None loads ``configs/fuel_moisture.yaml``.
     """
+    if source not in ("gridmet", "hrrr"):
+        raise ValueError(f"unknown weather source {source!r}; expected 'gridmet' or 'hrrr'")
     if start_time_utc.tzinfo is None:
         raise ValueError("start_time_utc must be timezone-aware")
     if duration_s <= 0:
@@ -845,7 +909,13 @@ def hourly_weather(
     n_hours = math.ceil((start - first_hour).total_seconds() / 3600 + duration_s / 3600)
     first_day, last_day = solar_dates_needed(lon_deg, first_hour, n_hours)
     daily = fetch_gridmet(lat_deg, lon_deg, first_day, last_day, cache_root=cache_root, http=http)
-    hours = disaggregate(daily.days, lat_deg, lon_deg, first_hour, n_hours, p)
+    if source == "hrrr":
+        from wildfire_sim.data.hrrr import fetch_hrrr_point
+
+        series = fetch_hrrr_point(lat_deg, lon_deg, first_hour, n_hours, cache_root=cache_root, get=hrrr_get)
+        hours = hourly_from_hrrr(series.hours, daily.days, lat_deg, lon_deg)
+    else:
+        hours = disaggregate(daily.days, lat_deg, lon_deg, first_hour, n_hours, p)
     live = live_fuel_moisture(_local_solar(start, lon_deg)[0], lat_deg, lon_deg, samples, p)
     return to_weather_config(hours, start, live, moisture_params)
 

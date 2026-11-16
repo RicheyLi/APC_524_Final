@@ -337,7 +337,7 @@ cache to disk with a manifest, run.
 | --- | --- | --- | --- |
 | Fuel model, canopy cover, height, base height, bulk density | LANDFIRE (Scott & Burgan 40 fuel models) | 30 m | US only. The LANDFIRE **version must predate the fire** being simulated, or the fuels already show its scar |
 | Elevation, slope, aspect | USGS 3DEP | 10-30 m | Slope and aspect computed here |
-| Wind, temperature, humidity | gridMET daily, disaggregated to hours (WP 2.4); HRRR, which covers both fires' windows, once a reader exists (section 13) | about 4 km | One value per hour for the grid, with the diurnal profiles documented in `data/weather.py` |
+| Wind, temperature, humidity | HRRR hourly analyses, which cover both fires' windows (`data/hrrr.py`, section 13); gridMET daily disaggregated to hours (WP 2.4) as the alternative | 3 km (HRRR); about 4 km (gridMET) | One value per hour for the grid, at its centroid; the gridMET diurnal profiles are documented in `data/weather.py` |
 | Dead fuel moisture | 1-h computed from T and RH; 10-h from the 1-h value by a cited offset; 100-h from gridMET (`fm100`) | about 4 km | gridMET has no 1-h or 10-h moisture |
 | Live fuel moisture | National Fuel Moisture Database samples near the site (now served through the Fire Environment Mapping System, FEMS); seasonal default otherwise | Point | Matters most in shrub fuels such as chaparral |
 | Roads, rivers, lakes, buildings | OpenStreetMap (osmnx) | Vector | See the barrier rule below |
@@ -890,7 +890,25 @@ cells that never breach end as FUEL. A constructed line without a width stays an
 barrier, as before. Trees count as present when the cell or a neighbour has canopy cover above
 0.10 (a placeholder, section 13). The breached set is the same for dt and dt / 2, hooks do not
 change the draws, the engines agree, and grids without breaks are bit-identical (golden runs
-unchanged). The remaining WPs have not started.
+unchanged).
+
+HRRR reader built (branch `wp-2.4b-hrrr`, the follow-up of WP 2.4 decided in section 13):
+`data/hrrr.py` reads each hour's HRRR analysis (`wrfsfcf00`) from NOAA's public AWS archive,
+only five fields by HTTP byte range from the published `.idx` offsets (2 m temperature and
+humidity, 10 m wind components, total cloud cover), decodes them with the GRIB2 driver of the
+GDAL that `rasterio` ships (no new dependency) and samples them bilinearly at the grid
+centroid. The HRRR's winds are relative to its Lambert grid (flag table 3.3, bit 5), about 14
+deg off true north at 120 W; they are rotated by `n (lon - LoV)` with the cone constant `n`
+from the standard parallels, read with the flag from each file's header. Checked against ASOS
+airport winds of the Silverado Santa Ana (Ontario, Riverside, Santa Ana, Fullerton): the
+rotation lowers the mean direction error at all four stations (by 2-9 deg). `hourly_weather`
+takes `source="hrrr"` (`Region.weather_source`, both regions): temperature, humidity and wind
+are the hour's analysis, the cloudiness code for the 1-h moisture the hour's cloud cover in
+daylight (Deeming et al. 1977 tenths), the 100-h moisture gridMET's. Hours are cached with a
+SHA-256 manifest; a region's 168-336 hours download in 1-2 minutes. Fire B's wind now shows the
+Santa Ana: 13.0 m/s on average from the north-east over the 12 hours after ignition, up to 20.3
+m/s, humidity down to 1.4 %, where gridMET's daily means gave at most 4.8 m/s. The remaining WPs
+have not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
@@ -1033,14 +1051,6 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       fire B's winds against the cap should inform it: fire B, a Santa Ana fire with gusts to
       80 mph, will very likely spend its main run above the cap, so its test is also the test
       of option (a).
-- [ ] **Hourly weather from HRRR** (WP 2.4 follow-up). HRRR has every analysis hour of both
-      fires' weather windows (Lake Fire 5-20 July 2024; Silverado 26 October-2 November 2020,
-      168 of 168; checked 2026-11-15), so by the decision below both fires use it. It needs a
-      reader for HRRR's GRIB2 files (byte ranges from the AWS archive with the published `.idx`
-      offsets, and a GRIB2 decoder, a new dependency) producing the same one-point-per-hour
-      `WeatherConfig`; until then both fires run on disaggregated gridMET. It matters most for
-      fire B: gridMET's daily means cannot represent Santa Ana winds (on the vetted Santa Ana
-      fires they give 2-7 m/s, and Canyon 2's wind blowing from the south-east).
 - [ ] **Time lag of the hourly fuel moisture** (WP 2.1c). (1) Done in WP 2.4: the sunshine
       correction's cloudiness code comes from gridMET's daily radiation (relative sunshine by
       the Angstrom formula, FAO-56 eq. 35), the same for every daylight hour of a day, none at
@@ -1106,7 +1116,10 @@ Decided after the fourth review:
   starts in 2019, so WP 2.4 built disaggregated gridMET. With the Lake Fire as fire A the
   question reopens: the archive has every analysis hour from 5 to 20 July 2024 (checked
   2026-11-15), so HRRR is used if fire B's dates are covered too. They are (Silverado, 168 of
-  168 hours), so both fires use HRRR once its reader exists (open decisions above).
+  168 hours), so both fires use HRRR. Its reader was built after WP 2.9 (`data/hrrr.py`,
+  section 12) and both regions now take their weather from it (`weather_source: hrrr` in
+  `configs/regions.yaml`); disaggregated gridMET stays available and still supplies the
+  100-h moisture.
 - **Fire A replaced by the 2024 Lake Fire** (decided 2026-11-15, during WP 2.6). The Chimney
   Fire's pre-fire fuels are LANDFIRE LF2014, and its fuel layers could not be obtained: the
   LANDFIRE map viewer offers LF2016 to LF2025 only, the Product Service serves only LF2014's

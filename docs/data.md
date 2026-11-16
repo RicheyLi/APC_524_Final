@@ -19,17 +19,18 @@ fuel (TL3, `configs/urban.yaml`), 77,439 buildings are worth 31.0 billion USD, a
 100,420 break cells are city streets. Inside the fire's perimeter it is 97 % burnable wildland
 (grass-shrub and chaparral) and 5.5 % urban. It has 192 first VIIRS detections (79 % inside the
 MTBS perimeter, 99 % within 1 km; intervals 0.8 to 11.5 h) and no daily perimeters, which NIFC
-publishes only from 2022. Its gridMET winds show the Santa Ana (north-north-east, humidity down
-to 12 %) but at most 4.8 m/s in the daily means, far below the gusts that drove it; hourly HRRR,
-which covers its whole window, is the planned fix (plan section 13).
+publishes only from 2022. Its HRRR winds show the Santa Ana: from the north-east at 13.0 m/s on
+average over the 12 hours after ignition, up to 20.3 m/s, with humidity down to 1.4 %. gridMET's
+daily means, used before the HRRR reader existed, gave at most 4.8 m/s.
 
 As built (2026-11-15) the Lake Fire grid is mostly chaparral and grass: SH5 (29 % of cells),
 GR2 (20 %), GS2 (15 %), SH4 (15 %), GS3 and TL3; 36,576 cells carry a road or stream break and
 261 buildings are worth 104.4 million USD. A three-hour Rothermel run on the committed crop,
 ignited at the reported time in the afternoon weather of 5 July (40 deg C, 10 % humidity, 1-h
-moisture 1.7 %), burns about 680 ha before reaching the crop's edge.
+moisture 1.6 %), burns about 650 ha before reaching the crop's edge.
 
-Fire B is added when the team chooses it (plan section 13).
+Both regions take their hourly weather from HRRR analyses (`weather_source: hrrr`; see
+[Hourly weather](#hourly-weather) below).
 
 ```sh
 uv sync --extra geo
@@ -41,7 +42,7 @@ uv run python scripts/download_data.py lake_2024 --verify
 The build:
 
 1. reads the fire's final perimeter from MTBS;
-2. downloads LANDFIRE, 3DEP, OpenStreetMap and gridMET for the perimeter's bounding box plus the
+2. downloads LANDFIRE, 3DEP, OpenStreetMap, HRRR and gridMET for the perimeter's bounding box plus the
    buffer (at least 3 km) and a 1 km margin, each cached by its own module under `data/cache/`;
 3. cuts the grid from the LANDFIRE raster's own 30 m lattice: the perimeter's bounding box plus
    the buffer and one cell on every side, so the grid size follows the fire;
@@ -69,7 +70,8 @@ hashes; it reports any file that differs.
 | --- | --- | --- | --- |
 | Fuel model (FBFM40), canopy cover, height, base height, bulk density | [LANDFIRE](https://landfire.gov) Product Service job API (`https://lfps.usgs.gov/api`, submit, poll, download a zip of GeoTIFFs); needs an email address, read from `WILDFIRE_SIM_LANDFIRE_EMAIL` and never stored (`data/landfire.py`) | US Government work, public domain | LANDFIRE, U.S. Department of the Interior and U.S. Department of Agriculture |
 | Elevation (slope and aspect computed) | USGS [3D Elevation Program](https://www.usgs.gov/3d-elevation-program) 10 m DEM through `py3dep` (`data/terrain.py`) | Public domain | U.S. Geological Survey, 3D Elevation Program |
-| Wind, temperature, humidity, radiation, 100-h fuel moisture | [gridMET](https://www.climatologylab.org/gridmet.html) daily, read at a point through the THREDDS NetCDF Subset Service of `thredds.northwestknowledge.net` (`data/weather.py`) | Stated variously as free of known copyright restrictions (Google Earth Engine catalogue) and CC BY 4.0 (UCAR GDEX); we attribute as CC BY 4.0 requires | Abatzoglou, J. T. (2013), Int. J. Climatol. 33, 121-131; Climatology Lab, UC Merced |
+| Hourly wind, temperature, humidity, cloud cover | NOAA [HRRR](https://rapidrefresh.noaa.gov/hrrr/) hourly analyses (`wrfsfcf00`) from the NOAA Open Data archive on AWS (`noaa-hrrr-bdp-pds`): five fields of each hour's GRIB2 file read by HTTP byte range from its `.idx` offsets, decoded with GDAL's GRIB driver through `rasterio`; no account (`data/hrrr.py`) | NOAA Open Data, no restrictions | NOAA; Dowell, D. C. et al. (2022), Weather and Forecasting 37, 1371-1395 |
+| Daily wind, temperature, humidity, radiation (alternative to HRRR), 100-h fuel moisture | [gridMET](https://www.climatologylab.org/gridmet.html) daily, read at a point through the THREDDS NetCDF Subset Service of `thredds.northwestknowledge.net` (`data/weather.py`) | Stated variously as free of known copyright restrictions (Google Earth Engine catalogue) and CC BY 4.0 (UCAR GDEX); we attribute as CC BY 4.0 requires | Abatzoglou, J. T. (2013), Int. J. Climatol. 33, 121-131; Climatology Lab, UC Merced |
 | Roads, waterways, water bodies, buildings | [OpenStreetMap](https://www.openstreetmap.org) through the Overpass API with `osmnx` (`data/osm.py`); the public Overpass server asks automated clients to retry with backoff when busy, which the client does | [Open Database Licence (ODbL) 1.0](https://www.openstreetmap.org/copyright) | (c) OpenStreetMap contributors |
 | Fire perimeter and point of origin | [MTBS](https://www.mtbs.gov) Burned Area Boundaries through the USFS map service `EDW_MTBS_01` (`data/cache.py`) | Public domain | Monitoring Trends in Burn Severity, USDA Forest Service and USGS |
 | Ignition time and point of origin | IRWIN incident record through NIFC's WFIGS Incident Locations service (`FireDiscoveryDateTime`, the record's point geometry); public (`data/validation.py`) | Public domain | National Interagency Fire Center, IRWIN |
@@ -79,7 +81,7 @@ hashes; it reports any file that differs.
 | Live fuel moisture | National Fuel Moisture Database, now in [FEMS](https://www.wildfire.gov/application/fems); no public API, so samples are passed in and a seasonal default is used until then (plan section 13) | Public domain | USDA Forest Service |
 
 **Projection: grid north is true north.** The simulator measures wind bearings (from true
-north, as gridMET gives them) and aspect against the grid's up direction, so grid north must be
+north, as gridMET gives them and as HRRR's are rotated to) and aspect against the grid's up direction, so grid north must be
 true north. The LANDFIRE Product Service delivers its rasters in an Albers projection centred on
 the request (central meridian at the box's centre, standard parallels at its south and north
 edges), where that holds to 0.09 deg across the Lake Fire grid. LANDFIRE's national projection,
@@ -92,6 +94,35 @@ The price is one resampling of LANDFIRE's categorical layers on its server.
 10 and bulk density in kg/m^3 x 100, with -9999 for no data; the build converts them
 (`landfire_canopy`). gridMET's point service returns the packed integers of its files; the
 client applies each variable's `scale_factor` and `add_offset`.
+
+## Hourly weather
+
+A region's weather is one value per hour at the grid's centroid, from `weather_start_utc` for
+`weather_days` days. With `weather_source: hrrr` (both regions) each hour is the HRRR analysis
+of that hour (`wildfire_sim.data.hrrr`):
+
+* **Only what is needed is downloaded.** An hourly file is about 130 MB; its `.idx` index gives
+  each field's byte offset, so only 2 m temperature (`TMP`) and relative humidity (`RH`), the
+  10 m wind components (`UGRD`, `VGRD`) and total cloud cover (`TCDC`) are fetched, 1-2 MB per
+  hour, eight hours at a time. They are decoded with the GRIB2 driver of the GDAL that
+  `rasterio` ships and interpolated bilinearly to the centroid on the 3 km grid. A region's
+  168-336 hours download in one to two minutes; the values are cached as
+  `data/cache/hrrr-<key>/hourly.csv` with a manifest (every URL and byte range, SHA-256).
+* **Winds are rotated to true north.** HRRR's wind components are relative to its Lambert
+  conformal grid, centred on 97.5 W, as each file's flag table 3.3 (bit 5) states, so at 120 W
+  they point about 14 deg off. They are rotated by the angle `n (lon - LoV)`, with the cone
+  constant `n` from the standard parallels (Snyder 1987, eq. 15-3), all read from the file's
+  own header. On the Silverado Santa Ana the rotated winds are closer to the ASOS airport
+  observations at all four nearby stations (mean direction error 27-47 deg, against 33-49 deg
+  unrotated).
+* **The rest of the weather.** The cloudiness code for the 1-h moisture comes from the hour's
+  cloud cover in tenths (Deeming et al. 1977) in daylight and is absent at night; the 100-h
+  moisture is gridMET's (`fm100`), since HRRR has no fuel moisture. The 1-h and 10-h moisture
+  and live moisture are computed as for gridMET.
+
+With `weather_source: gridmet` the hours are gridMET's daily values spread over the day by the
+diurnal profiles documented in `data/weather.py`. Daily means cannot show a Santa Ana's gusts:
+for Silverado gridMET gave at most 4.8 m/s, HRRR 20.3 m/s.
 
 ## Observations of the fire
 
@@ -137,9 +168,13 @@ uv run python scripts/demo_real_fire.py silverado_2020 --hours 12
 It prints the simulated and observed burned area, their overlap (Jaccard and Sorensen), the
 share of VIIRS detections whose interval contains the simulated arrival and the median error,
 and writes a map to `runs/demo_<region>.png`. About a minute per simulated day of fire A with the
-Numba engine (`uv sync --extra fast`). These runs are **not calibrated** (Phase 3): before
-calibration the Lake Fire burns about four times its observed first-day area and Silverado too
-little, round where the real fires ran with the wind. Listing the overpasses queries NASA's
+Numba engine (`uv sync --extra fast`). These runs are **not calibrated** (Phase 3) and have no
+suppression (Phase 4). With HRRR weather (2026-11-15) Silverado's 12-hour run burns 4,404 ha
+south-west before the Santa Ana, against 5,183 ha inside the final perimeter (Jaccard 0.45; 27 %
+of detections inside their interval). The Lake Fire's 24-hour run puts 60 % of detections inside
+their interval (median error 0.0 h) but burns far too much: 27,089 ha, reaching the grid's edge
+after 11.6 hours, against 1,891 ha in the daily perimeter posted 24 hours after ignition
+(Jaccard 0.07). Listing the overpasses queries NASA's
 public catalogue, so the command needs an internet connection even with everything cached.
 
 ## The LANDFIRE version must predate the fire

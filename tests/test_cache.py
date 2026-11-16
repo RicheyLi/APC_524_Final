@@ -257,7 +257,9 @@ def _fake_sources(tmp: Path, landfire_crs: str = LOCAL_ALBERS) -> tuple[Any, dic
         gdf.to_file(path, driver="GeoJSON")
         return OsmFeatures(path, {"dataset": "fake OSM"})
 
-    def weather(lat: float, lon: float, start: dt.datetime, duration_s: float, root: Path) -> WeatherConfig:
+    def weather(
+        lat: float, lon: float, start: dt.datetime, duration_s: float, root: Path, source: str = "gridmet"
+    ) -> WeatherConfig:
         calls["weather"] += 1
         assert 34.7 < lat < 34.8 and -120.1 < lon < -119.9 and duration_s == 86400.0
         return WeatherConfig()
