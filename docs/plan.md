@@ -851,8 +851,22 @@ fire masks and only the needed rows of the geolocation, by byte ranges; a NASA E
 live download succeeded, test marked `network`); `detections(grid)` returns each place's first
 detection with `t_clear` the last earlier overpass that saw it clear (no cloud, glint or fire)
 or the ignition, as section 7 requires: 654 for the Lake Fire, 98 % within 1 km of the MTBS
-perimeter, intervals 0.4-14 h (median 9.7 h). Details in `docs/data.md`. The remaining WPs have
-not started.
+perimeter, intervals 0.4-14 h (median 9.7 h). Details in `docs/data.md`.
+
+2.8 built (branch `wp-2.8-metrics`): `metrics.py` holds the scores of section 7 and the cost
+terms of section 5. Burned area; Jaccard and Sorensen overlap, with `consensus_mask` for the cells
+burned in at least half the runs; area ratio. `arrival_interval_error(arrival, detections,
+footprint_m, window_end_s, dx=...)`: per detection, the earliest simulated arrival within the
+footprint (cells within `footprint_m / 2` in row and column: 13 x 13 cells, 390 m, for a 375 m
+pixel at 30 m), 0 inside `(t_clear, t_detect]` and the distance to the nearer end outside; a
+detection the run never reaches is scored `max(0, window_end - t_detect)`, the least error
+consistent with an arrival after the window (the cell size is an added keyword, since the
+arrival array does not carry it). `asset_loss(grid)` sums the asset value of burning and burned
+cells. `suppression_cost(fleet, costs)` takes `ResourceUse` records (type, count, hours, water
+and retardant) that the suppression model (Phase 4) will fill; a zero hourly cost uses the
+`costs.yaml` rate, as `ResourceConfig` does. `bootstrap_ci` and `paired_difference_ci` are seeded
+percentile bootstrap intervals (Efron & Tibshirani 1993); in a simulation test 95 % intervals
+from samples of 50 cover a known mean at the stated rate. The remaining WPs have not started.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
