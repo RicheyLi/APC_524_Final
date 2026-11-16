@@ -174,8 +174,8 @@ south-west before the Santa Ana, against 5,183 ha inside the final perimeter (Ja
 of detections inside their interval). The Lake Fire's 24-hour run puts 60 % of detections inside
 their interval (median error 0.0 h) but burns far too much: 27,089 ha, reaching the grid's edge
 after 11.6 hours, against 1,891 ha in the daily perimeter posted 24 hours after ignition
-(Jaccard 0.07). Listing the overpasses queries NASA's
-public catalogue, so the command needs an internet connection even with everything cached.
+(Jaccard 0.07). The list of overpasses is cached with them
+(`listings` in the VIIRS manifest), so with everything cached the command needs no network.
 
 ## The LANDFIRE version must predate the fire
 

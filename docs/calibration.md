@@ -98,9 +98,8 @@ uv run --extra fast --extra opt python scripts/calibrate.py --synthetic crop.yam
 ```
 
 The region mode ignites the fire at the recorded cell and time, scores it against the daily
-perimeters and VIIRS detections and writes `configs/calibrated.yaml`. Listing the VIIRS
-overpasses queries NASA's public catalogue, so it needs an internet connection even when every
-overpass is cached. `--rule alexandridis` tunes that rule instead. `--window-hours`,
+perimeters and VIIRS detections and writes `configs/calibrated.yaml`. With the
+observations cached it needs no network. `--rule alexandridis` tunes that rule instead. `--window-hours`,
 `--trials` and `--seeds` override `configs/calibration.yaml`; `--no-surface` skips the surface.
 
 The synthetic mode takes a scenario file (its grid, weather, ignition cell and time and rule),
