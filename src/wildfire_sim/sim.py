@@ -86,6 +86,7 @@ import scipy
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from wildfire_sim import __version__
+from wildfire_sim.breaks import BreakState, draw_breach_thresholds
 from wildfire_sim.config import CitedValue, IgnitionConfig, ScenarioConfig, configs_dir, load_yaml
 from wildfire_sim.data import build_grid
 from wildfire_sim.grid import Grid, Weather
@@ -604,6 +605,16 @@ class _FireEngine:
         self.out: SpreadOutput | None = None
         self.rate = np.zeros((self.k, n), dtype=np.float64)  # progress per second, 1/s
 
+    @property
+    def progress_kn(self) -> FloatArray:
+        """Link progress as ``(K, H * W)`` (a view; the Numba engine stores it transposed)."""
+        return self.progress
+
+    @property
+    def thresholds_kn(self) -> FloatArray:
+        """Link thresholds as ``(K, H * W)`` (a view; the Numba engine stores them transposed)."""
+        return self.thresholds
+
     # -- cached spread-rule output --------------------------------------------------------
 
     def _compute_blocked(self) -> BoolArray:
@@ -984,10 +995,16 @@ def run(
 ) -> RunResult:
     """Run one simulation of ``config``.
 
-    Random streams: ``SeedSequence(seed).spawn(3)`` gives the spread, perturbation (reserved
-    for WP 1.6) and suppression streams. The spread stream draws the ``(K, H, W)`` link
-    thresholds once; hooks receive a generator on the suppression stream, so suppression can
-    never change the fire's random draws.
+    Random streams: ``SeedSequence(seed).spawn(4)`` gives the spread, perturbation (reserved
+    for WP 1.6), suppression and break streams (the first three are those of ``spawn(3)``, so
+    earlier runs keep their draws). The spread stream draws the ``(K, H, W)`` link thresholds
+    once; hooks receive a generator on the suppression stream, so suppression can never change
+    the fire's random draws; the break stream draws one breach threshold per cell
+    (:mod:`wildfire_sim.breaks`, WP 2.9).
+
+    Break cells (``break_width_m > 0``, and constructed lines with a width) hold as barriers
+    until breached (:class:`wildfire_sim.breaks.BreakState`); breaches are ``"breach"`` events
+    and counted in ``provenance["breaks"]``.
 
     Each step ``[t, t + dt)``: weather lookup at ``t``; hooks; spread rule (cached); the
     initial ignition if ``config.ignition.time_s`` falls in the step; link crossings with
@@ -1042,9 +1059,10 @@ def run(
 
     stencil = get_stencil(config.stencil)
     shape_k = config.spread.arrival_shape
-    spread_ss, _perturb_ss, suppression_ss = np.random.SeedSequence(seed).spawn(3)
+    spread_ss, _perturb_ss, suppression_ss, breaks_ss = np.random.SeedSequence(seed).spawn(4)
     thresholds = draw_crossing_thresholds(np.random.default_rng(spread_ss), shape_k, stencil, g.shape)
     suppression_rng = np.random.default_rng(suppression_ss)
+    breaks = BreakState(g, stencil, draw_breach_thresholds(breaks_ss, g.shape), ignition_cells)
     corrections = load_kernel_corrections()
     correction = corrections.value_for(config.stencil, shape_k)
     residence = load_residence_times()
@@ -1065,17 +1083,23 @@ def run(
         changed = False
         for hook in hooks:
             changed = bool(hook(g, t, dt, suppression_rng)) or changed
-        engine.refresh(weather, changed)
+        if changed:
+            breaks.add_new(g)  # lines a hook built with a width are held like any break
+        engine.refresh(weather, changed or breaks.pending_change)
+        breaks.pending_change = False
         if not ignited and t_ign < t_end:
             ignited = True
             _ignite_initial(engine, ignition_cells, t_ign)
+        breaks.ignite_due(engine, t, t_end)
         capped = getattr(rule, "lb_capped", None)  # set by rules that cap the ellipse, e.g. "rothermel"
         if capped is not None and engine.burning.size:
             capped_cell_s += float(np.count_nonzero(np.asarray(capped).reshape(-1)[engine.burning])) * dt
         engine.advance(t, t_end)
+        breaks.evaluate(engine)
         steps_done = i + 1
-        if ignited and engine.burning.size == 0:
+        if ignited and engine.burning.size == 0 and not breaks.active_schedule:
             break
+    g.state[breaks.held & ~g.fireline] = _FUEL  # breaks that held were never burnable barriers
 
     arrival = engine.arrival.reshape(g.shape)
     edge = first_edge_arrival(arrival, stencil)
@@ -1094,6 +1118,7 @@ def run(
         "final_time_s": steps_done * dt,
         "reached_edge_s": None if edge is None else edge[0],
         "lb_capped_cell_hours": capped_cell_s / 3600.0,
+        "breaks": breaks.provenance(),
     }
     return RunResult(
         grid=g,
