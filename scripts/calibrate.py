@@ -9,8 +9,7 @@ Two targets:
 * a built region and its observations (``scripts/download_data.py <region> --observations``):
   the run starts at the recorded ignition and is scored against the daily perimeters posted by
   the end of the window and the VIIRS detections in it. Writes ``configs/calibrated.yaml``.
-  Listing the VIIRS overpasses queries NASA's public catalogue, so it needs an internet
-  connection even when every overpass is cached.
+  With the observations cached it needs no network.
 * ``--synthetic SCENARIO``: a synthetic "observed" fire, one run of the scenario with the known
   parameters ``--truth`` (seed ``truth_seed``), with detections sampled from its arrival times
   at synthetic overpasses. A test of the method; writes ``runs/calibration_synthetic.yaml``.

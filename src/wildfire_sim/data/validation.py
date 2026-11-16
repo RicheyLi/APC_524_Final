@@ -47,6 +47,7 @@ References:
 
 from __future__ import annotations
 
+import dataclasses
 import datetime as dt
 import hashlib
 import io
@@ -725,13 +726,33 @@ def fetch_viirs(
     """Every VIIRS 375 m overpass of ``box`` in ``[start, end]``, cached per granule.
 
     Cached under ``<cache_root>/viirs-<name>/`` (one ``.npz`` per overpass that covers the box,
-    and ``manifest.json`` listing every overpass found, with or without coverage).
+    and ``manifest.json`` listing every overpass found, with or without coverage). The catalogue's
+    answer for this box and period is kept in the manifest too (``listings``), so a second call
+    with the same arguments reads everything from disk and needs no network; delete the
+    manifest's ``listings`` entry to ask the catalogue again.
     """
     directory = Path(cache_root) / f"viirs-{name}"
     directory.mkdir(parents=True, exist_ok=True)
     manifest_path = directory / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {"granules": {}}
-    pairs = find_overpasses(*box, start, end, http=http)
+    listings = manifest.setdefault("listings", {})
+    key = "|".join([",".join(repr(float(v)) for v in box), *(t.astimezone(dt.UTC).isoformat() for t in (start, end))])
+    if key in listings:
+        pairs = [
+            GranulePair(
+                p["product"],
+                p["satellite"],
+                p["stamp"],
+                p["fire_url"],
+                p["geo_url"],
+                dt.datetime.fromisoformat(p["time_start"]),
+            )
+            for p in listings[key]
+        ]
+    else:
+        pairs = find_overpasses(*box, start, end, http=http)
+        listings[key] = [{**dataclasses.asdict(p), "time_start": p.time_start.isoformat()} for p in pairs]
+        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     client = earthdata
     windows = []
     for i, pair in enumerate(pairs):

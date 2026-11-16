@@ -11,9 +11,8 @@ Usage::
 Writes ``runs/demo_<region>.png`` (simulated arrival time, observed perimeter, VIIRS detections)
 and prints the overlap with the observed burned area and the arrival-interval errors. The run is
 ignited at the recorded point and time; the comparison is with the daily perimeters posted by the
-end of the run when the fire has them, else with the final MTBS perimeter. Listing the VIIRS
-overpasses queries NASA's public catalogue, so it needs an internet connection even when every
-overpass is cached.
+end of the run when the fire has them, else with the final MTBS perimeter. With the
+observations cached it needs no network.
 """
 
 from __future__ import annotations
