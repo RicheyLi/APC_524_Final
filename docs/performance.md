@@ -243,3 +243,35 @@ For docs/plan.md section 6 (not edited by this work package): replace the estima
 | One scenario | 1 | 1.1-2.5 s | 0.14-0.23 s |
 | One ensemble | 200 | 4-8 min (1 core), 1.3-2.5 min (8 workers) | 30-50 s (1 core), 20-25 s (8 workers) |
 | One optimisation | 15,000 | 4.8-10.4 h (1 core), 1.4-3 h (8 workers) | 36-59 min (1 core), 7-12 min (8 workers) |
+
+## Real grids: break crossing and the hourly rule (WP 2.9 follow-up)
+
+Measured 2026-11-16 on the developer laptop with the Numba engine, the `"rothermel"` rule and
+fire A's region (`lake_2024`: 815 x 978 cells, 36,576 break cells), ignition at the recorded
+time, `dt` 60 s.
+
+| Run | Before | After |
+| --- | --- | --- |
+| 5 km crop of fire A, 4 h | 5.7 s | 0.6 s |
+| Fire A, 3 h after ignition | 124 s | 8.8 s |
+| Fire A, 24 h after ignition (18,700 ha burned, 4,081 breaches) | over 50 min | 60 s |
+
+Three costs were removed, each without changing any result (the runs are bit-identical, tested):
+
+- **A full refresh after every breach.** WP 2.9 re-ran the spread rule over the whole grid
+  (1.2-1.4 s on this grid) in every step with a breach. A breach only stops a cell being a
+  barrier, so the engine now updates the blocked links, link rates and stall flags of the cells
+  within `max_offset` of it (`_FireEngine.update_barriers`); only a breached constructed line,
+  which changes the rule's input, still triggers the full refresh.
+- **Rule evaluations before the ignition.** The weather series of a region starts at local
+  midnight, about 16 h before fire A's ignition, so the hourly weather changes cost 16 full
+  rule evaluations before anything burned. The engine is now first refreshed in the ignition
+  step, with any grid edits made before it.
+- **Checking every held break cell every step.** Only held cells next to a newly ignited cell
+  can be breached, so only those are checked (5.6 ms per step on this grid before).
+
+What remains on the real grid is the spread rule, re-evaluated over the whole grid each time
+the hourly weather changes: about 1.4 s per hour of fire on fire A's grid (the lattice-fitted
+multipliers 0.6 s, the directional rates 0.2 s, the link rates 0.3 s), so a 24-hour run spends
+about 35 of its 60 s there. Evaluating the rule only near the fire would remove most of it; WP
+3.1 measures whether calibration needs that.

@@ -523,6 +523,11 @@ class NumbaFireEngine(_FireEngine):
         """Link thresholds as ``(K, H * W)``: a transposed view of the cell-major array."""
         return self.thresholds.T
 
+    def _links_updated(self, src: np.ndarray) -> None:
+        """Copy the updated link rates and blocked flags of sources ``src`` into the cell-major arrays."""
+        self._rate_nk[src, :] = self.rate[:, src].T
+        self._blocked_nk[src, :] = self.blocked.reshape(self.k, -1)[:, src].T
+
     def refresh(self, weather: Weather, changed: bool) -> None:
         """As the NumPy engine; also caches the per-cell flaming time and intensity of the new output."""
         before = self.out

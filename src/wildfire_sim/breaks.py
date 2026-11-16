@@ -175,6 +175,9 @@ class BreakState:
         params: Parameters; None loads ``configs/breach.yaml``.
     """
 
+    local_updates: bool = True
+    """Update the engine locally after a breach; False forces the full refresh (for tests)."""
+
     def __init__(
         self,
         grid: Grid,
@@ -194,7 +197,10 @@ class BreakState:
         self.breached = np.zeros(grid.shape, dtype=bool)
         self.scheduled = np.full(self.h * self.w, np.inf)  # ignition time of breached cells, s
         self.scheduled_speed = np.zeros(self.h * self.w)  # rate of the crossing link, m/s
-        self.pending_change = False
+        self.pending_cells: list[np.ndarray] = []  # breached since the engine last saw them (flat)
+        self.pending_full = False  # a breached line: the rule's own input changed
+        self._seen: np.ndarray | None = None  # cells known to have ignited at the last check (flat)
+        self._recheck = np.zeros(grid.shape, dtype=bool)  # newly held cells, checked once
         self.n_breached = 0
         self._ignition = np.zeros(grid.shape, dtype=bool)
         for r, c in ignition_cells:
@@ -216,6 +222,7 @@ class BreakState:
         new = fuel_breaks | lines
         grid.state[fuel_breaks] = _UNBURNABLE
         self.held |= new
+        self._recheck |= new
         return int(new.sum())
 
     def ignite_due(self, engine: _FireEngine, t: float, t_end: float) -> None:
@@ -236,9 +243,35 @@ class BreakState:
         engine.progress_kn[:, due] = engine.rate[:, due] * credit
         engine.burning = np.concatenate([engine.burning, due.astype(engine.burning.dtype)])
 
+    def _to_check(self, engine: _FireEngine) -> np.ndarray:
+        """Held cells (flat) next to cells ignited since the last check, plus newly held ones.
+
+        A held cell's hottest ignited neighbour only changes when a neighbour ignites, so the
+        others cannot be breached now; a line built later (by a hook) is checked once against the
+        neighbours that already burned.
+        """
+        ignited = np.isfinite(engine.arrival)
+        if self._seen is None:
+            self._seen = np.zeros_like(ignited)
+        new = np.flatnonzero(ignited & ~self._seen)
+        self._seen = ignited
+        held = self.held.reshape(-1)
+        rows, cols = np.divmod(new, self.w)
+        cand: list[np.ndarray] = []
+        for dr, dc in NEIGHBOURS_8:
+            nr, nc = rows + dr, cols + dc
+            ok = (nr >= 0) & (nr < self.h) & (nc >= 0) & (nc < self.w)
+            nb = nr[ok] * self.w + nc[ok]
+            cand.append(nb[held[nb]])
+        recheck = np.flatnonzero(self._recheck.reshape(-1) & held)
+        self._recheck[:] = False
+        return np.unique(np.concatenate([*cand, recheck]))
+
     def evaluate(self, engine: _FireEngine) -> None:
         """Breach held cells next to cells that have ignited (after a step)."""
-        held_idx = np.flatnonzero(self.held.reshape(-1))
+        if not self.held.any():
+            return
+        held_idx = self._to_check(engine)
         if held_idx.size == 0:
             return
         rows, cols = np.divmod(held_idx, self.w)
@@ -277,16 +310,29 @@ class BreakState:
         r, c = rows[hit], cols[hit]
         self.held[r, c] = False
         self.breached[r, c] = True
+        self.pending_full |= bool(grid.fireline[r, c].any())  # a removed line changes the rule's output
         grid.fireline[r, c] = False
         grid.state[r, c] = _FUEL
         self._schedule(cells, t_cross[hit], speed[hit])
         self.n_breached += int(hit.sum())
-        self.pending_change = True
+        self.pending_cells.append(cells)
         if engine.record_events:
             engine.events.extend(
                 (float(tb), "breach", int(rr), int(cc))
                 for tb, rr, cc in zip(t_breach[hit].tolist(), r.tolist(), c.tolist(), strict=True)
             )
+
+    def take_pending(self) -> tuple[np.ndarray, bool]:
+        """Cells breached since the last call (flat), and whether the engine needs a full refresh.
+
+        A breached break cell only stops being a barrier, which the engine updates locally
+        (:meth:`wildfire_sim.sim._FireEngine.update_barriers`); a breached constructed line also
+        changes the spread rule's input (``fireline``), which needs the full refresh.
+        """
+        cells = np.concatenate(self.pending_cells) if self.pending_cells else np.empty(0, dtype=np.int64)
+        full = self.pending_full or (cells.size > 0 and not self.local_updates)
+        self.pending_cells, self.pending_full = [], False
+        return cells, full
 
     def _schedule(self, cells: np.ndarray, times: np.ndarray, speeds: np.ndarray) -> None:
         """Ignite ``cells`` at ``times`` (s); an infinite time (no link can cross) schedules nothing."""

@@ -91,8 +91,14 @@ from wildfire_sim.config import CitedValue, IgnitionConfig, ScenarioConfig, conf
 from wildfire_sim.data import build_grid
 from wildfire_sim.grid import Grid, Weather
 from wildfire_sim.spread import make_spread_rule
-from wildfire_sim.spread.base import SpreadOutput, SpreadRule, draw_crossing_thresholds, link_rate_of_spread
-from wildfire_sim.types import BoolArray, CellState, FloatArray, IntArray, Stencil, StencilSize, get_stencil
+from wildfire_sim.spread.base import (
+    SpreadOutput,
+    SpreadRule,
+    _cells_crossed,
+    draw_crossing_thresholds,
+    link_rate_of_spread,
+)
+from wildfire_sim.types import BoolArray, CellState, FloatArray, IntArray, LandUse, Stencil, StencilSize, get_stencil
 from wildfire_sim.urban import UrbanModel, load_urban_model, residence_scale, ros_scale, urban_mask
 
 StepHook = Callable[[Grid, float, float, np.random.Generator], bool]
@@ -664,6 +670,83 @@ class _FireEngine:
         self.out = out
         self.weather = weather
 
+    def update_barriers(self, cells: IntArray) -> None:
+        """Barriers were removed at flat ``cells`` and nothing else changed (breached breaks, WP 2.9).
+
+        Gives the same blocked links, link rates and stall flags as ``refresh(weather,
+        changed=True)`` with the current weather, at a cost that grows with the number of cells,
+        not the grid: a cell's state only enters the links of sources within ``max_offset`` of it
+        (as target or as a cell a diagonal or knight move squeezes past), and the spread rule's
+        output does not depend on it. A link that becomes unblocked gets its rate from the cached
+        rule output by the formula of :func:`~wildfire_sim.spread.base.link_rate_of_spread`, in
+        the same order of operations, so the result is bit-identical.
+        """
+        assert self.out is not None
+        idx = np.unique(np.asarray(cells, dtype=np.int64))
+        if idx.size == 0:
+            return
+        m = self.stencil.max_offset
+        rows, cols = np.divmod(idx, self.w)
+        span = np.arange(-m, m + 1)
+        sr = (rows[:, None, None] + span[None, :, None] + 0 * span[None, None, :]).ravel()
+        sc = (cols[:, None, None] + 0 * span[None, :, None] + span[None, None, :]).ravel()
+        inside = (sr >= 0) & (sr < self.h) & (sc >= 0) & (sc < self.w)
+        src = np.unique(sr[inside] * self.w + sc[inside])
+        srow, scol = np.divmod(src, self.w)
+        grid = self.grid
+        burnable_lu = np.isin(grid.land_use, [int(lu) for lu in LandUse if lu.burnable])
+
+        def barrier(r: IntArray, c: IntArray) -> BoolArray:
+            ok = (r >= 0) & (r < self.h) & (c >= 0) & (c < self.w)
+            out = np.zeros(r.shape, dtype=bool)
+            rr, cc = r[ok], c[ok]
+            unburnable = (grid.state[rr, cc] == _UNBURNABLE) | ~(
+                burnable_lu[rr, cc] & (grid.fuel_model[rr, cc] > 0) & ~grid.fireline[rr, cc]
+            )
+            out[ok] = unburnable
+            return out
+
+        may = np.zeros(src.size, dtype=bool)
+        for k, (dr, dc) in enumerate(self.offsets):
+            sgr, sgc = int(np.sign(dr)), int(np.sign(dc))
+            if abs(dr) == 1 and abs(dc) == 1:
+                blocked = barrier(srow + dr, scol) & barrier(srow, scol + dc)
+            elif abs(dr) == 2 and abs(dc) == 1:
+                blocked = barrier(srow + sgr, scol) & barrier(srow + sgr, scol + dc)
+            elif abs(dr) == 1 and abs(dc) == 2:
+                blocked = barrier(srow, scol + sgc) & barrier(srow + dr, scol + sgc)
+            else:
+                blocked = np.zeros(src.size, dtype=bool)
+            tr, tc = srow + dr, scol + dc
+            target_in = (tr >= 0) & (tr < self.h) & (tc >= 0) & (tc < self.w)
+            rate = self.rate[k, src]
+            freed = target_in & self.blocked[k, srow, scol] & ~blocked
+            if freed.any():
+                rate[freed] = self._free_link_rate(k, srow[freed], scol[freed])
+            rate[blocked] = 0.0
+            self.rate[k, src] = rate
+            self.blocked[k, srow, scol] = blocked
+            target_ok = np.zeros(src.size, dtype=bool)
+            target_ok[target_in] = grid.state[tr[target_in], tc[target_in]] != _UNBURNABLE
+            may |= target_ok & ~(rate > 0) & ~blocked
+        self.may_stall[src] = may
+        self._links_updated(src)
+
+    def _free_link_rate(self, k: int, rows: IntArray, cols: IntArray) -> FloatArray:
+        """Unblocked link rate (progress per second) of direction ``k`` from cells ``(rows, cols)``."""
+        assert self.out is not None
+        dr, dc = self.offsets[k]
+        crossed = [np.asarray(self.out.ros[k, rows + r, cols + c], dtype=np.float64) for r, c in _cells_crossed(dr, dc)]
+        passable = np.all([cell > 0 for cell in crossed], axis=0)
+        slowness = np.zeros(rows.shape, dtype=np.float64)
+        for cell in crossed:
+            slowness += np.divide(1.0, cell, out=np.zeros_like(slowness), where=passable)
+        link = np.divide(len(crossed), slowness, out=np.zeros_like(slowness), where=passable) / self.correction
+        return link / self.link_length_m[k]
+
+    def _links_updated(self, src: IntArray) -> None:
+        """Hook: the link rates and blocked flags of sources ``src`` changed (the Numba engine mirrors them)."""
+
     # -- life cycle -----------------------------------------------------------------------
 
     def ignite(
@@ -1077,6 +1160,7 @@ def run(
     ignited = False
     steps_done = 0
     capped_cell_s = 0.0  # burning cells whose ellipse the rule capped (WP 2.1d) x time, cell-s
+    grid_changed = False  # hook edits not yet seen by the engine (before the fire, it is not refreshed)
     for i in range(config.n_steps):
         t, t_end = i * dt, (i + 1) * dt
         weather = series.at(t)
@@ -1085,9 +1169,16 @@ def run(
             changed = bool(hook(g, t, dt, suppression_rng)) or changed
         if changed:
             breaks.add_new(g)  # lines a hook built with a width are held like any break
-        engine.refresh(weather, changed or breaks.pending_change)
-        breaks.pending_change = False
-        if not ignited and t_ign < t_end:
+        grid_changed = grid_changed or changed
+        steps_done = i + 1
+        if not ignited and t_ign >= t_end:
+            continue  # nothing burns yet: the rule output is not needed until the ignition step
+        breached, full_refresh = breaks.take_pending()
+        engine.refresh(weather, grid_changed or full_refresh)
+        if breached.size and not (grid_changed or full_refresh):
+            engine.update_barriers(breached)  # local: only links near the breached cells change
+        grid_changed = False
+        if not ignited:
             ignited = True
             _ignite_initial(engine, ignition_cells, t_ign)
         breaks.ignite_due(engine, t, t_end)
@@ -1096,7 +1187,6 @@ def run(
             capped_cell_s += float(np.count_nonzero(np.asarray(capped).reshape(-1)[engine.burning])) * dt
         engine.advance(t, t_end)
         breaks.evaluate(engine)
-        steps_done = i + 1
         if ignited and engine.burning.size == 0 and not breaks.active_schedule:
             break
     g.state[breaks.held & ~g.fireline] = _FUEL  # breaks that held were never burnable barriers
