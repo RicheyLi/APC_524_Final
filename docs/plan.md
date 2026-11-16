@@ -337,7 +337,7 @@ cache to disk with a manifest, run.
 | --- | --- | --- | --- |
 | Fuel model, canopy cover, height, base height, bulk density | LANDFIRE (Scott & Burgan 40 fuel models) | 30 m | US only. The LANDFIRE **version must predate the fire** being simulated, or the fuels already show its scar |
 | Elevation, slope, aspect | USGS 3DEP | 10-30 m | Slope and aspect computed here |
-| Wind, temperature, humidity | gridMET daily, disaggregated to hours (WP 2.4); an hourly analysis (HRRR) if it covers both fires' dates, decided with fire B (section 13) | about 4 km | One value per hour for the grid, with the diurnal profiles documented in `data/weather.py` |
+| Wind, temperature, humidity | gridMET daily, disaggregated to hours (WP 2.4); HRRR, which covers both fires' windows, once a reader exists (section 13) | about 4 km | One value per hour for the grid, with the diurnal profiles documented in `data/weather.py` |
 | Dead fuel moisture | 1-h computed from T and RH; 10-h from the 1-h value by a cited offset; 100-h from gridMET (`fm100`) | about 4 km | gridMET has no 1-h or 10-h moisture |
 | Live fuel moisture | National Fuel Moisture Database samples near the site (now served through the Fire Environment Mapping System, FEMS); seasonal default otherwise | Point | Matters most in shrub fuels such as chaparral |
 | Roads, rivers, lakes, buildings | OpenStreetMap (osmnx) | Vector | See the barrier rule below |
@@ -539,9 +539,12 @@ about twelve days. It has an MTBS perimeter; VIIRS hotspots from three satellite
 NOAA-20, NOAA-21), so about three times the overpasses of a 2016 fire; complete hourly
 analyses (HRRR); and pre-fire LANDFIRE fuels (LF2023) that the service delivers. It replaced
 the 2016 Chimney Fire, whose pre-fire fuels could not be obtained (section 13); with it went
-the comparison with a published simulation of that fire (arXiv 2507.00761). Fire B has the
-same data available and, like A, is a fire where surface fire dominated (see *Open
-decisions*).
+the comparison with a published simulation of that fire (arXiv 2507.00761). Fire B is the 2020
+Silverado Fire, Orange County, CA (MTBS `CA3375311768720201026`, 5,060 ha): grass-shrub and
+chaparral like A, but driven by offshore Santa Ana winds in October where A burned in onshore
+summer winds, in another county; aircraft were grounded by the wind at first, so early
+suppression was light. It has the same data except daily perimeters (NIFC's archive starts in
+2022); Suomi NPP and NOAA-20 saw it 11 times in its first 48 hours (section 13).
 
 **What fire B can and cannot show.** The calibrated spread multiplier mostly corrects the bias
 of the fuel models that dominate fire A; FARSITE's rate-of-spread adjustment factors are
@@ -645,7 +648,7 @@ Pareto front, with spotting switched on.
 | Rothermel implementation | Native vectorized NumPy (WP 2.1), cross-checked against `pyrothermel` (optional extra `rothermel`) and published BehavePlus values. |
 | Default stencil | 16 neighbours, from the lattice study in WP 1.4: better than 8 at every length-to-breadth ratio, at about twice the run time. |
 | Package name | `wildfire_sim` (CLI `wildfire-sim`). |
-| Validation fires | A: 2024 Lake Fire (calibration; replaced the 2016 Chimney Fire, section 13). B: to be chosen (test, no retuning). |
+| Validation fires | A: 2024 Lake Fire (calibration; replaced the 2016 Chimney Fire, section 13). B: 2020 Silverado Fire (test, no retuning; section 13). |
 | Weather | One hourly scalar series per run. Hourly analysis where available, disaggregated gridMET otherwise. Spatially varying wind is out of scope. |
 | Primary Python | 3.12. 3.13 tested in CI; 3.14 allowed to fail. |
 | Suppression set | Hand crews, dozers, engines and aircraft. |
@@ -963,23 +966,6 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
 
 **Open decisions.**
 
-- [ ] **Which fire is fire B.** The criteria are settled (below). Candidates, all wind-driven
-      brush fires in southern California inside the size range, with sizes and dates from
-      the incident records:
-
-      | Fire | Year | Size | Active | Notes |
-      | --- | --- | --- | --- | --- |
-      | Springs (Ventura Co.) | 2013 | 24,251 acres (9,814 ha) | 2-6 May | Chaparral; long-range spotting reported; predates the HRRR archive |
-      | Canyon 2 (Orange Co.) | 2017 | 9,217 acres (3,730 ha) | 9-17 Oct | About 7,500 acres on the first day; 25 structures destroyed |
-      | Lilac (San Diego Co.) | 2017 | 4,100 acres (1,659 ha) | 7-16 Dec | Reached nearly its full size within hours, so at most one or two overpasses saw it grow; 157 structures destroyed |
-      | Maria (Ventura Co.) | 2019 | 9,999 acres (4,046 ha) | 31 Oct-6 Nov | Started at night on South Mountain; burned into orchards and farmland |
-      | Silverado (Orange Co.) | 2020 | 13,390 acres (5,419 ha) | 26 Oct-7 Nov | Gusts to 80 mph; aircraft grounded at first, so little early air attack; slightly above the size range |
-
-      To check before choosing: the wind during the main run against the length-to-breadth
-      cap of WP 2.1d (2.1: an effective midflame wind of about 3.4 m/s, a 10 m wind of about
-      10.7 m/s over open grass; a Santa Ana fire may sit above it for most of its growth); how many
-      VIIRS overpasses saw the fire growing; that an MTBS perimeter and a LANDFIRE version
-      older than the fire exist.
 - [ ] Refresh `scripts/bench_baseline.json` from a CI run now that WPs 1.10-1.13 are in the
       engines (their measured cost is in `docs/performance.md`); the CI benchmark check stays
       non-blocking until then.
@@ -1041,7 +1027,17 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       rate as a continuous function of direction, at the cost of rewriting the engine and its
       kernel noise; (c) larger stencils, which the decision rules out (a 48-neighbour stencil
       reaches about 2.75 with sampled rates). Until decided, (a) is what ships. Fire A's and
-      fire B's winds against the cap should inform it.
+      fire B's winds against the cap should inform it: fire B, a Santa Ana fire with gusts to
+      80 mph, will very likely spend its main run above the cap, so its test is also the test
+      of option (a).
+- [ ] **Hourly weather from HRRR** (WP 2.4 follow-up). HRRR has every analysis hour of both
+      fires' weather windows (Lake Fire 5-20 July 2024; Silverado 26 October-2 November 2020,
+      168 of 168; checked 2026-11-15), so by the decision below both fires use it. It needs a
+      reader for HRRR's GRIB2 files (byte ranges from the AWS archive with the published `.idx`
+      offsets, and a GRIB2 decoder, a new dependency) producing the same one-point-per-hour
+      `WeatherConfig`; until then both fires run on disaggregated gridMET. It matters most for
+      fire B: gridMET's daily means cannot represent Santa Ana winds (on the vetted Santa Ana
+      fires they give 2-7 m/s, and Canyon 2's wind blowing from the south-east).
 - [ ] **Time lag of the hourly fuel moisture** (WP 2.1c). (1) Done in WP 2.4: the sunshine
       correction's cloudiness code comes from gridMET's daily radiation (relative sunshine by
       the Angstrom formula, FAO-56 eq. 35), the same for every daylight hour of a day, none at
@@ -1106,8 +1102,8 @@ Decided after the fourth review:
   August to 7 September 2016 (the Chimney Fire, fire A at the time), and the RTMA archive
   starts in 2019, so WP 2.4 built disaggregated gridMET. With the Lake Fire as fire A the
   question reopens: the archive has every analysis hour from 5 to 20 July 2024 (checked
-  2026-11-15), so HRRR is used if fire B's dates are covered too, which needs a GRIB2 reader,
-  a new dependency; otherwise both fires keep gridMET. Decided when fire B is chosen.
+  2026-11-15), so HRRR is used if fire B's dates are covered too. They are (Silverado, 168 of
+  168 hours), so both fires use HRRR once its reader exists (open decisions above).
 - **Fire A replaced by the 2024 Lake Fire** (decided 2026-11-15, during WP 2.6). The Chimney
   Fire's pre-fire fuels are LANDFIRE LF2014, and its fuel layers could not be obtained: the
   LANDFIRE map viewer offers LF2016 to LF2025 only, the Product Service serves only LF2014's
@@ -1121,6 +1117,26 @@ Decided after the fourth review:
   7,498 ha) fires for its three VIIRS satellites and complete hourly analyses. Both fires now
   use LANDFIRE versions after the LF 2016 Remap, so they share one base map. The 2.4 and 2.5
   examples near Lake Nacimiento remain test cases only.
+- **Fire B is the 2020 Silverado Fire** (decided 2026-11-15, after WP 2.9). Vetted against the
+  candidates on the same evidence as fire A (MTBS record; disturbance in the years the pre-fire
+  LANDFIRE version does not cover; gridMET winds of the first two days; VIIRS overpasses in the
+  first 48 hours; HRRR hours):
+
+  | Fire | Area (MTBS) | VIIRS passes, first 48 h | Disturbed after LF2016 | HRRR, first 3 days |
+  | --- | --- | --- | --- | --- |
+  | Silverado 2020 | 5,060 ha | 11 (Suomi NPP 7, NOAA-20 4) | 0.8 % (2017), 1.0 % (2018) | 72 of 72 |
+  | Maria 2019 | 4,062 ha | 9 | 1.7 % (2018) | 72 of 72 |
+  | Canyon 2 2017 | 3,682 ha | 6 (Suomi NPP only) | none possible | 72 of 72 |
+  | Lilac 2017 | 1,681 ha | 5 (Suomi NPP only) | none possible | not checked |
+
+  Silverado meets every criterion below, has the most early overpasses, and burned to the edge
+  of Irvine, so its strategy experiments have a town to protect. Maria is the reserve: it
+  burned largely into orchards and farmland. Silverado's pre-fire fuels are LF2016 (LF2020's
+  window includes 2020); its record is IRWIN `2020-CAORC-121364`, discovered 26 October 2020 at
+  06:49 PDT; there are no daily perimeters, so its test uses the final perimeter and VIIRS
+  detections. Region `silverado_2020` in `configs/regions.yaml`: 573 x 543 cells, 34 % urban
+  (Lake Forest and the edge of Irvine; 5.5 % inside the perimeter), 192 first VIIRS detections,
+  99 % within 1 km of the MTBS perimeter (`docs/data.md`).
 - **Module owners:** all three team members own every module.
 
 ## 14. Design review log

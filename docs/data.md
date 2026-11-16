@@ -12,6 +12,16 @@ The regions are defined in `configs/regions.yaml`, one per validation fire:
 | Region | Role | Fire | Pre-fire fuels | Weather window | Grid |
 | --- | --- | --- | --- | --- | --- |
 | `lake_2024` | A (calibration) | 2024 Lake Fire, Santa Barbara County, CA (MTBS `CA3478712005220240705`, 41,216 acres) | LANDFIRE LF2023 | 14 days from 5 July 2024, 00:00 PDT | 815 x 978 cells of 30 m (24.5 x 29.3 km), 97 % burnable; perimeter 101 cells from the edge; grid north within 0.09 deg of true north |
+| `silverado_2020` | B (test, no retuning) | 2020 Silverado Fire, Orange County, CA (MTBS `CA3375311768720201026`, 12,504 acres) | LANDFIRE LF2016 | 7 days from 26 October 2020, 00:00 PDT | 573 x 543 cells of 30 m (17.2 x 16.3 km), 96 % burnable; perimeter 101 cells from the edge; 34 % urban (Lake Forest, Irvine) |
+
+Fire B's grid takes in the edge of the city: 106,844 urban cells carry the urban surrogate
+fuel (TL3, `configs/urban.yaml`), 77,439 buildings are worth 31.0 billion USD, and 68,575 of its
+100,420 break cells are city streets. Inside the fire's perimeter it is 97 % burnable wildland
+(grass-shrub and chaparral) and 5.5 % urban. It has 192 first VIIRS detections (79 % inside the
+MTBS perimeter, 99 % within 1 km; intervals 0.8 to 11.5 h) and no daily perimeters, which NIFC
+publishes only from 2022. Its gridMET winds show the Santa Ana (north-north-east, humidity down
+to 12 %) but at most 4.8 m/s in the daily means, far below the gusts that drove it; hourly HRRR,
+which covers its whole window, is the planned fix (plan section 13).
 
 As built (2026-11-15) the Lake Fire grid is mostly chaparral and grass: SH5 (29 % of cells),
 GR2 (20 %), GS2 (15 %), SH4 (15 %), GS3 and TL3; 36,576 cells carry a road or stream break and
