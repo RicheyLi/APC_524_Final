@@ -2,7 +2,8 @@ name: Network tests
 
 # Weekly check that the external data services still answer as the clients expect (WP 2.6,
 # docs/plan.md section 3: "a scheduled CI job runs the network tests weekly"). LANDFIRE needs an
-# email address: add the repository secret WILDFIRE_SIM_LANDFIRE_EMAIL, or those tests skip.
+# email address (repository secret WILDFIRE_SIM_LANDFIRE_EMAIL) and VIIRS a NASA Earthdata
+# token (secret EARTHDATA_TOKEN, valid 60 days); without them those tests skip.
 
 on:
   schedule:
@@ -32,4 +33,5 @@ jobs:
       - name: Run the network tests
         env:
           WILDFIRE_SIM_LANDFIRE_EMAIL: ${{ secrets.WILDFIRE_SIM_LANDFIRE_EMAIL }}
+          EARTHDATA_TOKEN: ${{ secrets.EARTHDATA_TOKEN }}
         run: uv run --python=3.12 --extra geo pytest -m network --run-network -v
