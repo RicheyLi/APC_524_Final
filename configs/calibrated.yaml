@@ -1,0 +1,20 @@
+# Calibrated parameters of the spread rule (WP 3.1, docs/calibration.md). Schema:
+# wildfire_sim.calibration.CalibratedParams; written by scripts/calibrate.py.
+#
+# PLACEHOLDER: NOT CALIBRATED. No study produced these values. They are the neutral values, with
+# which the "rothermel" rule behaves exactly as without calibration. The study needs fire A's
+# region and observations, which were not available where this file was written. Replace this
+# file by running, once the region is built
+# (uv run python scripts/download_data.py lake_2024 --observations):
+#
+#   uv run --extra fast --extra opt --extra geo python scripts/calibrate.py lake_2024
+#
+# To use calibrated values in a run, copy `params` into the scenario's `spread.params`
+# (wildfire_sim.calibration.CalibratedParams.apply does this in code).
+status: placeholder
+source: "PLACEHOLDER - not calibrated, produced by no study; neutral values. Replace with: uv run --extra fast --extra opt --extra geo python scripts/calibrate.py lake_2024"
+rule: rothermel
+params:
+  ros_multiplier: 1.0
+  lb_scale: 1.0
+provenance: null

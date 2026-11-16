@@ -275,3 +275,64 @@ the hourly weather changes: about 1.4 s per hour of fire on fire A's grid (the l
 multipliers 0.6 s, the directional rates 0.2 s, the link rates 0.3 s), so a 24-hour run spends
 about 35 of its 60 s there. Evaluating the rule only near the fire would remove most of it; WP
 3.1 measures whether calibration needs that.
+
+## Sizing the calibration study (WP 3.1)
+
+The plan asks for `scripts/bench.py` on fire A's grid over the early-growth window before the
+trial and seed counts of the calibration study are chosen. **Fire A's built region was not
+available on the machine where WP 3.1 was written** (building it needs a LANDFIRE e-mail and a
+NASA Earthdata token), so the full-grid measurement is still to be made; what is below is the
+committed 5 km crop of fire A, the first full-grid measurement quoted above, and what they imply.
+Once the region is built, run
+
+```sh
+uv run --extra fast --extra geo python scripts/bench.py --region lake_2024 --hours 48 --engines numba --repeats 3
+```
+
+and revise the counts in `configs/calibration.yaml` if the time per run differs much from the
+estimate below.
+
+**Measured on the crop** (2026-11-16, the laptop above, Python 3.12.16, NumPy 2.5.4, Numba
+0.68.1): `tests/fixtures/lake_2024_5km.npz` (167 x 167 cells) with its hourly HRRR weather, the
+`"rothermel"` rule, 16 neighbours, dt 60 s, ignited at the centre at fire A's ignition time
+(56,880 s). Each invocation ran 7 interleaved repeats per engine after a warm-up; medians of
+separate invocations (this machine drifts by 10-20 % between invocations):
+
+```sh
+uv run --extra fast python scripts/bench.py --grid tests/fixtures/lake_2024_5km.npz \
+    --weather tests/fixtures/lake_2024_weather.yaml --ignition-time-s 56880 --hours 2 --repeats 7
+```
+
+| Window after ignition | Cells burned | NumPy engine | Numba engine |
+| --- | --- | --- | --- |
+| 1 h | 542 | 0.35-0.39 s | 0.24-0.25 s |
+| 2 h | 3,055 | 0.72-0.93 s | 0.37-0.49 s |
+
+One evaluation of the rule over the crop took 0.046-0.084 s, 1.6-3.0 us per cell; on fire A's
+815 x 978 cells that is the 1.4 s per hour of fire measured above (1.8 us per cell). After 2.4 h
+the crop's fire reaches the crop's edge, so longer windows cannot be timed on it. On small grids
+a fixed cost dominates: each run re-reads its YAML tables, about 60 ms of an 85 ms run on the
+101 x 101 grid of the recovery tests (cProfile); on fire A's grid it is negligible.
+
+**Fire A's grid, estimated.** The first measurement (previous section) is 60 s per 24-hour run
+with the Numba engine, 35 s of it in the hourly re-evaluation of the rule. The calibration
+window is 48 h (`configs/calibration.yaml`, a placeholder: the first two burning periods). The
+rule part doubles to about 70 s and the front part grows with the burned area, so a run of the
+window takes **about 2 min or more** (an estimate, not a measurement).
+
+**Seeds.** The objective is averaged over fixed seeds (common random numbers), so the seeds only
+need to average out the kernel's noise. On the crop (2-hour window, a synthetic observed fire),
+the objective at fixed parameters varied between 8 seeds with a standard deviation of 0.002-0.007,
+while a 10 % change of either parameter raised it by 0.05-0.12. Two seeds are enough:
+`n_seeds: 2`.
+
+**Trials.** On the synthetic recovery problem of `tests/test_calibration.py` (two parameters,
+the plan's bounds, sampler seed 0) the largest error of the recovered parameters was 19 % after
+40 trials, 6.4 % after 80 and 2.5 % after 150 (`docs/calibration.md`). `n_trials: 100`.
+
+**Budget.** 100 trials x 2 seeds x about 2 min is about 7 h on one core, plus the objective
+surface (25 points x 2 seeds, about 1.7 h): an overnight run. Trials rejected by the edge rule
+are cheaper (the remaining seeds are skipped). The rule re-evaluation is about half of each run,
+so evaluating it only near the fire, the open question of the previous section, would save up
+to about half of the study; it is not needed to run it. Runs of one trial are independent and
+could use the cores of the machine in parallel; `scripts/calibrate.py` runs them one after another.

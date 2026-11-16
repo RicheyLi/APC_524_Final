@@ -52,6 +52,7 @@ References:
 from __future__ import annotations
 
 import csv
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -804,11 +805,11 @@ class RothermelFire:
         phi_effective: Vector sum of the two, as used (after the wind limit if applied).
         head_bearing: Bearing of maximum spread, degrees.
         effective_wind: Effective midflame wind of ``phi_effective``, m/s.
-        length_to_breadth: Length-to-breadth ratio of the fire ellipse as used, after the caps
-            (1 on unburnable cells).
+        length_to_breadth: Length-to-breadth ratio of the fire ellipse as used, after
+            ``lb_scale`` and the caps (1 on unburnable cells).
         lb_capped: Bool, burnable cells whose ratio the lattice cap reduced.
-        ros_head: Head rate of spread, m/s (not changed by the cap).
-        intensity: Head fireline intensity, kW/m.
+        ros_head: Head rate of spread, m/s, times ``ros_multiplier`` (not changed by the cap).
+        intensity: Head fireline intensity, kW/m, of that rate.
         heat_per_area: Heat per unit area, kJ/m^2.
         wind_limited: Bool, where the wind limit capped ``phi_effective``.
         burnable: Bool, cells the rule spreads from.
@@ -843,12 +844,21 @@ class RothermelRule:
     3. Wind and slope added as vectors (toward ``weather.wind_to_bearing`` and up the slope,
        ``aspect + 180``): the head bearing and ``phi_e``; the head rate ``R_0 (1 + phi_e)``,
        with Rothermel's wind limit if ``apply_wind_limit``.
-    4. The ellipse: ``LB`` from the effective wind, capped at ``lb_max`` and at the lattice cap
-       of the stencil (WP 2.1d), which keeps the head rate and draws the fire rounder.
-    5. Directional rates: ``R_head (1 - e) / (1 - e cos(b_k - head))`` sampled from the
+    4. The calibration factors of WP 3.1 (both 1 by default, which leaves every output as it
+       was): the head rate times ``ros_multiplier``, with Byram's intensity ``I = H_A R`` and the
+       flame length following from the adjusted rate (heat per unit area unchanged), as
+       FARSITE's rate-of-spread adjustment factors do (Finney 1998).
+    5. The ellipse: ``LB`` from the effective wind, its elongation scaled to
+       ``1 + lb_scale (LB - 1)``, then capped at ``lb_max`` and at the lattice cap of the stencil
+       (WP 2.1d), which keeps the head rate and draws the fire rounder.
+    6. Directional rates: ``R_head (1 - e) / (1 - e cos(b_k - head))`` sampled from the
        ellipse, times the lattice-fitted multipliers if ``lattice_rates`` is ``"fitted"``
        (:class:`~wildfire_sim.spread.ellipse.LatticeFitTable`; 1 for a round fire).
-    6. Rates, head intensity and flame length times ``(1 - retardant)``.
+    7. Rates, head intensity and flame length times ``(1 - retardant)``.
+
+    ``ros_multiplier`` differs from :class:`wildfire_sim.ensemble.ScaledRateRule`, the
+    ensemble's random rate factor, which scales the directional rates only and leaves the head
+    intensity as it was. Here the fire really spreads faster, so it is also more intense.
 
     After each :meth:`rate_of_spread` the rule keeps :attr:`lb_capped`, the ``(H, W)`` cells
     whose ratio the lattice cap reduced; the simulator reads it to count the cell-hours the cap
@@ -864,6 +874,14 @@ class RothermelRule:
         canopy_height: Canopy height, m; overrides the YAML value when not None.
         crown_ratio: Crown ratio, fraction; overrides the YAML value when not None.
         lattice_rates: ``"fitted"`` or ``"sampled"``; overrides the YAML value when not None.
+        ros_multiplier: Rate-of-spread adjustment factor, dimensionless, finite and > 0
+            (calibrated in WP 3.1; ``spread.params`` in a scenario).
+        lb_scale: Elongation factor of the fire ellipse, dimensionless, finite and > 0
+            (calibrated in WP 3.1; ``spread.params`` in a scenario).
+
+    References:
+        Finney, M. A. (1998). FARSITE: Fire Area Simulator - model development and evaluation.
+        USDA For. Serv. Res. Pap. RMRS-RP-4 (rate-of-spread adjustment factors).
     """
 
     name = "rothermel"
@@ -876,6 +894,8 @@ class RothermelRule:
         canopy_height: float | None = None,
         crown_ratio: float | None = None,
         lattice_rates: LatticeRates | None = None,
+        ros_multiplier: float = 1.0,
+        lb_scale: float = 1.0,
     ) -> None:
         self.params = load_rothermel_params(params_path)
         self.table = load_fuel_models(fuel_models_path)
@@ -891,6 +911,11 @@ class RothermelRule:
             raise ValueError("crown_ratio must lie in [0, 1]")
         if self.lattice_rates not in ("fitted", "sampled"):
             raise ValueError("lattice_rates must be 'fitted' or 'sampled'")
+        self.ros_multiplier = float(ros_multiplier)
+        self.lb_scale = float(lb_scale)
+        for label, value in (("ros_multiplier", self.ros_multiplier), ("lb_scale", self.lb_scale)):
+            if not (math.isfinite(value) and value > 0):
+                raise ValueError(f"{label} must be finite and > 0, got {value!r}")
         self._fit_tables: dict[int, LatticeFitTable] = {}
         self.lb_capped: np.ndarray | None = None
 
@@ -940,7 +965,7 @@ class RothermelRule:
         phi_e, head = combine_wind_and_slope(phi_w, weather.wind_to_bearing, phi_s, upslope)
         hf = head_fire(bed, phi_e, flame=self.flame, wind_limit_on=self.apply_wind_limit)
         phi_used = np.where(hf.wind_limited, bed.wind_factor(hf.effective_wind), phi_e)
-        lb_free = length_to_breadth(hf.effective_wind, p.lb_max.value)
+        lb_free = length_to_breadth(hf.effective_wind, p.lb_max.value, self.lb_scale)
         cap = self.lb_cap(stencil)
         lb = np.minimum(lb_free, cap)
 
@@ -963,8 +988,8 @@ class RothermelRule:
             effective_wind=full(hf.effective_wind),
             length_to_breadth=full(lb, 1.0),
             lb_capped=mask(lb_free > cap * (1.0 + 1e-9)),  # rounding noise at the cap is not a cap
-            ros_head=full(hf.ros),
-            intensity=full(hf.intensity),
+            ros_head=full(hf.ros * self.ros_multiplier),
+            intensity=full(hf.intensity * self.ros_multiplier),
             heat_per_area=full(bed.heat_per_area),
             wind_limited=mask(hf.wind_limited),
             burnable=burnable.reshape(h, w),

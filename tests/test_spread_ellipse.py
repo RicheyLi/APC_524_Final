@@ -16,6 +16,7 @@ import pytest
 from wildfire_sim.config import configs_dir
 from wildfire_sim.data.synthetic import flat_uniform, slope_ramp
 from wildfire_sim.grid import Grid, Weather
+from wildfire_sim.sim import flame_length_from_intensity
 from wildfire_sim.spread import make_spread_rule
 from wildfire_sim.spread.ellipse import (
     build_fit_table,
@@ -461,3 +462,79 @@ def test_lattice_cap_parameters_are_validated(tmp_path: Path) -> None:
     assert params.lattice_rates == "fitted"
     with pytest.raises(ValueError, match="32-neighbour"):
         params.lattice_cap("fitted", 32)
+
+
+# ----------------------------------------------------------------------------- calibration factors (WP 3.1)
+
+
+def test_lb_scale_scales_the_elongation_before_the_cap() -> None:
+    """``LB' = 1 + s (LB - 1)``, then the cap; a round fire stays round for every ``s``."""
+    u = 10 * MPH  # LB 2.7810 (BehavePlus engine)
+    lb = float(length_to_breadth(u))
+    for s in (0.5, 1.3, 2.0):
+        assert float(length_to_breadth(u, lb_scale=s)) == pytest.approx(1 + s * (lb - 1), rel=1e-12)
+        assert float(length_to_breadth(0.0, lb_scale=s)) == 1.0
+    assert float(length_to_breadth(u, lb_max=3.0, lb_scale=2.0)) == 3.0  # 1 + 2 x 1.781 = 4.56, capped
+    assert float(length_to_breadth(u, lb_scale=1.0)) == lb
+    for bad in (0.0, -1.0, math.nan, math.inf):
+        with pytest.raises(ValueError, match="lb_scale"):
+            length_to_breadth(u, lb_scale=bad)
+
+
+def test_ros_multiplier_scales_rates_intensity_and_flame_length() -> None:
+    """A multiplier of 2 doubles every rate and the head intensity; heat per area and the ellipse do not change."""
+    g = slope_ramp((3, 4), 30.0, fuel_model=145, slope=0.2, aspect_deg=90.0)
+    wx, stencil = Weather(wind_speed=4.0, wind_direction=200.0), get_stencil(16)
+    base = RULE.rate_of_spread(g, wx, stencil)
+    rule = RothermelRule(ros_multiplier=2.0)
+    fast = rule.rate_of_spread(g, wx, stencil)
+    np.testing.assert_allclose(fast.ros, 2.0 * base.ros, rtol=1e-12)
+    np.testing.assert_allclose(fast.intensity, 2.0 * base.intensity, rtol=1e-12)
+    assert fast.heat_per_area is not None and base.heat_per_area is not None
+    np.testing.assert_array_equal(fast.heat_per_area, base.heat_per_area)
+    np.testing.assert_allclose(fast.intensity, fast.heat_per_area * rule.fire(g, wx).ros_head, rtol=1e-12)
+    np.testing.assert_allclose(fast.flame_length, flame_length_from_intensity(fast.intensity), rtol=1e-12)
+    assert np.all(fast.flame_length > base.flame_length)
+    np.testing.assert_array_equal(rule.fire(g, wx).length_to_breadth, RULE.fire(g, wx).length_to_breadth)
+
+
+def test_lb_scale_sets_the_back_to_head_ratio() -> None:
+    """With sampled rates the back spreads at ``(1 - e') / (1 + e')`` of the head, ``e'`` from ``LB'``."""
+    g = flat_uniform((3, 3), 30.0, fuel_model=145)
+    wx, stencil = Weather(wind_speed=2.5, wind_direction=270.0), get_stencil(16)  # head east
+    east, west = list(stencil.bearings_deg).index(90.0), list(stencil.bearings_deg).index(270.0)
+    lb = float(RothermelRule(lattice_rates="sampled").fire(g, wx, stencil).length_to_breadth[1, 1])
+    assert 1.1 < lb < 1.3  # scaled by 1.5 it stays below the sampled-rate cap of 1.5
+    for s in (0.5, 1.5):
+        rule = RothermelRule(lattice_rates="sampled", lb_scale=s)
+        fire = rule.fire(g, wx, stencil)
+        assert fire.length_to_breadth[1, 1] == pytest.approx(1 + s * (lb - 1), rel=1e-12)
+        out = rule.rate_of_spread(g, wx, stencil)
+        e = float(eccentricity(1 + s * (lb - 1)))
+        assert out.ros[west, 1, 1] / out.ros[east, 1, 1] == pytest.approx((1 - e) / (1 + e), rel=1e-12)
+        assert out.ros[east, 1, 1] == pytest.approx(fire.ros_head[1, 1], rel=1e-12)  # the head is unchanged
+
+
+def test_lb_scale_does_nothing_without_wind_or_slope() -> None:
+    g = flat_uniform((3, 3), 30.0, fuel_model=183)
+    for k in (8, 16):
+        stencil = get_stencil(k)
+        base = RULE.rate_of_spread(g, Weather(), stencil)
+        np.testing.assert_array_equal(RothermelRule(lb_scale=1.8).rate_of_spread(g, Weather(), stencil).ros, base.ros)
+
+
+def test_calibration_factors_default_to_one_and_come_from_spread_params() -> None:
+    """Defaults leave the output bit-identical; ``spread.params`` of a scenario reaches them."""
+    g = slope_ramp((3, 4), 30.0, fuel_model=145, slope=0.2, aspect_deg=90.0)
+    wx, stencil = Weather(wind_speed=6.0, wind_direction=30.0), get_stencil(16)
+    explicit = RothermelRule(ros_multiplier=1.0, lb_scale=1.0).rate_of_spread(g, wx, stencil)
+    base = RULE.rate_of_spread(g, wx, stencil)
+    np.testing.assert_array_equal(explicit.ros, base.ros)
+    np.testing.assert_array_equal(explicit.intensity, base.intensity)
+    rule = make_spread_rule("rothermel", ros_multiplier=1.4, lb_scale=0.7)
+    assert isinstance(rule, RothermelRule) and (rule.ros_multiplier, rule.lb_scale) == (1.4, 0.7)
+    for bad in (0.0, -0.5, math.nan, math.inf):
+        with pytest.raises(ValueError, match="ros_multiplier"):
+            RothermelRule(ros_multiplier=bad)
+        with pytest.raises(ValueError, match="lb_scale"):
+            RothermelRule(lb_scale=bad)

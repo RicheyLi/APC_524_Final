@@ -121,6 +121,21 @@ front_normal_rate(result.arrival_time, stencil, dx)  # m/s, the estimate behind 
 The constant and Alexandridis rules report no intensity, so these are zero for them; the
 Rothermel rule (WP 2.1) fills them in.
 
+## Calibrated parameters
+
+The Rothermel rule takes two calibration factors in `spread.params`: `ros_multiplier` (the
+head rate times this factor; intensity and flame length follow from the adjusted rate) and
+`lb_scale` (the ellipse's elongation, `LB' = 1 + lb_scale (LB - 1)`). Both default to 1, which
+leaves every result unchanged. `scripts/calibrate.py` fits them to a fire's early growth and
+writes `configs/calibrated.yaml`; the committed file is a placeholder with the neutral values.
+See [calibration.md](calibration.md) for the objective, the edge rule and how to run a study.
+
+```yaml
+spread:
+  rule: rothermel
+  params: {ros_multiplier: 1.0, lb_scale: 1.0}
+```
+
 ## Towns
 
 Urban cells burn. An urban cell carries a surrogate timber fuel model, and the simulator slows
