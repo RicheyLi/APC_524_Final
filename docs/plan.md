@@ -523,7 +523,10 @@ search instead of starting one per candidate.
 (about 16,700 ha), 1.7 times the whole reference area, and the fire grew for about twelve days
 (5 to 17 July 2024). Its grid, the perimeter plus 3 km, has about seven times the cells, and
 even the early-growth window used for calibration is days, not 12 hours. Calibration cost is
-therefore one to two orders of magnitude above the table. It is measured on the fire A grid
+therefore one to two orders of magnitude above the table. A first measurement (after the
+WP 2.9 performance fix, `docs/performance.md`): one run of the first 24 hours of fire A on its
+own grid takes about 60 s with the Numba engine, of which about 35 s is the hourly
+re-evaluation of the spread rule over the whole grid. It is measured fully on the fire A grid
 before the calibration study is sized (WP 3.1), and the same is done for runs with
 suppression before the strategy search is sized (WP 4.5): the table has no suppression in it.
 

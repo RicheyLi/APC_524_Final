@@ -238,6 +238,43 @@ def test_engines_agree(params: BreachParams) -> None:
     np.testing.assert_allclose(a.arrival_time, b.arrival_time, rtol=1e-9, atol=1e-6, equal_nan=True)
 
 
+@pytest.mark.slow
+def test_local_update_after_a_breach_equals_the_full_refresh(engine: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The local barrier update gives bit-identical runs to recomputing everything after each breach.
+
+    On the committed 5 km crop of fire A: Rothermel, real weather, urban cells, roads and streams;
+    the fire meets well over a hundred breaks in four hours.
+    """
+    from pathlib import Path
+
+    from wildfire_sim.breaks import BreakState
+    from wildfire_sim.config import WeatherConfig, load_yaml
+
+    fixtures = Path(__file__).parent / "fixtures"
+    weather = load_yaml(fixtures / "lake_2024_weather.yaml", WeatherConfig)
+    config = ScenarioConfig.model_validate(
+        {
+            "name": "local update",
+            "grid": {"kind": "cached", "path": str(fixtures / "lake_2024_5km.npz")},
+            "weather": weather.model_dump(),
+            "spread": {"rule": "rothermel"},
+            "ignition": {"center": True, "time_s": 56880},
+            "dt_s": 60,
+            "duration_s": 56880 + 4 * 3600,
+            "engine": engine,
+        }
+    )
+    local = run(config, seed=1)
+    monkeypatch.setattr(BreakState, "local_updates", False)
+    full = run(config, seed=1)
+    assert local.provenance["breaks"]["breaches"] > 100
+    assert local.provenance["breaks"] == full.provenance["breaks"]
+    assert np.array_equal(local.arrival_time, full.arrival_time, equal_nan=True)
+    assert np.array_equal(local.front_intensity, full.front_intensity, equal_nan=True)
+    assert local.events == full.events
+    assert np.array_equal(local.grid.state, full.grid.state)
+
+
 def test_lines_without_a_width_still_hold_and_lines_with_one_can_breach() -> None:
     held = _run(0.0, 30000.0, fireline=True)
     assert not _east(held).any() and not _breached(held)
