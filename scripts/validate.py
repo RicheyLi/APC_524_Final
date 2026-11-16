@@ -5,8 +5,7 @@ comparison window and scores it against the observations (method: :mod:`wildfire
 docs/validation.md; settings: ``configs/validation.yaml``). The parameters are those of a
 calibrated file (``configs/calibrated.yaml`` by default); nothing is tuned here, and fire B is
 run with fire A's parameters unchanged. Needs a built region and its observations
-(``scripts/download_data.py <region> --observations``); listing the VIIRS overpasses queries
-NASA's public catalogue, so it needs an internet connection even when every overpass is cached.
+(``scripts/download_data.py <region> --observations``); with those cached it needs no network.
 
 Writes, under ``--out`` (default ``docs/img/validation/``), with the prefix ``<region>_<rule>``
 (``synthetic_<scenario>_<rule>`` for ``--synthetic``):

@@ -260,9 +260,8 @@ uv run --extra fast --extra geo python scripts/validate.py lake_2024 --workers 8
 - **Exit code** 1 if the region is not built (the message says how to build it), the parameters
   are of another rule or were tuned on fire B, or every run reached the edge.
 - **Clusters.** Nothing is interactive; every input is a flag and every output goes under `--out`.
-  Listing the VIIRS overpasses currently queries NASA's public catalogue even when every overpass
-  is cached (`calibration.real_fire`), so a compute node without internet access cannot run it
-  yet.
+  With a region and its observations cached nothing touches the network, so the runs can be made
+  on a compute node without internet access (`docs/real_data.md`).
 - **Synthetic mode** (`--synthetic SCENARIO --weather FILE --truth NAME=VALUE ... --window-hours
   H`): a run of the scenario with known parameters (seed `truth_seed`) stands in for the
   observations, as in `scripts/calibrate.py --synthetic`; outputs are named `synthetic_...` and

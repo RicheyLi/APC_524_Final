@@ -64,7 +64,14 @@ from wildfire_sim import sim
 from wildfire_sim.calibration import CalibratedParams, RealFire, Target
 from wildfire_sim.config import CitedValue, ScenarioConfig, configs_dir, load_yaml
 from wildfire_sim.data.validation import Detection
-from wildfire_sim.ensemble import derive_seeds, draw_factors, mean_ci, perturb_config, perturbation_rng
+from wildfire_sim.ensemble import (
+    ScaledRateRule,
+    derive_seeds,
+    draw_factors,
+    mean_ci,
+    perturb_config,
+    perturbation_rng,
+)
 from wildfire_sim.ensemble import runs_for_precision as _runs_for_precision
 from wildfire_sim.metrics import (
     M2_PER_HA,
@@ -76,7 +83,6 @@ from wildfire_sim.metrics import (
     jaccard,
     sorensen,
 )
-from wildfire_sim.sensitivity import _ScaledRule
 from wildfire_sim.spread import make_spread_rule
 from wildfire_sim.spread.base import SpreadRule
 from wildfire_sim.types import BoolArray, FloatArray, IntArray
@@ -419,7 +425,7 @@ def run_member(config: ScenarioConfig, seed: int) -> Member:
     factors = draw_factors(perturbation_rng(seed), config.ensemble)
     rule: SpreadRule = make_spread_rule(config.spread.rule, **config.spread.params)
     if factors["ros_multiplier"] != 1.0:
-        rule = _ScaledRule(rule, factors["ros_multiplier"])
+        rule = ScaledRateRule(rule, factors["ros_multiplier"])
     result = sim.run(perturb_config(config, factors), seed=seed, rule=rule, record_events=False)
     edge = result.provenance["reached_edge_s"]
     return Member(
