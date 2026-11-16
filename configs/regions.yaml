@@ -17,7 +17,6 @@
 #   weather_days       length of the weather series, days
 #   irwin_id           IRWIN record of the incident: ignition and daily perimeters (WP 2.7)
 #
-# Fire B is added here when the team chooses it (section 13).
 regions:
   lake_2024:
     role: A
@@ -32,3 +31,16 @@ regions:
     weather_days: 14
     source: "MTBS Burned Area Boundaries 2024 (USFS EDW_MTBS_01 map service); CAL FIRE incident page https://www.fire.ca.gov/incidents/2024/7/5/lake-fire (reported 5 July 2024, about 15:48 PDT)"
     note: "weather starts at local midnight (PDT) on the day of ignition and covers the main growth to 17 July"
+  silverado_2020:
+    role: B
+    description: "2020 Silverado Fire, Orange County, CA: grass-shrub and chaparral, a Santa Ana fire, grew mainly 26-27 October 2020"
+    mtbs_fire_id: CA3375311768720201026
+    mtbs_year: 2020
+    irwin_id: "{BDE833A4-B278-4418-8526-67F2BFC7D7CD}"  # IRWIN 2020-CAORC-121364
+    fire_date: 2020-10-26
+    landfire_version: LF2016
+    buffer_m: 3000
+    weather_start_utc: 2020-10-26T07:00:00Z
+    weather_days: 7
+    source: "MTBS Burned Area Boundaries 2020 (USFS EDW_MTBS_01 map service); IRWIN 2020-CAORC-121364 through NIFC WFIGS Incident Locations (discovered 26 October 2020, 13:49 UTC = 06:49 PDT)"
+    note: "fire B (test without retuning), chosen 2026-11-15 (docs/plan.md section 13); weather from local midnight (PDT) on the day of ignition for a week"
