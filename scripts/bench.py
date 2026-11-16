@@ -30,11 +30,23 @@ engines. The check fails when ``normalised / baseline_normalised > 1 + tolerance
 entry present in both. Regenerate the baseline (``--json scripts/bench_baseline.json``) when
 a change is meant to alter speed, preferably from the CI job's uploaded ``bench.json``.
 
+**A real fire over a window** (WP 3.1 sizes the calibration study from it). With
+``--region NAME`` (a region built in ``--cache-root``, ignited at its recorded cell and time) or
+``--grid FILE --weather FILE`` (a saved grid and its weather series, ignited at the centre at
+``--ignition-time-s``), the ``"rothermel"`` rule with its default parameters is run for
+``--hours`` after the ignition (16 neighbours, ``--dt`` 60 s) instead of the workloads above.
+The engines' repeats are interleaved, so drift in the machine's speed affects each alike. The
+time of one evaluation of the rule over the whole grid is reported too: it is paid every time
+the hourly weather changes.
+
 Usage::
 
     uv run --extra fast python scripts/bench.py                        # print the table
     uv run --extra fast python scripts/bench.py --json bench.json      # also write the numbers
     uv run --extra fast python scripts/bench.py --workloads reference --check scripts/bench_baseline.json
+    uv run --extra fast --extra geo python scripts/bench.py --region lake_2024 --hours 24 --engines numba
+    uv run --extra fast python scripts/bench.py --grid tests/fixtures/lake_2024_5km.npz \\
+        --weather tests/fixtures/lake_2024_weather.yaml --ignition-time-s 56880 --hours 1
 """
 
 from __future__ import annotations
@@ -54,7 +66,10 @@ from typing import Any
 import numpy as np
 
 from wildfire_sim import sim
-from wildfire_sim.config import ScenarioConfig
+from wildfire_sim.config import CachedGridConfig, ScenarioConfig, WeatherConfig, load_yaml
+from wildfire_sim.grid import Grid
+from wildfire_sim.spread import make_spread_rule
+from wildfire_sim.types import get_stencil
 
 WORKLOADS: dict[str, dict[str, Any]] = {
     "reference": {"shape": (333, 333), "duration_s": 43200.0, "wind": False},
@@ -226,6 +241,86 @@ def run_benchmarks(workloads: Sequence[str], engines: Sequence[str], stencils: S
     return report
 
 
+def fire_config(
+    grid_path: Path, weather: WeatherConfig, cell: tuple[int, int] | None, ignition_s: float, hours: float, dt_s: float
+) -> ScenarioConfig:
+    """A fire on a saved grid for ``hours`` (h) after its ignition at ``ignition_s`` (s) at ``cell``
+    (None: the grid centre); ``"rothermel"`` rule, 16 neighbours, time step ``dt_s`` (s)."""
+    ignition: dict[str, Any] = {"center": True} if cell is None else {"cells": [list(cell)]}
+    return ScenarioConfig.model_validate(
+        {
+            "name": f"bench_fire_{grid_path.stem}",
+            "grid": {"kind": "cached", "path": str(grid_path)},
+            "weather": weather.model_dump(),
+            "spread": {"rule": "rothermel"},
+            "ignition": {**ignition, "time_s": ignition_s},
+            "dt_s": dt_s,
+            "duration_s": ignition_s + hours * 3600.0,
+            "stencil": 16,
+        }
+    )
+
+
+def run_fire_benchmark(config: ScenarioConfig, engines: Sequence[str], repeats: int) -> dict:
+    """Wall time, s, of ``config`` per engine (one warm-up each, then ``repeats`` interleaved rounds),
+    and of one evaluation of the rule over the grid with the weather at the ignition."""
+    assert isinstance(config.grid, CachedGridConfig)
+    grid = Grid.load(config.grid.path)
+    configs = {e: config.model_copy(update={"engine": e}) for e in engines}
+    times: dict[str, list[float]] = {e: [] for e in engines}
+    last: dict[str, sim.RunResult] = {}
+    for e in engines:
+        sim.run(configs[e], grid=grid, record_events=False)
+    for _ in range(repeats):
+        for e in engines:
+            start = time.perf_counter()
+            last[e] = sim.run(configs[e], grid=grid, record_events=False)
+            times[e].append(time.perf_counter() - start)
+    rule = make_spread_rule("rothermel")
+    weather = config.weather.to_series().at(config.ignition.time_s)
+    rule_s = _median_time(lambda: rule.rate_of_spread(grid, weather, get_stencil(16)), repeats)
+    report: dict[str, Any] = {
+        "machine": machine_info(),
+        "repeats": repeats,
+        "fire": {
+            "grid": str(config.grid.path),
+            "shape": list(grid.shape),
+            "hours": (config.duration_s - config.ignition.time_s) / 3600.0,
+            "dt_s": config.dt_s,
+            "rule_evaluation_s": rule_s,
+        },
+        "results": [],
+    }
+    for e in engines:
+        edge = last[e].provenance["reached_edge_s"]
+        report["results"].append(
+            {
+                "workload": "fire",
+                "engine": e,
+                "stencil": 16,
+                "min_s": min(times[e]),
+                "median_s": statistics.median(times[e]),
+                "burned_cells": int(last[e].burned_mask.sum()),
+                "reached_edge_h": None if edge is None else (edge - config.ignition.time_s) / 3600.0,
+            }
+        )
+    return report
+
+
+def print_fire_report(report: dict) -> None:
+    m, f = report["machine"], report["fire"]
+    print(f"machine: {m['processor']} | {m['platform']}")
+    print(f"python {m['python']}, numpy {m['numpy']}, numba {m['numba']}; {report['repeats']} interleaved repeats")
+    print(
+        f"{f['grid']}: {f['shape'][0]} x {f['shape'][1]} cells, {f['hours']:g} h after the ignition, dt {f['dt_s']:g} s"
+    )
+    print(f"one evaluation of the rothermel rule over the grid: {f['rule_evaluation_s']:.3f} s")
+    print(f"{'engine':6s} {'min s':>8s} {'median s':>9s} {'burned cells':>13s} {'reached edge':>13s}")
+    for r in report["results"]:
+        edge = "no" if r["reached_edge_h"] is None else f"{r['reached_edge_h']:.1f} h"
+        print(f"{r['engine']:6s} {r['min_s']:8.3f} {r['median_s']:9.3f} {r['burned_cells']:13d} {edge:>13s}")
+
+
 def print_report(report: dict) -> None:
     m = report["machine"]
     print(f"machine: {m['processor']} | {m['platform']}")
@@ -280,7 +375,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--json", type=Path, help="write the numbers to this file")
     parser.add_argument("--check", type=Path, help="baseline JSON; exit 1 on a slowdown beyond --tolerance")
     parser.add_argument("--tolerance", type=float, default=0.2, help="allowed slowdown, fraction (default 0.2)")
+    parser.add_argument("--region", help="time a built region's fire instead of the workloads")
+    parser.add_argument("--cache-root", type=Path, default=Path("data") / "cache", help="built regions")
+    parser.add_argument("--grid", type=Path, help="time a fire on this saved grid instead of the workloads")
+    parser.add_argument("--weather", type=Path, help="weather YAML of --grid")
+    parser.add_argument("--ignition-time-s", type=float, default=0.0, help="ignition time on --grid, s")
+    parser.add_argument("--hours", type=float, default=24.0, help="hours after the ignition for a fire")
+    parser.add_argument("--dt", type=float, default=60.0, help="time step for a fire, s")
     args = parser.parse_args(argv)
+    if args.region is not None and args.grid is not None:
+        parser.error("give --region or --grid, not both")
+    if (args.grid is None) != (args.weather is None):
+        parser.error("--grid and --weather go together")
 
     workloads = [w for w in args.workloads.split(",") if w]
     unknown = set(workloads) - set(WORKLOADS)
@@ -292,8 +398,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         engines.remove("numba")
     stencils = [int(s) for s in args.stencils.split(",") if s]
 
-    report = run_benchmarks(workloads, engines, stencils, args.repeats)
-    print_report(report)
+    if args.region is not None:
+        from wildfire_sim.calibration import real_fire
+
+        try:
+            fire = real_fire(args.region, args.hours, cache_root=args.cache_root, dt_s=args.dt, viirs=False)
+        except FileNotFoundError as exc:
+            print(exc, file=sys.stderr)
+            return 1
+        assert isinstance(fire.config.grid, CachedGridConfig)
+        cell = fire.config.ignition.cells[0]
+        config = fire_config(fire.config.grid.path, fire.config.weather, cell, fire.ignition_s, args.hours, args.dt)
+        report = run_fire_benchmark(config, engines, args.repeats)
+        print_fire_report(report)
+    elif args.grid is not None:
+        weather = load_yaml(args.weather, WeatherConfig)
+        config = fire_config(args.grid, weather, None, args.ignition_time_s, args.hours, args.dt)
+        report = run_fire_benchmark(config, engines, args.repeats)
+        print_fire_report(report)
+    else:
+        report = run_benchmarks(workloads, engines, stencils, args.repeats)
+        print_report(report)
     if args.json:
         args.json.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     if args.check:

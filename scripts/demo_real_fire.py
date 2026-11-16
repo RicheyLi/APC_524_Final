@@ -19,8 +19,6 @@ overpass is cached.
 from __future__ import annotations
 
 import argparse
-import datetime as dt
-import importlib.util
 import time
 from pathlib import Path
 
@@ -30,10 +28,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
-from wildfire_sim.config import ScenarioConfig, WeatherConfig, load_yaml  # noqa: E402
+from wildfire_sim.calibration import real_fire  # noqa: E402
 from wildfire_sim.data.cache import load_regions  # noqa: E402
-from wildfire_sim.data.validation import fetch_observations  # noqa: E402
-from wildfire_sim.grid import Grid  # noqa: E402
 from wildfire_sim.metrics import arrival_interval_error, burned_area_ha, jaccard, sorensen  # noqa: E402
 from wildfire_sim.sim import run  # noqa: E402
 
@@ -49,32 +45,13 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     region = regions[args.region]
-    grid_path = args.cache_root / args.region / "grid.npz"
-    if not grid_path.exists():
-        print(
-            f"{args.region} is not built in {args.cache_root}; build it first with\n"
-            f"  uv run python scripts/download_data.py {args.region} --observations"
-        )
+    try:
+        fire = real_fire(args.region, args.hours, cache_root=args.cache_root, dt_s=args.dt)
+    except FileNotFoundError as exc:
+        print(exc)
         return 1
-    grid = Grid.load(grid_path)
-    weather = load_yaml(args.cache_root / args.region / "weather.yaml", WeatherConfig)
-    obs = fetch_observations(args.region, region, cache_root=args.cache_root)
-    ignition_s = obs.seconds(grid, obs.ignition.time_utc)
-    end_s = ignition_s + args.hours * 3600
-    engine = "numba" if importlib.util.find_spec("numba") else "numpy"
-    config = ScenarioConfig.model_validate(
-        {
-            "name": f"demo {args.region}",
-            "grid": {"kind": "cached", "path": str(grid_path)},
-            "weather": weather.model_dump(),
-            "spread": {"rule": "rothermel"},
-            "ignition": {"cells": [list(obs.ignition_cell(grid))], "time_s": ignition_s},
-            "dt_s": args.dt,
-            "duration_s": end_s,
-            "start_time_utc": region.weather_start_utc.isoformat(),
-            "engine": engine,
-        }
-    )
+    config, grid, obs = fire.config, fire.grid, fire.observations
+    ignition_s, end_s, engine = fire.ignition_s, fire.end_s, config.engine
     print(
         f"{args.region}: {grid.shape[0]} x {grid.shape[1]} cells, ignition {obs.ignition.time_utc:%Y-%m-%d %H:%M} UTC, "
         f"{args.hours:g} h, Rothermel, {engine} engine"
@@ -83,8 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     result = run(config, seed=args.seed)
     print(f"  ran in {time.perf_counter() - t0:.0f} s")
 
-    assert config.start_time_utc is not None
-    until = config.start_time_utc + dt.timedelta(seconds=end_s)
+    until = fire.until
     observed = obs.observed_burn_mask(grid, until) if obs.daily else obs.observed_burn_mask(grid)
     label = f"daily perimeter posted by {until:%m-%d %H:%M} UTC" if obs.daily else "final MTBS perimeter"
     sim = result.burned_mask

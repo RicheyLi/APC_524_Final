@@ -1,0 +1,83 @@
+# Settings of the calibration study (docs/plan.md section 7, WP 3.1). Read by
+# wildfire_sim.calibration (CalibrationSettings); scripts/calibrate.py takes its defaults from
+# here. The objective of a parameter set, averaged over the fixed seeds, is
+#
+#   weight_overlap * (1 - Jaccard at the window end) + weight_arrival * (mean arrival-interval error / window length)
+#
+weight_overlap:
+  value: 0.5
+  units: dimensionless
+  source: "PLACEHOLDER - team choice (docs/plan.md section 7 asks for a weighted sum of overlap and arrival-time error without fixing the weights): equal weights, both terms lie in [0, 1]"
+weight_arrival:
+  value: 0.5
+  units: dimensionless
+  source: "PLACEHOLDER - team choice (docs/plan.md section 7 asks for a weighted sum of overlap and arrival-time error without fixing the weights): equal weights, both terms lie in [0, 1]"
+footprint_m:
+  value: 375.0
+  units: m
+  source: "Schroeder, W., Oliva, P., Giglio, L. & Csiszar, I. A. (2014), The New VIIRS 375 m active fire detection data product, Remote Sens. Environ. 143, 85-96 (I-band pixel at nadir)"
+  note: "the simulated arrival of a detection is the earliest among the cells within half a footprint (docs/plan.md section 7)"
+window_hours:
+  value: 48.0
+  units: h
+  source: "PLACEHOLDER - team choice: the first two burning periods after the ignition (docs/plan.md section 7, 'growth over the first burning periods, before containment lines held')"
+  note: "check against the posting times of fire A's daily perimeters once the region is built: a daily perimeter must have been posted by the window end"
+n_trials:
+  value: 100
+  units: count
+  source: "docs/performance.md, section 'Sizing the calibration study'"
+n_seeds:
+  value: 2
+  units: count
+  source: "docs/performance.md, section 'Sizing the calibration study'"
+base_seed:
+  value: 0
+  units: dimensionless
+  source: "team choice; the run seeds are wildfire_sim.ensemble.derive_seeds(base_seed, n_seeds), the same for every trial (common random numbers)"
+sampler_seed:
+  value: 0
+  units: dimensionless
+  source: "team choice; seeds Optuna's TPE sampler so a study reproduces"
+# The objective is evaluated on the grid best * (1 + step) of every parameter (clipped to the
+# bounds), so it is visible whether the parameters are identified or trade off (section 7).
+surface_steps: [-0.2, -0.1, 0.0, 0.1, 0.2]
+surface_steps_source: "team choice: plus or minus 10 and 20 %, twice the recovery tolerance of WP 3.1"
+# Synthetic observed fires (scripts/calibrate.py --synthetic, the WP 3.1 recovery tests).
+overpass_interval_s:
+  value: 1800.0
+  units: s
+  source: "team choice for synthetic fires only: frequent enough to give several overpasses in a short test window; real VIIRS overpasses come about every 12 h per satellite"
+truth_seed:
+  value: 999
+  units: dimensionless
+  source: "team choice; must not be one of the calibration seeds, so the synthetic fire's link thresholds differ from every calibration run's"
+# Search ranges, per spread rule; names are the rule's keyword arguments (spread.params).
+parameters:
+  rothermel:
+    ros_multiplier:
+      low: 0.3
+      high: 3.0
+      log: true
+      units: dimensionless
+      source: "docs/plan.md WP 3.1 (spread-rate multiplier in [0.3, 3])"
+      note: "sampled on a log scale: a factor of 2 too fast and too slow are equally far apart"
+    lb_scale:
+      low: 0.5
+      high: 2.0
+      log: false
+      units: dimensionless
+      source: "docs/plan.md WP 3.1 (ellipse lb_scale in [0.5, 2])"
+      note: "LB' = 1 + lb_scale (LB - 1); above the lattice cap (2.1 on 16 neighbours) a larger lb_scale changes nothing, so it is identified only where the fire's ratio stays below the cap"
+  alexandridis:
+    ros_base:
+      low: 0.03
+      high: 0.3
+      log: true
+      units: m/s
+      source: "PLACEHOLDER - team choice: the placeholder ros_base of configs/alexandridis.yaml (0.1 m/s) times the plan's multiplier range [0.3, 3]"
+    c2:
+      low: 0.0655
+      high: 0.262
+      log: false
+      units: s/m
+      source: "PLACEHOLDER - team choice: Alexandridis et al. (2008) c2 = 0.131 s/m times the plan's lb_scale range [0.5, 2]"

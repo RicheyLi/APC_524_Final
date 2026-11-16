@@ -158,7 +158,7 @@ def combine_wind_and_slope(
     return phi, head
 
 
-def length_to_breadth(effective_wind: float | FloatArray, lb_max: float = 8.0) -> FloatArray:
+def length_to_breadth(effective_wind: float | FloatArray, lb_max: float = 8.0, lb_scale: float = 1.0) -> FloatArray:
     """Length-to-breadth ratio of the fire ellipse from the effective midflame wind, m/s.
 
     Anderson (1983) in the form of BehavePlus, with ``U`` in m/s (the mph coefficients 0.1147
@@ -166,12 +166,27 @@ def length_to_breadth(effective_wind: float | FloatArray, lb_max: float = 8.0) -
 
     .. math:: LB = 0.936\\,e^{0.2566 U} + 0.461\\,e^{-0.1548 U} - 0.397
 
-    capped at ``lb_max`` (8 in BehavePlus, ``configs/rothermel.yaml``). ``LB = 1`` at ``U = 0``.
+    With ``lb_scale`` ``s`` the elongation is scaled, ``LB' = 1 + s (LB - 1)``: the calibrated
+    shape parameter of WP 3.1. ``LB' >= 1`` for every ``s > 0`` and a fire without wind or slope
+    stays round. The result is then capped at ``lb_max`` (8 in BehavePlus,
+    ``configs/rothermel.yaml``). ``LB = 1`` at ``U = 0``.
+
+    Args:
+        effective_wind: Effective midflame wind, m/s.
+        lb_max: Cap on the ratio, >= 1.
+        lb_scale: Elongation factor ``s``, dimensionless, finite and > 0; 1 is Anderson's ratio.
+
+    Returns:
+        The ratio (dimensionless), shaped like ``effective_wind``.
     """
     if lb_max < 1:
         raise ValueError("lb_max must be >= 1")
+    if not (math.isfinite(lb_scale) and lb_scale > 0):
+        raise ValueError(f"lb_scale must be finite and > 0, got {lb_scale!r}")
     u = np.maximum(np.asarray(effective_wind, dtype=np.float64), 0.0)
     lb = 0.936 * np.exp(0.1147 / MPH * u) + 0.461 * np.exp(-0.0692 / MPH * u) - 0.397
+    if lb_scale != 1.0:
+        lb = 1.0 + lb_scale * (lb - 1.0)
     return np.clip(lb, 1.0, lb_max)
 
 
