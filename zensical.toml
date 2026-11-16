@@ -15,6 +15,7 @@ nav = [
   { "Calibration" = "calibration.md" },
   { "Validation" = "validation.md" },
   { "Data" = "data.md" },
+  { "Running on the real fires" = "real_data.md" },
   { "API Reference" = "api.md" },
 ]
 
