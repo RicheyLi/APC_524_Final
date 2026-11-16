@@ -27,8 +27,10 @@ the Morris statistics are in output units per unit of the normalised input (belo
   valuable single step; the 10 m wind speed is the most valuable input datum.
 - **The stencil is the third input for burned area in both scenarios** (8 neighbours burn more
   in the window than 16, nearly every elementary effect of the same sign), ahead of every
-  fuel moisture. This is a model-structure choice, not a datum: a result that depends on it
-  should state which stencil it used. The kernel shape matters less but is not negligible
+  fuel moisture. Its `mu*` is 1.5 times the plain 8-against-16 difference (section 1): by that
+  difference (63 ha on the crop, 13 ha synthetic, seed 1) it stays third on the crop but falls
+  to fifth on the synthetic grid, below both live moistures. This is a model-structure choice,
+  not a datum: a result that depends on it should state which stencil it used. The kernel shape matters less but is not negligible
   (rank 6 on area), even though each shape runs with its measured front-speed correction.
 - **Live woody moisture is the most influential moisture** (rank 3-4), above live herbaceous and
   1-h moisture, in both scenarios. Live moisture is a placeholder (Scott & Burgan scenario L1
@@ -83,7 +85,11 @@ dependency; unit-tested on analytic functions with known answers in
   at `L - 1`) at grid index `j`, so [0, 1] is cut into `L` equal bins. Since `delta = 2/3`
   exceeds every bin width, every step changes a discrete input to another value: the stencil
   (`L = 2`) always switches between 8 and 16, the kernel shape (`L = 4`) between 5 and 50 or
-  20 and 200. Its effect is that change divided by `delta`, on the same footing as the others.
+  20 and 200. Its effect is that change divided by `delta`, the usual convention. For a
+  two-level input this is 1.5 times the plain difference between its two values, whereas a
+  continuous input's effect estimates the change over its whole range; the stencil's `mu*` is
+  therefore 1.5 times the mean absolute difference between an 8- and a 16-neighbour run, and
+  its rank is read with that in mind (summary).
 - **Common random numbers.** All runs of a screening use one simulator seed, so two runs that
   differ in one input share their kernel thresholds and breach draws (except that changing the
   stencil or the kernel shape changes the thresholds themselves). An input the model does not
