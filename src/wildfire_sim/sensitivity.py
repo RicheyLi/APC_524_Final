@@ -549,20 +549,6 @@ def parameter_files(edits: dict[str, dict[str, Any]]) -> Generator[None]:
                 os.environ["WILDFIRE_SIM_CONFIGS"] = old
 
 
-class _ScaledRule(ScaledRateRule):
-    """:class:`~wildfire_sim.ensemble.ScaledRateRule` that also shows the inner rule's ``lb_capped``.
-
-    The simulator counts the cell-hours under the lattice cap from the rule's ``lb_capped``
-    mask (``provenance["lb_capped_cell_hours"]``); the plain wrapper hides it, so a scaled run
-    would report 0.
-    """
-
-    @property
-    def lb_capped(self) -> np.ndarray | None:
-        """The inner rule's ``(H, W)`` mask of capped cells from its last evaluation, or None."""
-        return getattr(self.inner, "lb_capped", None)
-
-
 def run_point(
     base: ScenarioConfig,
     inputs: dict[str, SensitivityInput],
@@ -633,7 +619,7 @@ def run_point(
     with parameter_files(edits):
         rule: SpreadRule = make_spread_rule(config.spread.rule, **config.spread.params)
         if multiplier is not None:
-            rule = _ScaledRule(rule, multiplier)
+            rule = ScaledRateRule(rule, multiplier)
         result = run(config, seed=seed, rule=rule, grid=grid, record_events=False)
     return run_outputs(result, ignition_cell(config, grid.shape), window_s, head_distance_m)
 

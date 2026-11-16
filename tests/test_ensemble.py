@@ -458,3 +458,29 @@ def test_runs_for_precision(rng: np.random.Generator) -> None:
 def test_runs_for_precision_validates(values: np.ndarray, rel: float) -> None:
     with pytest.raises(ValueError):
         runs_for_precision(values, rel)
+
+
+def test_scaled_rule_keeps_the_lattice_cap_count() -> None:
+    """A rate multiplier must not hide the cells under the lattice cap: the capped cell-hours of
+    a wind-driven Rothermel run are counted with the wrapper as without it (they were 0)."""
+    cfg = ScenarioConfig.model_validate(
+        {
+            "name": "capped",
+            "grid": {"kind": "synthetic", "generator": "flat_uniform", "shape": [41, 41], "fuel_model": 102},
+            "weather": {"series": [{"wind_speed": 12.0, "wind_direction": 270.0}]},
+            "spread": {"rule": "rothermel"},
+            "ignition": {"center": True},
+            "dt_s": 30.0,
+            "duration_s": 300.0,
+        }
+    )
+    inner = make_spread_rule("rothermel")
+    plain = sim.run(cfg, seed=3, rule=inner)
+    assert plain.provenance["lb_capped_cell_hours"] > 0
+    assert ScaledRateRule(make_spread_rule("constant", ros=0.2), 2.0).lb_capped is None
+    same = sim.run(cfg, seed=3, rule=ScaledRateRule(make_spread_rule("rothermel"), 1.0))
+    assert same.provenance["lb_capped_cell_hours"] == plain.provenance["lb_capped_cell_hours"]
+    assert (
+        sim.run(cfg, seed=3, rule=ScaledRateRule(make_spread_rule("rothermel"), 2.0)).provenance["lb_capped_cell_hours"]
+        > 0
+    )
