@@ -396,3 +396,18 @@ def test_agrees_with_pyrothermel_for_every_model(moisture: FuelMoisture, wind: f
         assert mine.ros[i] == pytest.approx(ref["spread_rate"] * ch_h, rel=REL_TOL), code
         assert mine.intensity[i] == pytest.approx(ref["fireline_intensity"] * btu_ft_s, rel=REL_TOL), code
         assert mine.flame_length[i] == pytest.approx(ref["flame_length"] * 0.3048, rel=REL_TOL), code
+
+
+def test_docstring_examples_run() -> None:
+    """The ``Examples`` sections of the module's docstrings run and print what they show.
+
+    The documented functions (``load_fuel_models``, ``fuel_bed``, ``surface_fire``) are rendered
+    into the API reference, so their examples must stay correct as the code changes.
+    """
+    import doctest
+
+    from wildfire_sim.spread import rothermel
+
+    result = doctest.testmod(rothermel, optionflags=doctest.NORMALIZE_WHITESPACE, verbose=False)
+    assert result.attempted >= 3
+    assert result.failed == 0
