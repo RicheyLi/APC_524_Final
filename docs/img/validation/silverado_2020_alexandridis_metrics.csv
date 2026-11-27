@@ -1,0 +1,13 @@
+metric,comparison,statistic,value,lower,upper,n_runs,units,note
+runs_reaching_edge,grid edge,count,0,nan,nan,200,runs,"lower bounds on their fires, left out of every other row; milestone M2 requires 0"
+jaccard,final MTBS perimeter (includes suppression),consensus mask (burned in >= 0.5 of the runs),0.00322467,nan,nan,200,dimensionless,"includes suppression, which the runs do not have"
+jaccard,final MTBS perimeter (includes suppression),"mean over runs, bootstrap interval",0.00322467,0.00322467,0.00322467,200,dimensionless,"includes suppression, which the runs do not have"
+sorensen,final MTBS perimeter (includes suppression),consensus mask (burned in >= 0.5 of the runs),0.00642862,nan,nan,200,dimensionless,"includes suppression, which the runs do not have"
+sorensen,final MTBS perimeter (includes suppression),"mean over runs, bootstrap interval",0.00642862,0.00642862,0.00642862,200,dimensionless,"includes suppression, which the runs do not have"
+arrival_inside_fraction,192 VIIRS first detections in the window,"mean over runs, bootstrap interval",0,0,0,200,fraction,
+arrival_error_median,192 VIIRS first detections in the window,"mean over runs, bootstrap interval",40.5585,40.5585,40.5585,200,h,
+arrival_error_mean,192 VIIRS first detections in the window,"mean over runs, bootstrap interval",35.8048,35.8048,35.8048,200,h,
+burned_area,runs inside the grid,"mean, Student-t interval",221.31,221.31,221.31,200,ha,
+runs_for_precision,"burned area, half-width <= 0.05 of the mean",count,2,nan,nan,200,runs,enough
+lb_capped_cell_hours,lattice cap (WP 2.1d),not applicable,nan,nan,nan,200,cell-h,the spread rule does not cap the length-to-breadth ratio
+breaches,breaks (WP 2.9),"mean over runs, bootstrap interval",0,0,0,200,breaks,

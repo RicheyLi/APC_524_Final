@@ -1,0 +1,12 @@
+metric,comparison,statistic,units,rothermel_value,rothermel_lower,rothermel_upper,rothermel_n_runs,alexandridis_value,alexandridis_lower,alexandridis_upper,alexandridis_n_runs
+runs_reaching_edge,grid edge,count,runs,24,nan,nan,200,0,nan,nan,200
+jaccard,final MTBS perimeter (includes suppression),consensus mask (burned in >= 0.5 of the runs),dimensionless,0.45297169430929274,nan,nan,176,0.003224674608611385,nan,nan,200
+jaccard,final MTBS perimeter (includes suppression),"mean over runs, bootstrap interval",dimensionless,0.4164947097050715,0.4111947880179449,0.42167167577903314,176,0.0032246746086113855,0.0032246746086113855,0.0032246746086113855,200
+sorensen,final MTBS perimeter (includes suppression),consensus mask (burned in >= 0.5 of the runs),dimensionless,0.6235106934063495,nan,nan,176,0.006428619012724002,nan,nan,200
+sorensen,final MTBS perimeter (includes suppression),"mean over runs, bootstrap interval",dimensionless,0.5871167376528025,0.581579968016265,0.5924745942938497,176,0.006428619012724,0.006428619012724,0.006428619012724,200
+arrival_inside_fraction,192 VIIRS first detections in the window,"mean over runs, bootstrap interval",fraction,0.14210464015151514,0.13328598484848483,0.1512784090909091,176,0.0,0.0,0.0,200
+arrival_error_median,192 VIIRS first detections in the window,"mean over runs, bootstrap interval",h,13.502531246832921,12.487118184715513,14.546272216592993,176,40.55853546305555,40.55853546305555,40.55853546305555,200
+arrival_error_mean,192 VIIRS first detections in the window,"mean over runs, bootstrap interval",h,19.94018410696625,19.557562766468088,20.338595786531332,176,35.80480071134259,35.80480071134259,35.80480071134259,200
+burned_area,runs inside the grid,"mean, Student-t interval",ha,4771.4655681818185,4656.471571190272,4886.459565173364,176,221.31,221.31,221.31,200
+runs_for_precision,"burned area, half-width <= 0.05 of the mean",count,runs,43,nan,nan,176,2,nan,nan,200
+breaches,breaks (WP 2.9),"mean over runs, bootstrap interval",breaks,754.1875,719.3271306818183,790.154403409091,176,0.0,0.0,0.0,200

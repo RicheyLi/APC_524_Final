@@ -1,0 +1,789 @@
+{
+  "name": "silverado_2020",
+  "synthetic": false,
+  "label": "validation",
+  "warnings": [],
+  "target": {
+    "description": "region silverado_2020, 48 h after the recorded ignition",
+    "region": "silverado_2020",
+    "role": "B",
+    "window_hours": 48.0,
+    "ignition_s": 24540.0,
+    "window_end_s": 197340.0,
+    "start_time_utc": "2020-10-26T07:00:00+00:00",
+    "ignition_cell": [
+      146,
+      314
+    ],
+    "footprint_m": 375.0,
+    "n_detections": 192,
+    "observed_window_ha": null,
+    "observed_final_ha": 5182.65,
+    "final_label": "final MTBS perimeter (includes suppression)",
+    "notes": [
+      "silverado_2020 has no daily perimeters (NIFC's archive starts in 2022): no overlap at the window end and no daily area ratio; the overlap is scored against the final perimeter only, which includes suppression"
+    ]
+  },
+  "parameters": {
+    "status": "calibrated",
+    "rule": "alexandridis",
+    "params": {
+      "ros_base": 0.14479051206682336,
+      "c2": 0.1741250745662409
+    },
+    "source": "WP 3.1 study on region lake_2024, 48.5 h: 100 trials x 2 seeds",
+    "path": "configs/calibrated_alexandridis.yaml",
+    "sha256": "a92c2b42e60fc9fc55ce38802ac906a8f39e17e4b671f76f38c8189b56a76ed3",
+    "calibrated_on": "region lake_2024, 48.5 h",
+    "retuned": false,
+    "note": "fire B is run with the parameters of configs/calibrated_alexandridis.yaml unchanged (calibrated on: region lake_2024, 48.5 h); nothing is tuned"
+  },
+  "ensemble": {
+    "n_runs": 200,
+    "base_seed": 20261117,
+    "seeds": [
+      4545589327595665318,
+      3411433391869030454,
+      1108736466637607784,
+      6667003836739716841,
+      1910852588642630316,
+      6891205264560222853,
+      3718725497042014261,
+      1883078749492933359,
+      8195160267383914971,
+      4291893038481656238,
+      6967159479312381571,
+      3361069039602711417,
+      8884922674960476170,
+      3725153702870000099,
+      1741706316186214679,
+      7322383410894125881,
+      1958058006548247864,
+      7711286015731340621,
+      9159561142125292881,
+      1260869281850726852,
+      5874698255252260635,
+      5509645268065822184,
+      8181710501931142770,
+      8350422750710157775,
+      1615452271309360494,
+      9108036406319431463,
+      8568374858828411519,
+      3358859183198521880,
+      6984365067570932474,
+      865949729567050599,
+      445132762715540362,
+      7832743270035825959,
+      6907437999545345774,
+      7464880965788664266,
+      7177308558092285151,
+      3571083937779335392,
+      4183785206383229914,
+      8538513352444267821,
+      2717588000325191511,
+      7629878953165750156,
+      8738797628551548091,
+      926865889806197249,
+      1177267042095689143,
+      8255938940079191608,
+      6799318710376350095,
+      4885230682122821949,
+      577176884403886113,
+      3337563832906735772,
+      6761451597425801976,
+      2472025746273735847,
+      4413400074375911499,
+      1644300731667080412,
+      5598365548488654044,
+      766015072578276408,
+      5476518457835717861,
+      7407515839871557074,
+      416183816092199823,
+      7093633017309129456,
+      8193309158097612873,
+      8115842886763246266,
+      2245377084133546904,
+      2193206791678329084,
+      1808658369987365660,
+      7436721472157388174,
+      6789541229757791026,
+      2483023039289615171,
+      7533465732147655719,
+      5220676582574873382,
+      2323500191156263450,
+      6335143966745973965,
+      3473341282119034822,
+      4782372391368854411,
+      2575254246397751498,
+      7868797942656322038,
+      842930257784690363,
+      4635188863553542117,
+      1814242343931843066,
+      2793978457957594404,
+      3179458463926639610,
+      6982143414349778228,
+      2558081700906846749,
+      7340425588644308576,
+      7774091229005370890,
+      340649805750096585,
+      3410235237655360520,
+      8198787493585687136,
+      8972997292056555245,
+      6181896800038894343,
+      5841030396818594946,
+      4618967186799604718,
+      6958935872062292819,
+      2738334961976443884,
+      3912509970009296302,
+      2598827067056460732,
+      7961265112298982873,
+      3724126355874129954,
+      5725294774579030326,
+      3585632159717854018,
+      2167506806666027770,
+      6716962724027390521,
+      713479399295800724,
+      4625778623052592003,
+      3415127983130382031,
+      122386921696146253,
+      6794438357385318559,
+      3366789069990113024,
+      8691076912195355941,
+      7565102247924354046,
+      3192754409799797756,
+      4706753308438253383,
+      4238845065054809456,
+      3386539983176518917,
+      8661684059423523828,
+      7790764952396809831,
+      5396895036720183492,
+      8897265997603637013,
+      6112763677190542663,
+      886562478041887190,
+      6613678822313635572,
+      5895600108882813198,
+      4537714625752003710,
+      7437545466037566393,
+      6614872010069569968,
+      8780765198737649878,
+      6936856077602254713,
+      6021291723499865086,
+      4062994671854227125,
+      1461878512496506333,
+      7911161933766160320,
+      4136940440776598969,
+      1109831437431749313,
+      6966031973182860295,
+      5115108335019848555,
+      3269240952972440698,
+      8078102857897619198,
+      1206700092912935326,
+      4180261266367114820,
+      4751951149295025626,
+      3116874870064630607,
+      667031442201633139,
+      8963304726368250806,
+      1228815519000866501,
+      79548910169931777,
+      4673975760069999649,
+      2102613593842200340,
+      5406515939081333234,
+      3984357171148427217,
+      1959303577224729213,
+      8842109028845868223,
+      2501320411354453043,
+      4815805198645462325,
+      316070916094255906,
+      8739908002760667237,
+      7860125565870599367,
+      2578534342077960379,
+      5088522972002477520,
+      3462184216676564845,
+      2548520581092788759,
+      855618295692698158,
+      6884911965323293424,
+      3675839726981391260,
+      4189665811229898246,
+      7460362343768001676,
+      754833996468826277,
+      2431179964253967975,
+      4514084189176865562,
+      8245454976748072557,
+      5939651603141828461,
+      3419365826535664255,
+      4629675130773291939,
+      2565316270116606512,
+      6927365637035127315,
+      2865462095852306342,
+      1172770396143733889,
+      4602034784318815594,
+      4452042472618789772,
+      5016527412560994460,
+      4275987577945699740,
+      9039596950269421128,
+      8257471559627467409,
+      3552900478032201929,
+      6315602244852061178,
+      579346602710642090,
+      1559533448742934589,
+      2903364593558766341,
+      5810512749293472944,
+      6944156816521289206,
+      7034408146333798979,
+      7102838370672074508,
+      5524702976955272390,
+      550965015900694594,
+      8855900673519568377,
+      6967393002799124814,
+      3882455282754300419,
+      2559899220758732975,
+      2090921393820371923,
+      9005601009947249031,
+      8547196732829485009,
+      2929392793392539430,
+      3966605551810682140
+    ],
+    "sigmas": {
+      "wind_speed_sigma_frac": 0.15,
+      "wind_direction_sigma_deg": 15.0,
+      "moisture_sigma_frac": 0.15,
+      "ros_multiplier_sigma_frac": 0.1
+    },
+    "ignition_perturbed": false,
+    "consensus_threshold": 0.5,
+    "ci_level": 0.95,
+    "engine": "numba",
+    "dt_s": 60.0
+  },
+  "edge": {
+    "n_reached": 0,
+    "n_runs": 200,
+    "m2_no_run_reaches_edge": true,
+    "runs": []
+  },
+  "metrics": [
+    {
+      "metric": "runs_reaching_edge",
+      "comparison": "grid edge",
+      "statistic": "count",
+      "value": 0,
+      "lower": null,
+      "upper": null,
+      "n_runs": 200,
+      "units": "runs",
+      "note": "lower bounds on their fires, left out of every other row; milestone M2 requires 0"
+    },
+    {
+      "metric": "jaccard",
+      "comparison": "final MTBS perimeter (includes suppression)",
+      "statistic": "consensus mask (burned in >= 0.5 of the runs)",
+      "value": 0.003224674608611385,
+      "lower": null,
+      "upper": null,
+      "n_runs": 200,
+      "units": "dimensionless",
+      "note": "includes suppression, which the runs do not have"
+    },
+    {
+      "metric": "jaccard",
+      "comparison": "final MTBS perimeter (includes suppression)",
+      "statistic": "mean over runs, bootstrap interval",
+      "value": 0.0032246746086113855,
+      "lower": 0.0032246746086113855,
+      "upper": 0.0032246746086113855,
+      "n_runs": 200,
+      "units": "dimensionless",
+      "note": "includes suppression, which the runs do not have"
+    },
+    {
+      "metric": "sorensen",
+      "comparison": "final MTBS perimeter (includes suppression)",
+      "statistic": "consensus mask (burned in >= 0.5 of the runs)",
+      "value": 0.006428619012724002,
+      "lower": null,
+      "upper": null,
+      "n_runs": 200,
+      "units": "dimensionless",
+      "note": "includes suppression, which the runs do not have"
+    },
+    {
+      "metric": "sorensen",
+      "comparison": "final MTBS perimeter (includes suppression)",
+      "statistic": "mean over runs, bootstrap interval",
+      "value": 0.006428619012724,
+      "lower": 0.006428619012724,
+      "upper": 0.006428619012724,
+      "n_runs": 200,
+      "units": "dimensionless",
+      "note": "includes suppression, which the runs do not have"
+    },
+    {
+      "metric": "arrival_inside_fraction",
+      "comparison": "192 VIIRS first detections in the window",
+      "statistic": "mean over runs, bootstrap interval",
+      "value": 0.0,
+      "lower": 0.0,
+      "upper": 0.0,
+      "n_runs": 200,
+      "units": "fraction",
+      "note": ""
+    },
+    {
+      "metric": "arrival_error_median",
+      "comparison": "192 VIIRS first detections in the window",
+      "statistic": "mean over runs, bootstrap interval",
+      "value": 40.55853546305555,
+      "lower": 40.55853546305555,
+      "upper": 40.55853546305555,
+      "n_runs": 200,
+      "units": "h",
+      "note": ""
+    },
+    {
+      "metric": "arrival_error_mean",
+      "comparison": "192 VIIRS first detections in the window",
+      "statistic": "mean over runs, bootstrap interval",
+      "value": 35.80480071134259,
+      "lower": 35.80480071134259,
+      "upper": 35.80480071134259,
+      "n_runs": 200,
+      "units": "h",
+      "note": ""
+    },
+    {
+      "metric": "burned_area",
+      "comparison": "runs inside the grid",
+      "statistic": "mean, Student-t interval",
+      "value": 221.31,
+      "lower": 221.31,
+      "upper": 221.31,
+      "n_runs": 200,
+      "units": "ha",
+      "note": ""
+    },
+    {
+      "metric": "runs_for_precision",
+      "comparison": "burned area, half-width <= 0.05 of the mean",
+      "statistic": "count",
+      "value": 2,
+      "lower": null,
+      "upper": null,
+      "n_runs": 200,
+      "units": "runs",
+      "note": "enough"
+    },
+    {
+      "metric": "lb_capped_cell_hours",
+      "comparison": "lattice cap (WP 2.1d)",
+      "statistic": "not applicable",
+      "value": null,
+      "lower": null,
+      "upper": null,
+      "n_runs": 200,
+      "units": "cell-h",
+      "note": "the spread rule does not cap the length-to-breadth ratio"
+    },
+    {
+      "metric": "breaches",
+      "comparison": "breaks (WP 2.9)",
+      "statistic": "mean over runs, bootstrap interval",
+      "value": 0.0,
+      "lower": 0.0,
+      "upper": 0.0,
+      "n_runs": 200,
+      "units": "breaks",
+      "note": ""
+    }
+  ],
+  "surface_note": null,
+  "files": [
+    "silverado_2020_alexandridis_arrival.png",
+    "silverado_2020_alexandridis_burn_probability.png",
+    "silverado_2020_alexandridis_convergence.csv",
+    "silverado_2020_alexandridis_convergence.png",
+    "silverado_2020_alexandridis_detections.csv",
+    "silverado_2020_alexandridis_maps.npz",
+    "silverado_2020_alexandridis_metrics.csv",
+    "silverado_2020_alexandridis_runs.csv",
+    "silverado_2020_alexandridis_summary.json",
+    "silverado_2020_alexandridis_surface.csv",
+    "silverado_2020_alexandridis_surface.png"
+  ],
+  "provenance": {
+    "package_version": "0.1.0",
+    "command": "scripts/validate.py silverado_2020 --workers 3 --rule alexandridis --calibrated configs/calibrated_alexandridis.yaml",
+    "model": {
+      "git_commit": "fb9f81b9e975457b06f28e54d70b9730cc00bcee",
+      "versions": {
+        "python": "3.12.15",
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "wildfire_sim": "0.1.0",
+        "numba": "0.68.1"
+      },
+      "engine": "numba",
+      "rule": "alexandridis",
+      "stencil": 16,
+      "arrival_shape": 200.0,
+      "kernel_correction": 1.042,
+      "kernel_correction_source": "scripts/kernel_front_speed.py: area-equivalent-radius front speed / R, constant rule R = 0.2 m/s, dx = 30 m, no wind, flat uniform fuel, reference radius 40 cells, 20 seeds, standard error 0.0003",
+      "residence_time_s": {
+        "default": {
+          "value": 15.0,
+          "source": "Team choice: 15 s, near the median of the listed fuel models (6.6-20.1 s); applies only to fuel model numbers not in configs/fuel_models.csv",
+          "units": "s",
+          "note": ""
+        },
+        "by_fuel_model": {
+          "1": {
+            "value": 6.6,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "2": {
+            "value": 8.3,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "3": {
+            "value": 15.4,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "4": {
+            "value": 13.2,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "5": {
+            "value": 13.7,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "6": {
+            "value": 14.7,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "7": {
+            "value": 14.8,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "8": {
+            "value": 12.2,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "9": {
+            "value": 9.3,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "10": {
+            "value": 13.1,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "11": {
+            "value": 19.5,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "12": {
+            "value": 20.1,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "13": {
+            "value": 19.9,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "101": {
+            "value": 11.2,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "102": {
+            "value": 12.7,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "103": {
+            "value": 17.9,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "104": {
+            "value": 12.6,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "105": {
+            "value": 14.1,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "106": {
+            "value": 11.5,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "107": {
+            "value": 12.6,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "108": {
+            "value": 17.7,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "109": {
+            "value": 14.3,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "121": {
+            "value": 12.6,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "122": {
+            "value": 12.6,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "123": {
+            "value": 14.3,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "124": {
+            "value": 14.1,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "141": {
+            "value": 13.8,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "142": {
+            "value": 13.8,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "143": {
+            "value": 16.8,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "144": {
+            "value": 13.7,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "145": {
+            "value": 18.4,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "146": {
+            "value": 20.1,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "147": {
+            "value": 18.7,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "148": {
+            "value": 16.6,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "149": {
+            "value": 16.7,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "161": {
+            "value": 14.3,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "162": {
+            "value": 13.0,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "163": {
+            "value": 14.3,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "164": {
+            "value": 10.4,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "165": {
+            "value": 18.8,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "181": {
+            "value": 13.4,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "182": {
+            "value": 12.8,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "183": {
+            "value": 15.0,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "184": {
+            "value": 14.7,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "185": {
+            "value": 13.4,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "186": {
+            "value": 11.9,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "187": {
+            "value": 18.7,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "188": {
+            "value": 13.0,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "189": {
+            "value": 13.3,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "201": {
+            "value": 13.9,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "202": {
+            "value": 12.2,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "203": {
+            "value": 11.9,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          },
+          "204": {
+            "value": 12.1,
+            "source": "Anderson (1969), Heat transfer and fire spread, USDA For. Serv. Res. Pap. INT-69: t_r = 384 / sigma min, sigma the characteristic SAV (1/ft) of the fuel bed from configs/fuel_models.csv, computed by wildfire_sim.spread.rothermel.residence_times at the Weather defaults (6/7/8 % dead, 60 % live herb, 90 % live woody)",
+            "units": "s",
+            "note": ""
+          }
+        }
+      },
+      "holdover_s": {
+        "default": {
+          "value": 43200.0,
+          "source": "PLACEHOLDER - open decision in docs/plan.md section 13; 12 h for every fuel, enough to carry a fire through one night",
+          "units": "s",
+          "note": "team assumption, not a measurement; in the sensitivity analysis (WP 3.2)"
+        },
+        "by_fuel_model": {}
+      },
+      "urban": {
+        "fuel_model": {
+          "value": 183.0,
+          "source": "PLACEHOLDER - team assumption (docs/plan.md sections 2.6 and 13): TL3, moderate load conifer litter, as the surrogate fuel of an urban cell",
+          "units": "fuel model number (Scott & Burgan 2005)",
+          "note": "written into urban cells by the data generators; a slow-burning timber litter model"
+        },
+        "ros_factor": {
+          "value": 0.5,
+          "source": "PLACEHOLDER - team assumption (docs/plan.md sections 2.6 and 13): fire takes twice as long to cross into and through an urban cell as through the surrogate fuel",
+          "units": "dimensionless",
+          "note": "in [0, 1]; multiplies the urban cell's rate of spread in every direction, after the spread rule"
+        },
+        "residence_factor": {
+          "value": 30.0,
+          "source": "PLACEHOLDER - team assumption (docs/plan.md sections 2.6 and 13): an urban cell flames 30 times as long as the surrogate fuel (TL3 residence time 15.0 s, Anderson 1969, -> 7.5 min; it was 1 h while the TL3 value was a 120 s placeholder)",
+          "units": "dimensionless",
+          "note": ">= 1; multiplies the residence time of the urban cell's fuel model"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+metric,comparison,statistic,units,rothermel_value,rothermel_lower,rothermel_upper,rothermel_n_runs,alexandridis_value,alexandridis_lower,alexandridis_upper,alexandridis_n_runs
+runs_reaching_edge,grid edge,count,runs,19,nan,nan,200,80,nan,nan,200
+jaccard,observed burned by the window end (48.5 h),consensus mask (burned in >= 0.5 of the runs),dimensionless,0.42707752170865343,nan,nan,181,0.34548050867467983,nan,nan,120
+jaccard,observed burned by the window end (48.5 h),"mean over runs, bootstrap interval",dimensionless,0.39722913778746616,0.38868584431936876,0.40546545053627736,181,0.3450035296960889,0.3427719493404002,0.34729753276653874,120
+sorensen,observed burned by the window end (48.5 h),consensus mask (burned in >= 0.5 of the runs),dimensionless,0.598534438686007,nan,nan,181,0.513542197671795,nan,nan,120
+sorensen,observed burned by the window end (48.5 h),"mean over runs, bootstrap interval",dimensionless,0.5660405909313397,0.5571114259310287,0.5746530178941868,181,0.5128825211025894,0.5104131855051334,0.5154178070748486,120
+jaccard,final MTBS perimeter (includes suppression),consensus mask (burned in >= 0.5 of the runs),dimensionless,0.34937762916621723,nan,nan,181,0.37243178013935924,nan,nan,120
+jaccard,final MTBS perimeter (includes suppression),"mean over runs, bootstrap interval",dimensionless,0.3348045023519798,0.32774159159013144,0.34180295235691205,181,0.36656125880767826,0.36457153996688796,0.3683810046340842,120
+sorensen,final MTBS perimeter (includes suppression),consensus mask (burned in >= 0.5 of the runs),dimensionless,0.5178352176804625,nan,nan,181,0.5427326669767758,nan,nan,120
+sorensen,final MTBS perimeter (includes suppression),"mean over runs, bootstrap interval",dimensionless,0.499559812741561,0.49109607725501675,0.5078766840790162,181,0.5363824492461066,0.5341988227186316,0.5383640036414767,120
+arrival_inside_fraction,308 VIIRS first detections in the window,"mean over runs, bootstrap interval",fraction,0.08746502116667863,0.08211908947406185,0.09300782090837341,181,0.05822510822510822,0.05633116883116883,0.06020021645021645,120
+arrival_error_median,308 VIIRS first detections in the window,"mean over runs, bootstrap interval",h,10.063082296464334,9.556547941027711,10.572883720533314,181,12.629082073120866,12.409022145250942,12.85680454522001,120
+arrival_error_mean,308 VIIRS first detections in the window,"mean over runs, bootstrap interval",h,11.94960701290127,11.497728126024816,12.40367482403693,181,13.428477081844509,13.191496118277554,13.67762952164858,120
+area_ratio,observed burned 24 h after the ignition (1891 ha),"mean over runs, bootstrap interval",dimensionless,2.4385541572961604,2.3121795300014436,2.572039838338549,181,1.7383507084939942,1.6714556655717936,1.8031406495453897,120
+area_ratio,observed burned 48 h after the ignition (4959 ha),"mean over runs, bootstrap interval",dimensionless,2.380026929414971,2.2714572993895965,2.494895942819314,181,2.88585535470132,2.832537017375101,2.937165626096531,120
+area_ratio,observed burned 48.5 h after the ignition (6699 ha),"mean over runs, bootstrap interval",dimensionless,1.7941545815261541,1.712492002043914,1.8808974645699825,181,2.171461311443107,2.1314088558460518,2.2098402204920826,120
+burned_area,runs inside the grid,"mean, Student-t interval",ha,12018.826243093923,11443.877526455608,12593.77495973224,181,14546.35875,14276.600317163256,14816.11718283674,120
+burned_area,all runs,mean (lower bound),ha,12958.69545,nan,nan,200,16259.35815,nan,nan,200
+runs_for_precision,"burned area, half-width <= 0.05 of the mean",count,runs,166,nan,nan,181,19,nan,nan,120
+breaches,breaks (WP 2.9),"mean over runs, bootstrap interval",breaks,1623.3149171270718,1528.4334254143646,1724.757458563536,181,0.0,0.0,0.0,120

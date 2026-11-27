@@ -639,8 +639,9 @@ engine's whole 0.5 s budget. WP 3.1 benchmarks with this rule on the fire A grid
 arrival-time errors reported for both, with the sensitivity analysis. No reported run reaches
 the edge of its grid, and calibration recovers the same parameters at every head bearing.
 Status: open. The last condition is met on synthetic fires (WP 3.1) and the pipeline is built
-(section 12, Phase 3). Fire A is calibrated ([calibration.md](calibration.md), *Fire A*); the
-two validations have not been run on the real fires ([real_data.md](real_data.md)).
+(section 12, Phase 3). Fire A is calibrated ([calibration.md](calibration.md), *Fire A*) and
+both fires are validated ([validation.md](validation.md) section 11). Not met: runs reach the
+grid edge on both fires (19 and 24 of 200 with Rothermel), and the overlap is poor.
 
 **M3 - strategies are evaluated.** The optimized policy is compared with the three baselines on
 unseen seeds and held-out scenarios, with confidence intervals and the mean / 90th-percentile
@@ -938,8 +939,12 @@ Status: the code of 3.1-3.3 is built and tested on synthetic fires and the commi
 `ros_multiplier` 0.383 and `lb_scale` 0.641, identified (a clear minimum, both inside their
 bounds, no surface point at the grid edge) but with a burned-area overlap of only 42 % and a
 factor that absorbs the fire's suppression and any remaining input errors; the Alexandridis
-optimum is limited by the grid edge. **The validations have not been run:** `docs/validation.md`
-has no numbers and milestone M2 is open. [real_data.md](real_data.md) lists the steps.
+optimum is limited by the grid edge. **Both fires are validated** (WP 3.3 run,
+[validation.md](validation.md) section 11) and **milestone M2 is not met**: with Rothermel, 19
+and 24 of 200 runs reach the grid edge, the overlap is Jaccard 0.40 (fire A, 48.5 h perimeter)
+and 0.42 (fire B, final perimeter), and both fires burn partly in the wrong place, which points
+to the single-point wind. The Alexandridis rule reports no intensity, so its fires never cross a
+break; its results are confounded (open decision for the team).
 
 3.1 built (branch `wp-3.1-calibration`): `wildfire_sim.calibration` and `scripts/calibrate.py`,
 settings in `configs/calibration.yaml`. The `"rothermel"` rule takes the two calibrated

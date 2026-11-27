@@ -1,0 +1,217 @@
+{
+  "target": {
+    "description": "region silverado_2020, 48 h after the recorded ignition",
+    "region": "silverado_2020",
+    "role": "B",
+    "window_hours": 48.0,
+    "ignition_s": 24540.0,
+    "window_end_s": 197340.0,
+    "start_time_utc": "2020-10-26T07:00:00+00:00",
+    "ignition_cell": [
+      146,
+      314
+    ],
+    "footprint_m": 375.0,
+    "n_detections": 192,
+    "observed_window_ha": null,
+    "observed_final_ha": 5182.65,
+    "final_label": "final MTBS perimeter (includes suppression)",
+    "notes": [
+      "silverado_2020 has no daily perimeters (NIFC's archive starts in 2022): no overlap at the window end and no daily area ratio; the overlap is scored against the final perimeter only, which includes suppression"
+    ]
+  },
+  "synthetic": false,
+  "rules": {
+    "rothermel": {
+      "summary": "docs/img/validation/silverado_2020_rothermel_summary.json",
+      "parameters": {
+        "status": "calibrated",
+        "rule": "rothermel",
+        "params": {
+          "ros_multiplier": 0.3828128626140037,
+          "lb_scale": 0.6406909338883094
+        },
+        "source": "WP 3.1 study on region lake_2024, 48.5 h: 100 trials x 2 seeds",
+        "path": "/Users/oscaransted/apc524/APC_524_Final/configs/calibrated.yaml",
+        "sha256": "a18bb4831ab267ef585599593b7f8903e7c01c1b7064e9a31796dfd695abdbb5",
+        "calibrated_on": "region lake_2024, 48.5 h",
+        "retuned": false,
+        "note": "fire B is run with the parameters of /Users/oscaransted/apc524/APC_524_Final/configs/calibrated.yaml unchanged (calibrated on: region lake_2024, 48.5 h); nothing is tuned"
+      },
+      "edge": {
+        "n_reached": 24,
+        "n_runs": 200,
+        "m2_no_run_reaches_edge": false,
+        "runs": [
+          {
+            "run": 12,
+            "seed": 8884922674960476170,
+            "reached_edge_s": 185813.58065789624,
+            "hours_after_ignition": 44.798216849415624
+          },
+          {
+            "run": 31,
+            "seed": 7832743270035825959,
+            "reached_edge_s": 164689.24656091878,
+            "hours_after_ignition": 38.93034626692188
+          },
+          {
+            "run": 41,
+            "seed": 926865889806197249,
+            "reached_edge_s": 136889.83678950818,
+            "hours_after_ignition": 31.208287997085606
+          },
+          {
+            "run": 47,
+            "seed": 3337563832906735772,
+            "reached_edge_s": 196417.88524454745,
+            "hours_after_ignition": 47.74385701237429
+          },
+          {
+            "run": 49,
+            "seed": 2472025746273735847,
+            "reached_edge_s": 186423.2936879901,
+            "hours_after_ignition": 44.96758157999725
+          },
+          {
+            "run": 73,
+            "seed": 7868797942656322038,
+            "reached_edge_s": 151626.2007617703,
+            "hours_after_ignition": 35.301722433825084
+          },
+          {
+            "run": 77,
+            "seed": 2793978457957594404,
+            "reached_edge_s": 194560.05539152835,
+            "hours_after_ignition": 47.22779316431343
+          },
+          {
+            "run": 78,
+            "seed": 3179458463926639610,
+            "reached_edge_s": 163381.7814539545,
+            "hours_after_ignition": 38.56716151498736
+          },
+          {
+            "run": 85,
+            "seed": 8198787493585687136,
+            "reached_edge_s": 138905.17675730473,
+            "hours_after_ignition": 31.76810465480687
+          },
+          {
+            "run": 92,
+            "seed": 3912509970009296302,
+            "reached_edge_s": 167528.57547310658,
+            "hours_after_ignition": 39.71904874252961
+          },
+          {
+            "run": 102,
+            "seed": 3415127983130382031,
+            "reached_edge_s": 188744.38462466985,
+            "hours_after_ignition": 45.61232906240829
+          },
+          {
+            "run": 103,
+            "seed": 122386921696146253,
+            "reached_edge_s": 183312.81910525518,
+            "hours_after_ignition": 44.10356086257089
+          },
+          {
+            "run": 119,
+            "seed": 5895600108882813198,
+            "reached_edge_s": 166584.8533726639,
+            "hours_after_ignition": 39.45690371462886
+          },
+          {
+            "run": 125,
+            "seed": 6021291723499865086,
+            "reached_edge_s": 179655.25373123834,
+            "hours_after_ignition": 43.08757048089954
+          },
+          {
+            "run": 134,
+            "seed": 8078102857897619198,
+            "reached_edge_s": 136965.79872099185,
+            "hours_after_ignition": 31.229388533608848
+          },
+          {
+            "run": 143,
+            "seed": 4673975760069999649,
+            "reached_edge_s": 156963.47680007733,
+            "hours_after_ignition": 36.78429911113259
+          },
+          {
+            "run": 147,
+            "seed": 1959303577224729213,
+            "reached_edge_s": 179680.24810859986,
+            "hours_after_ignition": 43.09451336349996
+          },
+          {
+            "run": 149,
+            "seed": 2501320411354453043,
+            "reached_edge_s": 154874.5765277539,
+            "hours_after_ignition": 36.204049035487195
+          },
+          {
+            "run": 159,
+            "seed": 6884911965323293424,
+            "reached_edge_s": 173192.58047245038,
+            "hours_after_ignition": 41.292383464569554
+          },
+          {
+            "run": 162,
+            "seed": 7460362343768001676,
+            "reached_edge_s": 184263.5146287967,
+            "hours_after_ignition": 44.367642952443525
+          },
+          {
+            "run": 166,
+            "seed": 8245454976748072557,
+            "reached_edge_s": 193319.24145670538,
+            "hours_after_ignition": 46.88312262686261
+          },
+          {
+            "run": 168,
+            "seed": 3419365826535664255,
+            "reached_edge_s": 185110.45181850845,
+            "hours_after_ignition": 44.602903282919016
+          },
+          {
+            "run": 177,
+            "seed": 4275987577945699740,
+            "reached_edge_s": 185884.57925981717,
+            "hours_after_ignition": 44.81793868328255
+          },
+          {
+            "run": 183,
+            "seed": 1559533448742934589,
+            "reached_edge_s": 186128.50161429585,
+            "hours_after_ignition": 44.88569489285996
+          }
+        ]
+      }
+    },
+    "alexandridis": {
+      "summary": "docs/img/validation/silverado_2020_alexandridis_summary.json",
+      "parameters": {
+        "status": "calibrated",
+        "rule": "alexandridis",
+        "params": {
+          "ros_base": 0.14479051206682336,
+          "c2": 0.1741250745662409
+        },
+        "source": "WP 3.1 study on region lake_2024, 48.5 h: 100 trials x 2 seeds",
+        "path": "configs/calibrated_alexandridis.yaml",
+        "sha256": "a92c2b42e60fc9fc55ce38802ac906a8f39e17e4b671f76f38c8189b56a76ed3",
+        "calibrated_on": "region lake_2024, 48.5 h",
+        "retuned": false,
+        "note": "fire B is run with the parameters of configs/calibrated_alexandridis.yaml unchanged (calibrated on: region lake_2024, 48.5 h); nothing is tuned"
+      },
+      "edge": {
+        "n_reached": 0,
+        "n_runs": 200,
+        "m2_no_run_reaches_edge": true,
+        "runs": []
+      }
+    }
+  }
+}
