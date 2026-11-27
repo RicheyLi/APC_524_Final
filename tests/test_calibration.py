@@ -341,13 +341,27 @@ def test_observed_target_needs_daily_perimeters_posted_in_the_window() -> None:
 # ----------------------------------------------------------------------------- configs/calibrated.yaml
 
 
-def test_committed_calibrated_yaml_is_an_unmistakable_placeholder() -> None:
+@pytest.mark.parametrize(
+    ("filename", "rule"), [("calibrated.yaml", "rothermel"), ("calibrated_alexandridis.yaml", "alexandridis")]
+)
+def test_committed_calibrations_are_fire_a_studies_inside_their_bounds(filename: str, rule: str) -> None:
+    """The committed records are the fire A study (docs/calibration.md, "Fire A"), not a placeholder."""
+    record = load_calibrated(configs_dir() / filename)
+    assert record.status == "calibrated" and record.rule == rule
+    prov = record.provenance
+    assert prov is not None and prov.target == "region lake_2024, 48.5 h"
+    assert prov.window_hours == load_calibration_settings().window_hours.value  # the default reproduces it
+    assert prov.n_trials == 100 and len(prov.seeds) == 2 and len(prov.surface) == 25
+    space = load_calibration_settings().space(rule)
+    assert set(record.params) == set(space)
+    for name, value in record.params.items():
+        assert space[name].low < value < space[name].high  # an optimum on a bound is not a calibration
+
+
+def test_calibrated_record_applies_only_to_its_rule() -> None:
     record = load_calibrated()
-    assert record.status == "placeholder" and record.provenance is None
-    assert record.params == {"ros_multiplier": 1.0, "lb_scale": 1.0} and record.rule == "rothermel"
-    assert record.source.startswith("PLACEHOLDER") and "scripts/calibrate.py lake_2024" in record.source
-    config = record.apply(flat_fire(0.0))
-    assert config.spread.params == {"ros_multiplier": 1.0, "lb_scale": 1.0}
+    config = record.apply(changed(flat_fire(0.0), spread={"rule": "rothermel"}))
+    assert config.spread.params == record.params
     with pytest.raises(ValueError, match="rule"):
         record.apply(changed(flat_fire(0.0), spread={"rule": "constant"}))
     with pytest.raises(ValueError, match="provenance"):

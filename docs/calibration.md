@@ -5,11 +5,11 @@ rejected, how to run a study and what the tests show the method can recover. The
 `docs/plan.md` section 7; the code is `wildfire_sim.calibration` and `scripts/calibrate.py`;
 the settings are `configs/calibration.yaml` and the result goes to `configs/calibrated.yaml`.
 
-**Status.** The committed `configs/calibrated.yaml` is a **placeholder**: neutral values
-(`ros_multiplier` 1, `lb_scale` 1), produced by no study. The study on fire A needs its built
-region and observations (a LANDFIRE e-mail and a NASA Earthdata token), which were not
-available where this work package was written. Run it with the command under *Running a study*
-once the region is built.
+**Status.** Fire A is calibrated (section *Fire A*): `configs/calibrated.yaml` (Rothermel,
+`ros_multiplier` 0.383, `lb_scale` 0.641) and `configs/calibrated_alexandridis.yaml`
+(`ros_base` 0.145 m/s, `c2` 0.174 s/m). The Rothermel factor is about 2.6 times below 1, which
+the data do not attribute to the rule: it absorbs the suppression of the real fire and whatever
+inputs are still wrong. Read that section before using the values.
 
 Units: times in s unless stated (the window in h), rates in m/s, lengths in m; the objective
 and both calibration factors are dimensionless.
@@ -46,7 +46,8 @@ In code, `load_calibrated().apply(config)` returns the scenario with the calibra
 ## The objective
 
 A run starts at the recorded ignition `t_0` and runs, unsuppressed, to the end of the
-early-growth window `t_1` (`window_hours`, a placeholder of 48 h, the first two burning periods).
+early-growth window `t_1` (`window_hours`, 48.5 h: the first two burning periods, ending just
+after one of fire A's daily perimeters was posted).
 For each of a fixed set of seeds:
 
 ```latex
@@ -161,7 +162,90 @@ capped for every `lb_scale` above 0.83) the objectives at `lb_scale` 1, 1.5 and 
 check that count before reading a calibrated `lb_scale`. Fire B, a Santa Ana fire, will very
 likely spend its main run above the cap (`docs/plan.md` section 13).
 
+## Fire A
+
+The 2024 Lake Fire, calibrated on 2026-11-27 on an Apple M4 Pro (macOS 26.6, Python 3.12.15,
+NumPy 2.5.4, Numba 0.68.1), from commit `7f359fa`:
+
+```sh
+uv run --extra fast --extra opt --extra geo python scripts/calibrate.py lake_2024 --window-hours 48.5
+uv run --extra fast --extra opt --extra geo python scripts/calibrate.py lake_2024 --window-hours 48.5 \
+    --rule alexandridis --out configs/calibrated_alexandridis.yaml
+```
+
+(`window_hours` in `configs/calibration.yaml` is now 48.5, so the flag can be left out.)
+
+**Target.** The region's 815 x 978 cells of 30 m; ignition 5 July 2024 22:48 UTC at the IRWIN
+point; window 48.5 h. The observed mask is the daily perimeter posted 48.1 h after the ignition,
+6,699 ha (74,432 cells): a 48 h window would have ended 4 minutes before that posting and
+scored the fire against the perimeter of 27.1 h (4,959 ha). 308 VIIRS first detections fall in
+the window. Live woody moisture is the measured 88 % of the Santa Barbara County Fire
+Department's chamise samples (`configs/live_fuel_moisture.yaml`), not the 60 % placeholder.
+Weights 0.5 / 0.5, 100 trials x 2 seeds, sampler seed 0.
+
+| | Rothermel | Alexandridis |
+| --- | --- | --- |
+| Parameters | `ros_multiplier` 0.383, `lb_scale` 0.641 | `ros_base` 0.145 m/s, `c2` 0.174 s/m |
+| Objective | 0.403 | 0.460 |
+| 1 - Jaccard | 0.579 | 0.670 |
+| Normalized arrival error | 0.227 | 0.249 |
+| Trials rejected by the edge rule | 25 of 100 | 34 of 100 |
+| Surface points rejected | 0 of 25 | 11 of 25 |
+| Wall time, one core | 1 h 40 min | 42 min |
+
+**Rothermel is identified.** All 24 neighbours of the optimum on the surface (plus and minus
+10 and 20 % in each parameter) have a larger objective (0.407-0.430), no surface point reaches
+the grid edge and both parameters are inside their bounds. The minimum is shallow: 20 % in
+either parameter raises the objective by at most 7 %, so the values are known to about that
+precision. The lattice cap does not hide `lb_scale`: run at the optimum, at most 5.7 % of the
+burned cells (0.7 % on average over the 49 hours) have a capped ellipse in any hour, and
+`lb_capped_cell_hours` is about 400. The two seeds give 1 - Jaccard 0.579 and 0.578.
+
+**Alexandridis is limited by the grid edge.** Every surface point faster than the optimum
+(larger `ros_base`, or smaller `c2` at the same `ros_base`) reached the edge, and the objective
+falls towards them. Its optimum is the fastest fire that stays on the grid within the window,
+not a minimum of the objective, so its `ros_base` is a lower bound.
+
+**What the Rothermel factor means.** A multiplier of 0.38 says that, with the measured inputs,
+the uncalibrated rule spreads the fire about 2.6 times too fast over the first two burning
+periods. Before calibration a probe with the placeholder 60 % live woody moisture needed about
+0.30-0.35; the measured moisture explains part of the gap. The rest is not attributable to
+Rothermel's equations:
+
+- The Lake Fire was suppressed from the start, and the model has no suppression in Phase 3.
+  Calibrating to perimeters of a suppressed fire folds the suppression into the factor
+  (Stratton 2006 names "a fire with minimal suppression or knowledge of suppression tactics" as
+  a criterion for a calibration fire; Carrasco et al. 2019 make the same point for adjustment
+  factors fitted to real fire scars).
+- Stratton (2006) takes an adjustment of about 0.3-0.4 away from 1 to mean that a different
+  fuel model may be needed. This one is 0.62. About 40 % of the burnable cells are grass or
+  grass-shrub models (GR2, GS2, GS3), whose spread does not depend on live woody moisture.
+- The wind is one HRRR point at the grid centroid for the whole region; terrain-driven local
+  winds are not represented.
+
+**The two terms disagree.** The perimeter favours a slower fire and the VIIRS arrivals a faster
+one: at the optimum the simulated fire burns about 11,800 ha against 6,699 ha observed. Along
+the surface at `lb_scale` 0.641, 1 - Jaccard falls from 0.688 to 0.523 between multipliers 0.459
+and 0.306 while the arrival error rises from 0.166 to 0.309. So the optimum depends on the
+weights, which are placeholders. Even at the optimum the burned areas
+overlap by 42 % (Jaccard 0.42), and `lb_scale` 0.64 asks for a rounder fire than Anderson's
+(1983) ratios: where the fire burns, not only how fast, is off.
+
+**Use.** Report fire B's validation (WP 3.3) with these values as a test of the whole model
+including this compensation, not of Rothermel alone. Cruz & Alexander (2013) found mean
+rate-of-spread errors of 20 to 310 % across 49 evaluation data sets, mostly under-predictions,
+so an over-prediction of this size is unusual and worth revisiting when suppression is modelled
+(Phase 4) or the wind is improved.
+
 ## References
+
+- Carrasco, J., Pais, C., Shen, Z.-J. M. & Weintraub, A. (2019). Adjusting rate of spread
+  factors through derivative-free optimization: a new methodology to improve the performance of
+  forest fire simulators. arXiv:1909.05949.
+- Cruz, M. G. & Alexander, M. E. (2013). Uncertainty associated with model predictions of
+  surface and crown fire rates of spread. Environ. Model. Softw. 47, 16-28.
+- Stratton, R. D. (2006). Guidance on spatial wildland fire analysis: models, tools, and
+  techniques. USDA For. Serv. Gen. Tech. Rep. RMRS-GTR-183.
 
 - Anderson, H. E. (1983). Predicting wind-driven wild land fire size and shape. USDA For. Serv.
   Res. Pap. INT-305.

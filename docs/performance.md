@@ -279,18 +279,29 @@ about 35 of its 60 s there. Evaluating the rule only near the fire would remove 
 ## Sizing the calibration study (WP 3.1)
 
 The plan asks for `scripts/bench.py` on fire A's grid over the early-growth window before the
-trial and seed counts of the calibration study are chosen. **Fire A's built region was not
-available on the machine where WP 3.1 was written** (building it needs a LANDFIRE e-mail and a
-NASA Earthdata token), so the full-grid measurement is still to be made; what is below is the
-committed 5 km crop of fire A, the first full-grid measurement quoted above, and what they imply.
-Once the region is built, run
+trial and seed counts of the calibration study are chosen.
+
+**Measured on fire A's grid** (2026-11-27, Apple M4 Pro, macOS 26.6, Python 3.12.15, NumPy
+2.5.4, Numba 0.68.1, `NUMBA_NUM_THREADS=1`; a different machine from the laptop above):
 
 ```sh
-uv run --extra fast --extra geo python scripts/bench.py --region lake_2024 --hours 48 --engines numba --repeats 3
+uv run --extra fast --extra opt --extra geo python scripts/bench.py --region lake_2024 --hours 48 --engines numba --repeats 3
 ```
 
-and revise the counts in `configs/calibration.yaml` if the time per run differs much from the
-estimate below.
+| Grid | Window | Rule | Numba engine, min / median of 3 | Rule evaluation over the grid |
+| --- | --- | --- | --- | --- |
+| 815 x 978 cells | 48 h after the ignition | `"rothermel"`, uncalibrated | 28.3 / 28.8 s | 0.342 s |
+
+The uncalibrated fire burned 599,268 cells and reached the grid edge 12.8 h after the ignition,
+so the run is a lower bound on the cost of a fire that stays on the grid. Near the calibrated
+parameters (about 131,000 cells burned in 48.5 h) a trial of two runs took about 55 s in the
+study log, so about 27 s per run. A run is about 4 times
+cheaper than the estimate below (2 min), so the counts were kept: the Rothermel study (100
+trials x 2 seeds and the 25-point surface) took 1 h 40 min on one core and the Alexandridis
+study 42 min (`docs/calibration.md`, *Fire A*).
+
+What follows was written before the region was built: the committed 5 km crop of fire A, the
+first full-grid measurement quoted above, and the estimate they implied.
 
 **Measured on the crop** (2026-11-16, the laptop above, Python 3.12.16, NumPy 2.5.4, Numba
 0.68.1): `tests/fixtures/lake_2024_5km.npz` (167 x 167 cells) with its hourly HRRR weather, the
