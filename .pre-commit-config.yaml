@@ -27,3 +27,20 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+
+  # The repository is public: refuse to commit a NASA Earthdata token (docs/real_data.md).
+  # .gitignore already ignores token files; these also catch `git add -f` and a token
+  # pasted into another file. Earthdata tokens are JWTs (three base64url parts, the first
+  # two starting "eyJ").
+  - repo: local
+    hooks:
+      - id: forbid-earthdata-token-file
+        name: forbid Earthdata token files
+        language: fail
+        entry: "a NASA Earthdata token file is staged; unstage it with `git rm --cached <file>`"
+        files: earthdata_token
+      - id: forbid-bearer-token
+        name: forbid bearer tokens (JWTs) in file contents
+        language: pygrep
+        entry: 'eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'
+        types: [text]
