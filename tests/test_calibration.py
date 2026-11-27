@@ -312,7 +312,7 @@ def test_objective_surface_is_a_clipped_grid_around_the_center() -> None:
 
 
 def test_real_fire_says_how_to_build_a_missing_region(tmp_path: Path) -> None:
-    with pytest.raises(FileNotFoundError, match="download_data.py lake_2024 --observations"):
+    with pytest.raises(FileNotFoundError, match=r"download_data\.py lake_2024 --observations"):
         real_fire("lake_2024", 24.0, cache_root=tmp_path)
 
 

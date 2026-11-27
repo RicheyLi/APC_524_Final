@@ -21,14 +21,14 @@ import pytest
 
 pytest.importorskip("numba")
 
-from wildfire_sim import sim, sim_fast  # noqa: E402
-from wildfire_sim.config import ScenarioConfig, load_scenario  # noqa: E402
-from wildfire_sim.data.synthetic import flat_uniform  # noqa: E402
-from wildfire_sim.ensemble import run_ensemble  # noqa: E402
-from wildfire_sim.grid import Grid, Weather  # noqa: E402
-from wildfire_sim.sim import RunResult  # noqa: E402
-from wildfire_sim.spread.base import SpreadOutput  # noqa: E402
-from wildfire_sim.types import CellState, Stencil  # noqa: E402
+from wildfire_sim import sim, sim_fast
+from wildfire_sim.config import ScenarioConfig, load_scenario
+from wildfire_sim.data.synthetic import flat_uniform
+from wildfire_sim.ensemble import run_ensemble
+from wildfire_sim.grid import Grid, Weather
+from wildfire_sim.sim import RunResult
+from wildfire_sim.spread.base import SpreadOutput
+from wildfire_sim.types import CellState, Stencil
 
 SCENARIOS = Path(__file__).resolve().parent.parent / "configs" / "scenarios"
 ARRIVAL_RTOL = 1e-9  # relative, on float64 arrival times (s)

@@ -132,7 +132,7 @@ def write_csv(path: Path, **override: str) -> Path:
         "sav_live_woody,depth,mx_dead,heat_dead,heat_live,dynamic,sav_10h,sav_100h,particle_density,"
         "mineral_total,mineral_effective,name"
     )
-    defaults = "1,X,0.74,0,0,0,0,3500,0,0,1,12,8000,8000,0,109,30,32,0.0555,0.01,test".split(",")
+    defaults = "1,X,0.74,0,0,0,0,3500,0,0,1,12,8000,8000,0,109,30,32,0.0555,0.01,test".split(",")  # noqa: SIM905
     values = [override.get(col, val) for col, val in zip(header.split(","), defaults, strict=True)]
     path.write_text("# comment\n" + header + "\n" + ",".join(values) + "\n", encoding="utf-8")
     return path

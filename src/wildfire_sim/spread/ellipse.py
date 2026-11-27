@@ -524,7 +524,7 @@ def load_fit_table(path: str | Path, stencil_size: int) -> LatticeFitTable:
     for line in p.read_text(encoding="utf-8").splitlines():
         if line.startswith("# bearings_deg:"):
             bearings = np.array([float(x) for x in line.split(":", 1)[1].split()])
-        elif line.startswith("#") or line.startswith("lb,") or not line.strip():
+        elif line.startswith(("#", "lb,")) or not line.strip():
             continue
         else:
             rows.append([float(x) for x in line.split(",")])
