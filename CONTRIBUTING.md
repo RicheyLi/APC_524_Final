@@ -15,6 +15,16 @@ uv sync --extra all           # also numba, geospatial stack, pyrothermel, optun
 
 `uv` creates `.venv/` inside the repo. Never commit it.
 
+Install the commit hooks once per clone:
+
+```sh
+uvx pre-commit install
+```
+
+Besides formatting, they refuse a commit that contains a NASA Earthdata token, either a token
+file (even one added with `git add -f`) or a token pasted into any text file. The repository is
+public, so a token that reaches it must be revoked at <https://urs.earthdata.nasa.gov>.
+
 On Windows or WSL set `git config core.autocrlf false`; `.gitattributes` enforces LF endings so
 checkouts stay clean.
 

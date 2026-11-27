@@ -51,6 +51,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import itertools
 import math
 import os
 import shutil
@@ -317,7 +318,7 @@ def plot_outlines(results: Sequence[CaseResult], stencil: StencilSize, path: Pat
             ax = axes[i, j]
             case = next(r for r in results if r.stencil == stencil and r.lb == lb and r.head_deg == head)
             arr = case.arrival
-            h, w = arr.shape
+            _h, w = arr.shape
             burned = (np.nan_to_num(arr, nan=np.inf) <= T_S).astype(float)
             half = w // 2
             ext_km = (np.array([-half - 0.5, half + 0.5]) * DX) / 1000.0
@@ -420,7 +421,7 @@ def plot_isotropic_profile(path: Path, seeds: Sequence[int]) -> dict[tuple[int, 
     out: dict[tuple[int, float], tuple[FloatArray, FloatArray]] = {}
     fig = _figure(6.5, 4.2)
     ax = fig.add_subplot()
-    bins = list(zip(edges[:-1], edges[1:], strict=True))
+    bins = list(itertools.pairwise(edges))
     for stencil in STENCILS:
         for shape in (20.0, ALT_SHAPE):
             cfg = ellipse_config(n, stencil, 60 * DX / R_HEAD, shape)

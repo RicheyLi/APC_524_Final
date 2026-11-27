@@ -62,3 +62,7 @@ runs/
 
 # Notebook checkpoints
 .ipynb_checkpoints/
+
+# NASA Earthdata token: a personal credential, ignored in every folder (never commit).
+# Keep this last so that no later "!" rule can re-include it.
+*earthdata_token*

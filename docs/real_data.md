@@ -41,6 +41,12 @@ mkdir -p data && printf '%s\n' "PASTE-THE-TOKEN" > data/.earthdata_token   # git
 `EARTHDATA_TOKEN` in the environment works instead of the file. In PowerShell the first line is
 `$env:WILDFIRE_SIM_LANDFIRE_EMAIL = "you@example.edu"`.
 
+The repository is public. Any file named `*earthdata_token*` is git-ignored in every folder, and
+the commit hooks (`uvx pre-commit install`, once per clone) also refuse a token file added with
+`git add -f` or a token pasted into any other file. If a token is ever pushed, revoke it on the
+Earthdata token page and generate a new one: deleting it in a later commit leaves it in the
+history.
+
 ## 2. Install
 
 From the repository root, on the machine that will download (see `AGENTS.md`: run `uv` from WSL

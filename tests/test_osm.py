@@ -127,7 +127,7 @@ def test_buildings_and_missing_tags(params: OsmParams) -> None:
     assert classify({"building": "yes"}, "Point", params) == Feature("building")
     assert classify({"building": "no", "natural": "water"}, "Polygon", params) == Feature("water")
     assert classify({"building": "yes"}, "LineString", params) is None
-    nan = {k: math.nan for k in ("highway", "waterway", "building", "width", "tunnel", "bridge")}
+    nan = dict.fromkeys(("highway", "waterway", "building", "width", "tunnel", "bridge"), math.nan)
     assert classify({**nan, "highway": "track"}, "LineString", params) == Feature("break", 3.0)
     assert classify(nan, "LineString", params) is None
 
@@ -353,7 +353,7 @@ def test_fetch_osm_caches_with_a_manifest(tmp_path: Path) -> None:
     assert calls == [(bbox, OSM_TAGS)]
     assert got.manifest["attribution"] == ATTRIBUTION and got.manifest["n_features"] == 3
     gdf = got.read()
-    assert list(gdf["highway"])[0] == "track" and len(gdf) == 3
+    assert next(iter(gdf["highway"])) == "track" and len(gdf) == 3
     assert "nodes" not in gdf.columns
     again = fetch_osm(bbox, cache_root=tmp_path, source=source)
     assert len(calls) == 1 and again.manifest == got.manifest

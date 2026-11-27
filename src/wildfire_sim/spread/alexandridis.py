@@ -22,6 +22,7 @@ Spetses Island in 1990. Applied Mathematics and Computation 204, 191-201.
 
 from __future__ import annotations
 
+import itertools
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -89,7 +90,7 @@ class VegetationMap(_Strict):
     @model_validator(mode="after")
     def _no_overlap(self) -> VegetationMap:
         spans = sorted((r.first, r.last) for r in self.ranges)
-        for (_, prev_last), (first, last) in zip(spans, spans[1:], strict=False):
+        for (_, prev_last), (first, last) in itertools.pairwise(spans):
             if first <= prev_last:
                 raise ValueError(f"fuel model ranges overlap at {first}-{last}")
         return self
