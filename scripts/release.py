@@ -26,7 +26,7 @@ class TagState(NamedTuple):
 
 
 def _run(*cmd: str) -> None:
-    print(f"$ {' '.join(cmd)}")  # noqa: T201
+    print(f"$ {' '.join(cmd)}")
     try:
         subprocess.run(cmd, check=True)
     except OSError as error:
@@ -235,13 +235,13 @@ def main() -> int:
                 notes,
             )
     except ReleaseError as error:
-        print(f"Release aborted: {error}")  # noqa: T201
+        print(f"Release aborted: {error}")
         return 1
     except subprocess.CalledProcessError as error:
-        print(f"Release command failed: {error}")  # noqa: T201
+        print(f"Release command failed: {error}")
         return 1
     except OSError as error:
-        print(f"Release command failed: {error}")  # noqa: T201
+        print(f"Release command failed: {error}")
         return 1
     return 0
 

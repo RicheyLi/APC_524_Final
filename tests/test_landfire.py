@@ -69,7 +69,7 @@ def test_refuses_a_version_newer_than_the_fire() -> None:
         check_version("LF2024", dt.date(2024, 9, 1))
     with pytest.raises(ValueError, match="unknown LANDFIRE version"):
         check_version("LF1999", CHIMNEY)
-    with pytest.raises(ValueError, match="before the fire$"):
+    with pytest.raises(ValueError, match=r"before the fire$"):
         check_version("LF2012", dt.date(2012, 6, 1))  # nothing older is listed
 
 
