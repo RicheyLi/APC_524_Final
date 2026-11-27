@@ -173,17 +173,45 @@ def write_runs(result: ValidationRuns, observed: Observed, path: Path) -> None:
     with path.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.writer(fh, lineterminator="\n")
         writer.writerow(
-            ["run", "seed", *keys, "reached_edge_s", "reached_edge_h", "burned_area_ha", "jaccard_window"]
-            + ["sorensen_window", "jaccard_final", "sorensen_final", "arrival_inside_fraction"]
-            + ["arrival_error_median_h", "arrival_error_mean_h", *days, "lb_capped_cell_hours", "breaches"]
+            [
+                "run",
+                "seed",
+                *keys,
+                "reached_edge_s",
+                "reached_edge_h",
+                "burned_area_ha",
+                "jaccard_window",
+                "sorensen_window",
+                "jaccard_final",
+                "sorensen_final",
+                "arrival_inside_fraction",
+                "arrival_error_median_h",
+                "arrival_error_mean_h",
+                *days,
+                "lb_capped_cell_hours",
+                "breaches",
+            ]
         )
         for i, r in enumerate(result.runs):
             writer.writerow(
-                [i, r.seed, *(_fmt(r.perturbation[k]) for k in keys), _fmt(r.reached_edge_s)]
-                + [_fmt(_hours(r.reached_edge_s, observed)), _fmt(r.burned_area_ha), _fmt(r.jaccard_window)]
-                + [_fmt(r.sorensen_window), _fmt(r.jaccard_final), _fmt(r.sorensen_final), _fmt(r.inside_fraction)]
-                + [_fmt(r.median_error_h), _fmt(r.mean_error_h), *(_fmt(a) for a in r.area_ratio)]
-                + [_fmt(r.lb_capped_cell_hours), r.breaches]
+                [
+                    i,
+                    r.seed,
+                    *(_fmt(r.perturbation[k]) for k in keys),
+                    _fmt(r.reached_edge_s),
+                    _fmt(_hours(r.reached_edge_s, observed)),
+                    _fmt(r.burned_area_ha),
+                    _fmt(r.jaccard_window),
+                    _fmt(r.sorensen_window),
+                    _fmt(r.jaccard_final),
+                    _fmt(r.sorensen_final),
+                    _fmt(r.inside_fraction),
+                    _fmt(r.median_error_h),
+                    _fmt(r.mean_error_h),
+                    *(_fmt(a) for a in r.area_ratio),
+                    _fmt(r.lb_capped_cell_hours),
+                    r.breaches,
+                ]
             )
 
 
@@ -192,15 +220,32 @@ def write_detections(summaries: Sequence[DetectionSummary], observed: Observed, 
     with path.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.writer(fh, lineterminator="\n")
         writer.writerow(
-            ["row", "col", "t_clear_h", "t_detect_h", "sim_q05_h", "sim_median_h", "sim_q95_h"]
-            + ["reached_fraction", "median_error_h"]
+            [
+                "row",
+                "col",
+                "t_clear_h",
+                "t_detect_h",
+                "sim_q05_h",
+                "sim_median_h",
+                "sim_q95_h",
+                "reached_fraction",
+                "median_error_h",
+            ]
         )
         for s in summaries:
             d = s.detection
             writer.writerow(
-                [d.row, d.col, _fmt(_hours(d.t_clear, observed)), _fmt(_hours(d.t_detect, observed))]
-                + [_fmt(_hours(s.q05, observed)), _fmt(_hours(s.median, observed)), _fmt(_hours(s.q95, observed))]
-                + [_fmt(s.reached_fraction), _fmt(s.median_error_s / 3600.0)]
+                [
+                    d.row,
+                    d.col,
+                    _fmt(_hours(d.t_clear, observed)),
+                    _fmt(_hours(d.t_detect, observed)),
+                    _fmt(_hours(s.q05, observed)),
+                    _fmt(_hours(s.median, observed)),
+                    _fmt(_hours(s.q95, observed)),
+                    _fmt(s.reached_fraction),
+                    _fmt(s.median_error_s / 3600.0),
+                ]
             )
 
 
