@@ -26,6 +26,7 @@ from wildfire_sim.data.weather import (
     NfmdSample,
     Packing,
     WeatherParams,
+    _distance_km,
     bbox_centroid,
     daily_from_gridmet,
     disaggregate,
@@ -33,6 +34,7 @@ from wildfire_sim.data.weather import (
     hourly_weather,
     hrrr_missing_hours,
     live_fuel_moisture,
+    load_live_moisture_samples,
     load_weather_params,
     parse_ncss_csv,
     parse_packing,
@@ -320,6 +322,76 @@ def test_live_moisture_from_nearby_samples(params: WeatherParams) -> None:
     assert live.woody == pytest.approx(0.66)
     assert live.woody_source.startswith("NFMD: mean of 2")
     assert live.herb == 0.30 and "seasonal" in live.herb_source
+
+
+# Grid centroid of the built lake_2024 region (data/cache/lake_2024/manifest.json, "weather.point").
+LAKE_CENTROID = (34.762242, -120.034626)
+LAKE_WEATHER_DATE = dt.date(2024, 7, 5)  # local date of the region's weather start (configs/regions.yaml)
+
+
+def test_live_moisture_samples_file_loads() -> None:
+    samples = load_live_moisture_samples()
+    assert len(samples) == 10
+    assert {s.fuel for s in samples} == {"woody"}
+    assert {s.date for s in samples} == {dt.date(2024, 6, 6), dt.date(2024, 7, 2)}
+    assert all(0.5 < s.moisture < 1.5 for s in samples)
+
+
+def test_lake_sample_sites_are_well_inside_the_radius(params: WeatherParams) -> None:
+    # The site coordinates are estimates from the place names; they decide only whether a site
+    # is within nfmd_radius_km, so each must be inside it by more than the estimate's error.
+    margin_km = 5.0
+    for s in load_live_moisture_samples():
+        assert _distance_km(*LAKE_CENTROID, s.lat, s.lon) <= params.nfmd_radius_km.value - margin_km
+
+
+def test_lake_2024_live_moisture_from_county_samples(params: WeatherParams) -> None:
+    live = live_fuel_moisture(LAKE_WEATHER_DATE, *LAKE_CENTROID, load_live_moisture_samples(), params)
+    # chamise, Santa Barbara County Fire Department: 6 June (100, 88, 99, 83, 94 %) and 2 July 2024
+    # (83, 81, 95, 74, 86 %)
+    assert live.woody == pytest.approx(0.883)
+    assert live.woody_source.startswith("NFMD: mean of 10")
+    assert live.herb == 0.30 and "seasonal" in live.herb_source  # no herbaceous samples
+
+
+def test_silverado_keeps_the_seasonal_default(params: WeatherParams) -> None:
+    live = live_fuel_moisture(dt.date(2020, 10, 26), 33.75, -117.69, load_live_moisture_samples(), params)
+    assert (live.herb, live.woody) == (0.30, 0.60)
+
+
+def test_live_moisture_samples_validation(tmp_path: Path) -> None:
+    good = {
+        "sources": {"s": "a report"},
+        "sites": {"A": {"lat": 34.0, "lon": -120.0, "location_source": "estimate"}},
+        "samples": [{"site": "A", "date": "2024-07-02", "fuel": "woody", "moisture": 0.8, "source": "s"}],
+    }
+    path = tmp_path / "lfm.yaml"
+    for change, match in (
+        ({"site": "B"}, "unknown site"),
+        ({"source": "t"}, "unknown source"),
+        ({"moisture": 0.0}, "greater than 0"),
+        ({"fuel": "dead"}, "fuel"),
+    ):
+        raw = {**good, "samples": [{**good["samples"][0], **change}]}
+        path.write_text(json.dumps(raw), encoding="utf-8")
+        with pytest.raises(ValueError, match=match):
+            load_live_moisture_samples(path)
+
+
+def test_region_weather_uses_the_live_moisture_samples(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from wildfire_sim.data import cache
+
+    seen: dict[str, object] = {}
+
+    def fake_hourly_weather(*args: object, **kwargs: object) -> str:
+        seen.update(kwargs)
+        return "weather"
+
+    monkeypatch.setattr(cache, "hourly_weather", fake_hourly_weather)
+    start = dt.datetime(2024, 7, 5, 7, tzinfo=UTC)
+    assert cache._weather_source(*LAKE_CENTROID, start, 3600.0, tmp_path, "hrrr") == "weather"
+    assert seen["samples"] == load_live_moisture_samples()
+    assert seen["source"] == "hrrr"
 
 
 def test_params_validation(params: WeatherParams) -> None:

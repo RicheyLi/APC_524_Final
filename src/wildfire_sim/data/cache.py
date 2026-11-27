@@ -25,7 +25,8 @@ A region (``configs/regions.yaml``) is one validation fire. :func:`build_region`
 5. **Roads, water, buildings** (WP 2.5). OpenStreetMap features with the barrier rule; break
    widths; asset value from buildings.
 6. **Weather** (WP 2.4). Hourly gridMET at the grid centroid from ``weather_start_utc`` for
-   ``weather_days``.
+   ``weather_days``, with live moisture from the measured samples near the centroid
+   (``configs/live_fuel_moisture.yaml``) where there are any.
 
 The region directory ``data/cache/<region>/`` then holds ``grid.npz``, ``canopy.npz``,
 ``weather.yaml``, ``perimeter.geojson`` and ``manifest.json`` (sources, versions, dates, the
@@ -70,7 +71,12 @@ from wildfire_sim.data.landfire import (
 )
 from wildfire_sim.data.osm import OsmFeatures, apply_to_grid, fetch_osm, rasterize_features
 from wildfire_sim.data.terrain import DemFile, TargetGrid, fetch_dem, grid_metadata, terrain_for_grid
-from wildfire_sim.data.weather import gridmet_cache_key, hourly_weather, solar_dates_needed
+from wildfire_sim.data.weather import (
+    gridmet_cache_key,
+    hourly_weather,
+    load_live_moisture_samples,
+    solar_dates_needed,
+)
 from wildfire_sim.grid import LAYER_SPECS, Grid
 from wildfire_sim.types import FloatArray, IntArray
 from wildfire_sim.urban import load_urban_model
@@ -431,7 +437,13 @@ def _weather_source(
     lat: float, lon: float, start: dt.datetime, duration_s: float, root: Path, source: str = "gridmet"
 ) -> WeatherConfig:
     return hourly_weather(
-        lat, lon, start, duration_s, cache_root=root, source="hrrr" if source == "hrrr" else "gridmet"
+        lat,
+        lon,
+        start,
+        duration_s,
+        cache_root=root,
+        source="hrrr" if source == "hrrr" else "gridmet",
+        samples=load_live_moisture_samples(),
     )
 
 
@@ -592,6 +604,10 @@ def build_region(
             "point": {"lat": lat, "lon": lon},
             "start_utc": region.weather_start_utc.isoformat(),
             "days": region.weather_days,
+            "live_moisture_samples": {
+                "file": "configs/live_fuel_moisture.yaml",
+                "sha256": _sha256(configs_dir() / "live_fuel_moisture.yaml"),
+            },
         },
         "sources": {
             "mtbs": perimeter.manifest,
