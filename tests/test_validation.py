@@ -543,6 +543,53 @@ def test_earthdata_token_sources(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 # ----------------------------------------------------------------------------- live
 
 
+def test_fetch_viirs_reads_a_cached_period_without_the_catalogue(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A second call for the same box and period lists nothing and downloads nothing: the
+    catalogue's answer and every overpass come from the cache (a compute node without internet)."""
+    from wildfire_sim.data import validation
+    from wildfire_sim.data.validation import GranulePair, SwathWindow, fetch_viirs
+
+    start = dt.datetime(2024, 7, 6, 8, tzinfo=UTC)
+    end = start + dt.timedelta(hours=2)
+    box = (-120.2, 34.6, -119.9, 34.9)
+    pairs = [
+        GranulePair("VNP14IMG", "Suomi NPP", "A2024188.0930", "https://f/a.nc", "https://g/a.nc", start),
+        GranulePair("VJ114IMG", "NOAA-20", "A2024188.1018", "https://f/b.nc", "https://g/b.nc", end),
+    ]
+    calls = {"list": 0, "read": 0}
+
+    def find(*args: object, **kwargs: object) -> list[GranulePair]:
+        calls["list"] += 1
+        return pairs
+
+    def read(pair: GranulePair, box: object, http: object) -> SwathWindow | None:
+        calls["read"] += 1
+        if pair.satellite == "NOAA-20":
+            return None  # this overpass does not cover the box
+        z = np.zeros((2, 2))
+        return SwathWindow(pair.satellite, "a.nc", pair.time_start, z, z, z.astype(np.uint8), z[0], z[0], z[0])
+
+    monkeypatch.setattr(validation, "find_overpasses", find)
+    monkeypatch.setattr(validation, "read_overpass", read)
+    monkeypatch.setattr(validation, "EarthdataHttp", lambda token: None)  # the real client needs requests
+    first = fetch_viirs("x", box, start, end, cache_root=tmp_path, token="t")
+    assert calls == {"list": 1, "read": 2} and [w.satellite for w in first] == ["Suomi NPP"]
+
+    def offline(*args: object, **kwargs: object) -> None:
+        raise AssertionError("the cached period must not touch the network")
+
+    monkeypatch.setattr(validation, "find_overpasses", offline)
+    monkeypatch.setattr(validation, "read_overpass", offline)
+    again = fetch_viirs("x", box, start, end, cache_root=tmp_path)  # no token either
+    assert [(w.satellite, w.time_utc) for w in again] == [(w.satellite, w.time_utc) for w in first]
+
+    monkeypatch.setattr(validation, "find_overpasses", find)  # another period asks the catalogue again
+    fetch_viirs("x", box, start, end + dt.timedelta(hours=1), cache_root=tmp_path)
+    assert calls["list"] == 2 and calls["read"] == 2
+
+
 @pytest.mark.network
 def test_live_lake_fire_observations(tmp_path: Path) -> None:
     """Ignition, daily perimeters and the first VIIRS night passes of the Lake Fire."""

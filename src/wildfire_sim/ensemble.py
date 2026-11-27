@@ -213,6 +213,15 @@ class ScaledRateRule:
         self.multiplier = multiplier
         self.name = inner.name
 
+    @property
+    def lb_capped(self) -> np.ndarray | None:
+        """The inner rule's ``(H, W)`` bool mask of cells under the lattice cap, or None.
+
+        The simulator counts ``provenance["lb_capped_cell_hours"]`` from this attribute of the
+        rule it is given (WP 2.1d); without it a scaled run would report 0.
+        """
+        return getattr(self.inner, "lb_capped", None)
+
     def rate_of_spread(self, grid: Grid, weather: Weather, stencil: Stencil) -> SpreadOutput:
         """Inner output with ``ros`` (``(K, H, W)``, m/s) scaled by :attr:`multiplier`; no ``heat_per_area``."""
         out = self.inner.rate_of_spread(grid, weather, stencil)

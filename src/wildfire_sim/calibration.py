@@ -360,8 +360,8 @@ def real_fire(
 ) -> RealFire:
     """Set up a built region's fire for ``hours`` after its recorded ignition.
 
-    Listing the VIIRS overpasses queries NASA's public catalogue, so with ``viirs`` this needs an
-    internet connection even when every overpass is cached.
+    Once the region's observations are cached (``scripts/download_data.py <region>
+    --observations``) nothing here needs the network.
 
     Args:
         name: Region name.
