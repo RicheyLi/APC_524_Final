@@ -638,6 +638,9 @@ engine's whole 0.5 s budget. WP 3.1 benchmarks with this rule on the fire A grid
 **M2 - model is validated.** Calibrated on fire A; run on fire B without retuning; overlap and
 arrival-time errors reported for both, with the sensitivity analysis. No reported run reaches
 the edge of its grid, and calibration recovers the same parameters at every head bearing.
+Status: open. The last condition is met on synthetic fires (WP 3.1) and the pipeline is built
+(section 12, Phase 3); the calibration and both validations have not been run on the real fires
+([real_data.md](real_data.md)).
 
 **M3 - strategies are evaluated.** The optimized policy is compared with the three baselines on
 unseen seeds and held-out scenarios, with confidence intervals and the mean / 90th-percentile
@@ -682,6 +685,9 @@ src/wildfire_sim/
   data/synthetic.py   test landscapes                              [Phase 0]
   data/landfire.py, terrain.py, weather.py, osm.py, cache.py, validation.py  [WP 2.2-2.7]
   metrics.py          burned area, overlap, cost, intervals        [WP 2.8]
+  calibration.py      objective, Optuna study, calibrated.yaml     [WP 3.1]
+  sensitivity.py      Morris screening                             [WP 3.2]
+  evaluation.py       validation ensemble and its metrics          [WP 3.3]
   breaks.py           breach of roads, streams and built lines     [WP 2.9]
   suppression/geometry.py, resources.py, tactics.py, policies.py  [WP 4.1-4.4]
   optimize.py         Optuna study                                 [WP 4.5]
@@ -690,7 +696,7 @@ configs/              scenarios/*.yaml, costs.yaml, resources.yaml, alexandridis
                       residence_time.yaml, holdover.yaml, urban.yaml, flame_length.yaml,
                       breach.yaml, kernel_correction.yaml, fuel_models.csv, calibrated.yaml
 scripts/              kernel_front_speed.py, bench.py, download_data.py, calibrate.py,
-                      sensitivity.py, run_experiments.py
+                      sensitivity.py, validate.py, run_experiments.py
 docs/decisions/       one short record per design decision
 tests/                offline, deterministic; fixtures/ holds committed .npz grids;
                       golden/ holds committed arrival-time arrays
@@ -926,6 +932,55 @@ have not started.
 | 2.8 | `metrics.py` | `RunResult`, `EnsembleResult` | `burned_area_ha`, `jaccard(sim_mask, obs_mask)`, `sorensen`, `arrival_interval_error(arrival, detections, footprint_m, window_end_s)` (the interval score of section 7: zero inside `(t_clear, t_detect]`, distance to the nearer end outside, earliest simulated arrival within the detection footprint, never-reached detections scored against the window end), `area_ratio`, `suppression_cost(fleet, costs)`, `asset_loss(grid)` (the asset value of every burned cell, urban cells included), `bootstrap_ci(values, level)`, `paired_difference_ci(a, b, level)` | Hand-computed cases; intervals cover a known mean at the stated rate in a simulation test |
 
 ### Phase 3 - Calibration and validation
+
+Status: the code of 3.1-3.3 is built and tested on synthetic fires and the committed crops. **No
+real-fire result exists yet:** the regions and observations were not available where Phase 3 was
+written, so `configs/calibrated.yaml` is a marked placeholder, `docs/validation.md` has no
+numbers, and milestone M2 is open. [real_data.md](real_data.md) lists the steps that produce them.
+
+3.1 built (branch `wp-3.1-calibration`): `wildfire_sim.calibration` and `scripts/calibrate.py`,
+settings in `configs/calibration.yaml`. The `"rothermel"` rule takes the two calibrated
+parameters through `spread.params`: `ros_multiplier` (head rate, and with it Byram's intensity
+and the flame length, as FARSITE's adjustment factors; unlike the ensemble's random rate factor,
+which leaves intensity alone) and `lb_scale` (`LB' = 1 + lb_scale (LB - 1)`, before the caps).
+On a synthetic observed fire with known parameters (1.5 and 1.25; 150 trials x 2 seeds) both are
+recovered within 2.5 % at head bearings 0, 13.3, 22.5 and 45 degrees and agree across bearings
+within 4.2 %; against the analytic ellipse of the same parameters, where the lattice's shape
+error does not cancel, within 4.0 % and 7.9 % (target 10 %). Above the lattice cap `lb_scale` is
+not identified (tested). A trial with a run at the grid edge is an Optuna `PRUNED` trial.
+Weights (0.5 / 0.5) and the 48-hour window are placeholders. `scripts/bench.py` times a region
+or a grid file with the Rothermel rule; the full-grid benchmark of fire A is still to be run, so
+the trial and seed counts (100 x 2) rest on the crop and on the one earlier full-grid measurement
+(`docs/performance.md`). The study runs its trials one after another on one core. Outside its
+file list it touches `spread/rothermel.py` and `spread/ellipse.py` (the two parameters),
+`scripts/demo_real_fire.py` (shared set-up of a real fire) and the Numba CI job (which now
+installs optuna and runs the calibration tests).
+
+3.2 built (branch `wp-3.2-sensitivity`): `wildfire_sim.sensitivity` (Morris 1991 elementary
+effects with `mu*`, in NumPy), `scripts/sensitivity.py`, `configs/sensitivity.yaml`,
+`docs/sensitivity.md`. Screened on a synthetic grass-shrub grid (11 inputs) and on the fire A
+crop (19 inputs, 45-minute window), two seeds each: the rate multiplier ranks first and wind
+speed second on both outputs; the stencil is third on burned area on the crop; live woody
+moisture is the most influential moisture; the inert control (air temperature) has an effect of
+exactly 0. Of the section 13 placeholders, crown ratio matters (rank 7 on the crop); holdover,
+the urban residence factor, the breach floor and the wind limit do not act in so short a window,
+which is a property of the design, not evidence about them. Kernel shape is screened over the
+four shapes that have a front-speed correction.
+
+Two fixes found on the way (branches `fix-scaled-rule-lb-capped`, `fix-viirs-offline-listing`):
+`ensemble.ScaledRateRule` hid the rule's `lb_capped` mask, so any run with a rate multiplier
+recorded 0 capped cell-hours; and `fetch_viirs` asked NASA's catalogue for the overpass list on
+every call, so cached observations could not be read without a network.
+
+3.3 built (branch `wp-3.3-validation`): `wildfire_sim.evaluation`, `scripts/validate.py`,
+`configs/validation.yaml`, `docs/validation.md` (protocol, no results) and
+`notebooks/validation.ipynb`. An ensemble of 200 with input uncertainty is scored run by run:
+overlap of the consensus mask and per run with bootstrap intervals, arrival-interval errors,
+daily area ratio, final-perimeter overlap labelled as including suppression, cell-hours under
+the cap, breaches. Runs at the grid edge are counted and left out of every metric. Fire B has no
+daily perimeters, so its overlap is against the final perimeter only. `--compare` tabulates
+Rothermel against Alexandridis. Exercised end to end only on a synthetic observed fire on the
+crop and with stubbed observations. No published simulation of either fire has been looked for.
 
 | WP | Files | Consumes | Deliverable | Acceptance |
 | --- | --- | --- | --- | --- |
