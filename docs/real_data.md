@@ -1,8 +1,8 @@
 # Running Phase 3 on the real fires
 
 Phase 3's code (calibration, sensitivity analysis, validation) is tested on synthetic fires and
-on the committed 5 km crops. Its results on the real fires do not exist yet:
-`configs/calibrated.yaml` is a placeholder and `docs/validation.md` has no numbers. This page is
+on the committed 5 km crops. Steps 1-5 have been run for fire A (`docs/calibration.md`,
+*Fire A*); the validations (steps 6-8) have not, and `docs/validation.md` has no numbers. This page is
 the list of steps that produces them, on a laptop or on a cluster. Milestone M2
 (`docs/plan.md` section 9) is met only when these steps have been run and their outputs
 committed.
@@ -16,7 +16,7 @@ so they can run on a cluster's compute nodes.
 | 2. Install | internet | 5 min | `.venv/` |
 | 3. Build both regions | internet, both credentials | 15-30 min | `data/cache/` |
 | 4. Benchmark | 1 core | 10 min | numbers for `docs/performance.md` |
-| 5. Calibrate on fire A (two rules) | 1 core each | about 9 h each (estimate) | `configs/calibrated.yaml`, `configs/calibrated_alexandridis.yaml` |
+| 5. Calibrate on fire A (two rules) | 1 core each | 1 h 40 min (Rothermel) and 42 min (Alexandridis), measured on an Apple M4 Pro | `configs/calibrated.yaml`, `configs/calibrated_alexandridis.yaml` |
 | 6. Validate A and B (two rules) | 8 or more cores | about 1 h per run with 8 workers (estimate) | `docs/img/validation/` |
 | 7. Compare the rules | seconds | seconds | `docs/img/validation/*_rule_comparison.*` |
 | 8. Write up and commit | | | `docs/validation.md`, `docs/performance.md`, `docs/plan.md` |
@@ -106,8 +106,9 @@ the same time. Each prints one line per trial.
 
 Before trusting the result, check in the output and in the written file:
 
-- **The window.** The default is 48 hours after the ignition (`configs/calibration.yaml`, a
-  placeholder). The command refuses to run if no daily perimeter was posted by the window end.
+- **The window.** The default is 48.5 hours after the ignition (`configs/calibration.yaml`),
+  chosen for fire A, whose second daily perimeter was posted 48.1 hours after the ignition. The
+  command refuses to run if no daily perimeter was posted by the window end.
   A perimeter is posted some hours after the flight that mapped it, so the observed area at the
   window end is somewhat older than the window end; if the first perimeters were posted late,
   choose `--window-hours` so that it ends shortly after a posting.

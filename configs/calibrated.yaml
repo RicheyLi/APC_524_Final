@@ -1,20 +1,199 @@
-# Calibrated parameters of the spread rule (WP 3.1, docs/calibration.md). Schema:
-# wildfire_sim.calibration.CalibratedParams; written by scripts/calibrate.py.
-#
-# PLACEHOLDER: NOT CALIBRATED. No study produced these values. They are the neutral values, with
-# which the "rothermel" rule behaves exactly as without calibration. The study needs fire A's
-# region and observations, which were not available where this file was written. Replace this
-# file by running, once the region is built
-# (uv run python scripts/download_data.py lake_2024 --observations):
-#
-#   uv run --extra fast --extra opt --extra geo python scripts/calibrate.py lake_2024
-#
-# To use calibrated values in a run, copy `params` into the scenario's `spread.params`
-# (wildfire_sim.calibration.CalibratedParams.apply does this in code).
-status: placeholder
-source: "PLACEHOLDER - not calibrated, produced by no study; neutral values. Replace with: uv run --extra fast --extra opt --extra geo python scripts/calibrate.py lake_2024"
+status: calibrated
+source: 'WP 3.1 study on region lake_2024, 48.5 h: 100 trials x 2 seeds'
 rule: rothermel
 params:
-  ros_multiplier: 1.0
-  lb_scale: 1.0
-provenance: null
+  ros_multiplier: 0.3828128626140037
+  lb_scale: 0.6406909338883094
+provenance:
+  target: region lake_2024, 48.5 h
+  rule: rothermel
+  window_hours: 48.5
+  ignition_s: 56880.0
+  observed_cells: 74432
+  n_detections: 308
+  seeds:
+  - 4334430513956379144
+  - 2440950710608614359
+  sampler_seed: 0
+  n_trials: 100
+  n_rejected: 25
+  objective: 0.4029962799464653
+  overlap: 0.5785616353236335
+  arrival: 0.22743092456929712
+  weights:
+    overlap: 0.5
+    arrival: 0.5
+  bounds:
+    ros_multiplier:
+      low: 0.3
+      high: 3.0
+      log: true
+      units: dimensionless
+      source: docs/plan.md WP 3.1 (spread-rate multiplier in [0.3, 3])
+      note: 'sampled on a log scale: a factor of 2 too fast and too slow are equally
+        far apart'
+    lb_scale:
+      low: 0.5
+      high: 2.0
+      log: false
+      units: dimensionless
+      source: docs/plan.md WP 3.1 (ellipse lb_scale in [0.5, 2])
+      note: LB' = 1 + lb_scale (LB - 1); above the lattice cap (2.1 on 16 neighbours)
+        a larger lb_scale changes nothing, so it is identified only where the fire's
+        ratio stays below the cap
+  surface:
+  - params:
+      ros_multiplier: 0.30625029009120297
+      lb_scale: 0.5125527471106476
+    objective: 0.41422962347043535
+    overlap: 0.545026153563952
+    arrival: 0.2834330933769188
+  - params:
+      ros_multiplier: 0.30625029009120297
+      lb_scale: 0.5766218404994785
+    objective: 0.413993423118178
+    overlap: 0.5336660780206305
+    arrival: 0.2943207682157255
+  - params:
+      ros_multiplier: 0.30625029009120297
+      lb_scale: 0.6406909338883094
+    objective: 0.4160570701591817
+    overlap: 0.5232552478425107
+    arrival: 0.30885889247585274
+  - params:
+      ros_multiplier: 0.30625029009120297
+      lb_scale: 0.7047600272771405
+    objective: 0.41998927450719636
+    overlap: 0.5182367306995498
+    arrival: 0.3217418183148429
+  - params:
+      ros_multiplier: 0.30625029009120297
+      lb_scale: 0.7688291206659713
+    objective: 0.4258031082894208
+    overlap: 0.5182054919602852
+    arrival: 0.3334007246185564
+  - params:
+      ros_multiplier: 0.34453157635260334
+      lb_scale: 0.5125527471106476
+    objective: 0.40694133053725606
+    overlap: 0.575603291377492
+    arrival: 0.23827936969702013
+  - params:
+      ros_multiplier: 0.34453157635260334
+      lb_scale: 0.5766218404994785
+    objective: 0.40960670803467303
+    overlap: 0.5672435121661987
+    arrival: 0.25196990390314744
+  - params:
+      ros_multiplier: 0.34453157635260334
+      lb_scale: 0.6406909338883094
+    objective: 0.41242104204368946
+    overlap: 0.5577490720995529
+    arrival: 0.267093011987826
+  - params:
+      ros_multiplier: 0.34453157635260334
+      lb_scale: 0.7047600272771405
+    objective: 0.41291044143657507
+    overlap: 0.545828704321156
+    arrival: 0.2799921785519942
+  - params:
+      ros_multiplier: 0.34453157635260334
+      lb_scale: 0.7688291206659713
+    objective: 0.41227972839003113
+    overlap: 0.5330499593020799
+    arrival: 0.2915094974779825
+  - params:
+      ros_multiplier: 0.3828128626140037
+      lb_scale: 0.5125527471106476
+    objective: 0.41693320620251195
+    overlap: 0.6358580668992293
+    arrival: 0.1980083455057946
+  - params:
+      ros_multiplier: 0.3828128626140037
+      lb_scale: 0.5766218404994785
+    objective: 0.4070115524244542
+    overlap: 0.599905597421316
+    arrival: 0.21411750742759234
+  - params:
+      ros_multiplier: 0.3828128626140037
+      lb_scale: 0.6406909338883094
+    objective: 0.4029962799464653
+    overlap: 0.5785616353236335
+    arrival: 0.22743092456929712
+  - params:
+      ros_multiplier: 0.3828128626140037
+      lb_scale: 0.7047600272771405
+    objective: 0.4073026157526917
+    overlap: 0.5737966396034601
+    arrival: 0.24080859190192336
+  - params:
+      ros_multiplier: 0.3828128626140037
+      lb_scale: 0.7688291206659713
+    objective: 0.4103179183279706
+    overlap: 0.5663374034445758
+    arrival: 0.25429843321136536
+  - params:
+      ros_multiplier: 0.42109414887540414
+      lb_scale: 0.5125527471106476
+    objective: 0.42505795439146155
+    overlap: 0.6856717399442
+    arrival: 0.16444416883872306
+  - params:
+      ros_multiplier: 0.42109414887540414
+      lb_scale: 0.5766218404994785
+    objective: 0.4238999807419469
+    overlap: 0.6667015958211663
+    arrival: 0.18109836566272752
+  - params:
+      ros_multiplier: 0.42109414887540414
+      lb_scale: 0.6406909338883094
+    objective: 0.4191197761047698
+    overlap: 0.6429330397519618
+    arrival: 0.1953065124575778
+  - params:
+      ros_multiplier: 0.42109414887540414
+      lb_scale: 0.7047600272771405
+    objective: 0.4150190074494915
+    overlap: 0.6227069474484443
+    arrival: 0.20733106745053867
+  - params:
+      ros_multiplier: 0.42109414887540414
+      lb_scale: 0.7688291206659713
+    objective: 0.40986958638240023
+    overlap: 0.5991568126093586
+    arrival: 0.22058236015544183
+  - params:
+      ros_multiplier: 0.45937543513680446
+      lb_scale: 0.5125527471106476
+    objective: 0.4302145934906454
+    overlap: 0.7183898492851523
+    arrival: 0.14203933769613858
+  - params:
+      ros_multiplier: 0.45937543513680446
+      lb_scale: 0.5766218404994785
+    objective: 0.4273236569269821
+    overlap: 0.7013118683172053
+    arrival: 0.15333544553675887
+  - params:
+      ros_multiplier: 0.45937543513680446
+      lb_scale: 0.6406909338883094
+    objective: 0.4271278703403669
+    overlap: 0.6881591086304008
+    arrival: 0.16609663205033307
+  - params:
+      ros_multiplier: 0.45937543513680446
+      lb_scale: 0.7047600272771405
+    objective: 0.4258594884205976
+    overlap: 0.6718483299713343
+    arrival: 0.17987064686986098
+  - params:
+      ros_multiplier: 0.45937543513680446
+      lb_scale: 0.7688291206659713
+    objective: 0.4221949775122507
+    overlap: 0.6522666591657658
+    arrival: 0.19212329585873567
+  git_commit: 7f359faa308b8c51dae87108dbcf0757b4ea06e3
+  package_version: 0.1.0
+  created_utc: '2026-11-27T19:03:48.570866Z'
+  command: scripts/calibrate.py lake_2024 --window-hours 48.5 --storage sqlite:///runs/calibration_rothermel.db
+    --study-name rothermel_w48p5

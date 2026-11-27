@@ -152,9 +152,11 @@ def test_seed_and_retuning_guards() -> None:
 
 
 def test_parameter_record_says_what_the_parameters_are(tmp_path: Path) -> None:
-    placeholder = ParameterRecord.read(load_calibrated(), configs_dir() / "calibrated.yaml")
-    assert placeholder.status == "placeholder" and placeholder.calibrated_on is None
-    assert len(placeholder.sha256) == 64 and "NOT CALIBRATED" in (placeholder.warning() or "")
+    committed = ParameterRecord.read(load_calibrated(), configs_dir() / "calibrated.yaml")
+    assert committed.status == "calibrated" and committed.calibrated_on == "region lake_2024, 48.5 h"
+    assert len(committed.sha256) == 64 and committed.warning() is None
+    placeholder = ParameterRecord("placeholder", "rothermel", {}, "x", "p", "0" * 64, None)
+    assert "NOT CALIBRATED" in (placeholder.warning() or "")
     synthetic = ParameterRecord("synthetic", "rothermel", {}, "x", "p", "0" * 64, "t")
     assert "SYNTHETIC" in (synthetic.warning() or "")
     assert ParameterRecord("calibrated", "rothermel", {}, "x", "p", "0" * 64, "t").warning() is None
