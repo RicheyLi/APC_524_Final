@@ -11,7 +11,7 @@ import email.message
 import math
 import urllib.error
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 import numpy as np
 import pytest
@@ -92,7 +92,7 @@ def test_lambert_header() -> None:
     assert not lambert_from_grib(grib2_header(flags=0b1010_0000)).grid_relative_winds
     negative = lambert_from_grib(grib2_header(latin1_udeg=(1 << 31) | 30_000_000, latin2_udeg=(1 << 31) | 30_000_000))
     assert negative.latin1_deg == -30.0  # GRIB2 sign-and-magnitude
-    with pytest.raises(ValueError, match="3.20"):
+    with pytest.raises(ValueError, match=r"3\.20"):
         lambert_from_grib(grib2_header(template=20))
     with pytest.raises(ValueError, match="GRIB edition 2"):
         lambert_from_grib(b"not grib at all" * 4)
@@ -149,7 +149,13 @@ def test_bilinear_sampling() -> None:
 class FakeArchive:
     """Serves the index and one tagged message per field; a decoder turns the tag into a field."""
 
-    VALUES = {"temperature_c": 40.0, "relative_humidity_pct": 9.0, "u_grid": 0.0, "v_grid": -5.0, "cloud_pct": 30.0}
+    VALUES: ClassVar[dict[str, float]] = {
+        "temperature_c": 40.0,
+        "relative_humidity_pct": 9.0,
+        "u_grid": 0.0,
+        "v_grid": -5.0,
+        "cloud_pct": 30.0,
+    }
 
     def __init__(self, missing: dt.datetime | None = None) -> None:
         self.calls = 0

@@ -209,16 +209,16 @@ def _fake_sources(tmp: Path, landfire_crs: str = LOCAL_ALBERS) -> tuple[Any, dic
             if product == "CC":
                 data[0, 0] = -9999
             path = d / f"LF2023_{product}.tif"
-            profile = dict(
-                driver="GTiff",
-                height=h,
-                width=w,
-                count=1,
-                dtype="int16",
-                crs=landfire_crs,
-                transform=from_origin(x0, y1, 30.0, 30.0),
-                nodata=-9999,
-            )
+            profile = {
+                "driver": "GTiff",
+                "height": h,
+                "width": w,
+                "count": 1,
+                "dtype": "int16",
+                "crs": landfire_crs,
+                "transform": from_origin(x0, y1, 30.0, 30.0),
+                "nodata": -9999,
+            }
             with rasterio.open(path, "w", **profile) as dst:
                 dst.write(data, 1)
             files[product] = (path, 1)
@@ -231,15 +231,15 @@ def _fake_sources(tmp: Path, landfire_crs: str = LOCAL_ALBERS) -> tuple[Any, dic
         x = x0 + 10.0 * (np.arange(w) + 0.5)
         z = np.tile(100.0 + 0.1 * (x - x0), (h, 1)).astype(np.float32)  # rises to the east: slope 0.1, aspect 270
         path = tmp / "dem.tif"
-        profile = dict(
-            driver="GTiff",
-            height=h,
-            width=w,
-            count=1,
-            dtype="float32",
-            crs=landfire_crs,
-            transform=from_origin(x0, y1, 10.0, 10.0),
-        )
+        profile = {
+            "driver": "GTiff",
+            "height": h,
+            "width": w,
+            "count": 1,
+            "dtype": "float32",
+            "crs": landfire_crs,
+            "transform": from_origin(x0, y1, 10.0, 10.0),
+        }
         with rasterio.open(path, "w", **profile) as dst:
             dst.write(z, 1)
         return DemFile(path, {"dataset": "fake 3DEP"})

@@ -246,7 +246,7 @@ def load_fuel_models(path: str | Path | None = None) -> FuelModelTable:
     if np.unique(numbers).size != numbers.size:
         raise ValueError(f"{p}: fuel model numbers repeat")
     cols = {c: np.array([float(r[c]) for r in rows], dtype=np.float64) for c in _FLOAT_COLUMNS}
-    if not 0 < cols["mx_dead"].min() or cols["mx_dead"].max() > 100:
+    if not cols["mx_dead"].min() > 0 or cols["mx_dead"].max() > 100:
         raise ValueError(f"{p}: mx_dead must lie in (0, 100] percent")
     cols["mx_dead"] = cols["mx_dead"] / 100.0
     for c in ("load_1h", "load_10h", "load_100h", "load_live_herb", "load_live_woody"):

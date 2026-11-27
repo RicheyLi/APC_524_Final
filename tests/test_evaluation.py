@@ -617,7 +617,7 @@ def _run_notebook(out: Path, monkeypatch: pytest.MonkeyPatch) -> str:
     matplotlib.use("Agg")
     for cell in notebook["cells"]:
         if cell["cell_type"] == "code":
-            exec(compile("".join(cell["source"]), "validation.ipynb", "exec"), namespace)  # noqa: S102
+            exec(compile("".join(cell["source"]), "validation.ipynb", "exec"), namespace)
     import matplotlib.pyplot as plt
 
     plt.close("all")
