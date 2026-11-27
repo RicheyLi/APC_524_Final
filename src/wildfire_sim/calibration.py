@@ -137,7 +137,7 @@ class CalibrationSettings(_Strict):
             value = getattr(self, name).value
             if value != int(value) or value < (1 if name in ("n_trials", "n_seeds") else 0):
                 raise ValueError(f"{name} must be a whole number (>= 1 for counts, >= 0 for seeds)")
-        if any(not -1 < s for s in self.surface_steps):
+        if any(not s > -1 for s in self.surface_steps):
             raise ValueError("surface_steps are relative changes and must be > -1")
         if not self.parameters:
             raise ValueError("parameters must name at least one rule")

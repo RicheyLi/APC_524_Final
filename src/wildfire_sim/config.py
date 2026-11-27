@@ -10,6 +10,7 @@ fine; renaming or removing fields is not.
 
 from __future__ import annotations
 
+import itertools
 import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -93,7 +94,7 @@ class WeatherConfig(_Strict):
         if self.series[0].time_s != 0:
             raise ValueError("first weather point must be at time_s = 0")
         times = [p.time_s for p in self.series]
-        if any(b <= a for a, b in zip(times, times[1:], strict=False)):
+        if any(b <= a for a, b in itertools.pairwise(times)):
             raise ValueError("weather time_s must be strictly increasing")
         return self
 

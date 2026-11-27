@@ -85,6 +85,7 @@ import csv
 import datetime as dt
 import hashlib
 import io
+import itertools
 import json
 import math
 import re
@@ -551,7 +552,7 @@ def to_weather_config(
         raise ValueError("no hours")
     if start_time_utc.tzinfo is None:
         raise ValueError("start_time_utc must be timezone-aware")
-    if any(b.time_utc - a.time_utc != HOUR for a, b in zip(hours, hours[1:], strict=False)):
+    if any(b.time_utc - a.time_utc != HOUR for a, b in itertools.pairwise(hours)):
         raise ValueError("hours must be consecutive, one hour apart")
     first = hours[0].time_utc
     if not first <= start_time_utc < first + HOUR:

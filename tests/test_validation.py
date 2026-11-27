@@ -285,13 +285,13 @@ def test_observations_on_a_grid() -> None:
 
     grid = _grid()
     rows, cols = np.mgrid[10:30, 10:30]
-    lat, lon = _cell_latlon(grid, rows, cols)
+    _lat, _lon = _cell_latlon(grid, rows, cols)
 
     def box(r0: int, r1: int, c0: int, c1: int) -> dict[str, Any]:
         # corners on cell edges: covers the centres of cells r0..r1-1, c0..c1-1 and no others
         la, lo = _cell_latlon(grid, np.array([r0, r0, r1, r1]), np.array([c0, c1, c1, c0]), centre=False)
         ring = [[float(x), float(y)] for x, y in zip(lo, la, strict=True)]
-        return {"type": "Polygon", "coordinates": [ring + [ring[0]]]}
+        return {"type": "Polygon", "coordinates": [[*ring, ring[0]]]}
 
     t0 = dt.datetime(2024, 7, 5, 22, 48, tzinfo=UTC)
     daily = [

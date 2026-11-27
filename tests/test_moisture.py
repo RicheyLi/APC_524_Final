@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import math
 from pathlib import Path
 
@@ -167,11 +168,9 @@ def test_moisture_rises_overnight_and_falls_in_the_afternoon() -> None:
         assert int(np.argmin(hours)) == 15  # afternoon low, at the warmest, driest hour
         assert int(np.argmax(hours)) == 3  # pre-dawn high, at the coolest, most humid hour
         night = hours[18:24].tolist() + m1[24 * day + 24 : 24 * day + 28].tolist()  # 18:00 to 03:00
-        assert all(b >= a for a, b in zip(night, night[1:], strict=False)), "moisture must rise overnight"
+        assert all(b >= a for a, b in itertools.pairwise(night)), "moisture must rise overnight"
         afternoon = hours[8:15]
-        assert all(b <= a for a, b in zip(afternoon, afternoon[1:], strict=False)), (
-            "moisture must fall to the afternoon"
-        )
+        assert all(b <= a for a, b in itertools.pairwise(afternoon)), "moisture must fall to the afternoon"
     assert 0.02 < m1.min() < 0.06 < 0.12 < m1.max() < 0.20  # a dry afternoon and a moist night
 
 

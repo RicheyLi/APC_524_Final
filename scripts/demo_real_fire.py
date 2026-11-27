@@ -25,13 +25,13 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
+import matplotlib.pyplot as plt
+import numpy as np
 
-from wildfire_sim.calibration import real_fire  # noqa: E402
-from wildfire_sim.data.cache import load_regions  # noqa: E402
-from wildfire_sim.metrics import arrival_interval_error, burned_area_ha, jaccard, sorensen  # noqa: E402
-from wildfire_sim.sim import run  # noqa: E402
+from wildfire_sim.calibration import real_fire
+from wildfire_sim.data.cache import load_regions
+from wildfire_sim.metrics import arrival_interval_error, burned_area_ha, jaccard, sorensen
+from wildfire_sim.sim import run
 
 
 def main(argv: list[str] | None = None) -> int:

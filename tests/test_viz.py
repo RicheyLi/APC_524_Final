@@ -7,6 +7,7 @@ an off-screen Agg canvas; nothing touches pyplot's global state or opens a windo
 
 from __future__ import annotations
 
+import itertools
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -236,7 +237,7 @@ def test_frames_from_arrival_times_and_shapes(result: FakeResult) -> None:
     times = [t for t, _ in frames]
     assert times[0] == 0.0
     assert times[-1] == pytest.approx(np.nanmax(result.arrival_time))
-    assert all(b > a for a, b in zip(times, times[1:], strict=False))
+    assert all(b > a for a, b in itertools.pairwise(times))
     for _, cats in frames:
         assert cats.shape == result.grid.shape
         assert np.issubdtype(cats.dtype, np.integer)
@@ -252,7 +253,7 @@ def test_frames_from_arrival_initially_unburned_except_ignition(result: FakeResu
 def test_frames_from_arrival_burned_area_non_decreasing(result: FakeResult) -> None:
     frames = viz.frames_from_arrival(result, n_frames=12)
     areas = [int(((c == viz.DisplayClass.BURNING) | (c == viz.DisplayClass.BURNED)).sum()) for _, c in frames]
-    assert all(b >= a for a, b in zip(areas, areas[1:], strict=False))
+    assert all(b >= a for a, b in itertools.pairwise(areas))
     # by the last frame every cell that ever burned shows as burning or burned
     assert areas[-1] == int(np.isfinite(result.arrival_time).sum())
     # burned-out cells appear once the front has moved on
