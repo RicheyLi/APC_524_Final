@@ -1,8 +1,9 @@
 # Running Phase 3 on the real fires
 
 Phase 3's code (calibration, sensitivity analysis, validation) is tested on synthetic fires and
-on the committed 5 km crops. Steps 1-5 have been run for fire A (`docs/calibration.md`,
-*Fire A*); the validations (steps 6-8) have not, and `docs/validation.md` has no numbers. This page is
+on the committed 5 km crops. Every step has been run once on an Apple M4 Pro: the calibration
+of fire A (`docs/calibration.md`, *Fire A*) and the validation of both fires
+(`docs/validation.md`, section 11). This page is
 the list of steps that produces them, on a laptop or on a cluster. Milestone M2
 (`docs/plan.md` section 9) is met only when these steps have been run and their outputs
 committed.

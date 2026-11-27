@@ -1,0 +1,21 @@
+metric,comparison,statistic,value,lower,upper,n_runs,units,note
+runs_reaching_edge,grid edge,count,80,nan,nan,200,runs,"lower bounds on their fires, left out of every other row; milestone M2 requires 0"
+jaccard,observed burned by the window end (48.5 h),consensus mask (burned in >= 0.5 of the runs),0.345481,nan,nan,120,dimensionless,
+jaccard,observed burned by the window end (48.5 h),"mean over runs, bootstrap interval",0.345004,0.342772,0.347298,120,dimensionless,
+sorensen,observed burned by the window end (48.5 h),consensus mask (burned in >= 0.5 of the runs),0.513542,nan,nan,120,dimensionless,
+sorensen,observed burned by the window end (48.5 h),"mean over runs, bootstrap interval",0.512883,0.510413,0.515418,120,dimensionless,
+jaccard,final MTBS perimeter (includes suppression),consensus mask (burned in >= 0.5 of the runs),0.372432,nan,nan,120,dimensionless,"includes suppression, which the runs do not have"
+jaccard,final MTBS perimeter (includes suppression),"mean over runs, bootstrap interval",0.366561,0.364572,0.368381,120,dimensionless,"includes suppression, which the runs do not have"
+sorensen,final MTBS perimeter (includes suppression),consensus mask (burned in >= 0.5 of the runs),0.542733,nan,nan,120,dimensionless,"includes suppression, which the runs do not have"
+sorensen,final MTBS perimeter (includes suppression),"mean over runs, bootstrap interval",0.536382,0.534199,0.538364,120,dimensionless,"includes suppression, which the runs do not have"
+arrival_inside_fraction,308 VIIRS first detections in the window,"mean over runs, bootstrap interval",0.0582251,0.0563312,0.0602002,120,fraction,
+arrival_error_median,308 VIIRS first detections in the window,"mean over runs, bootstrap interval",12.6291,12.409,12.8568,120,h,
+arrival_error_mean,308 VIIRS first detections in the window,"mean over runs, bootstrap interval",13.4285,13.1915,13.6776,120,h,
+area_ratio,observed burned 24 h after the ignition (1891 ha),"mean over runs, bootstrap interval",1.73835,1.67146,1.80314,120,dimensionless,simulated over observed burned area
+area_ratio,observed burned 48 h after the ignition (4959 ha),"mean over runs, bootstrap interval",2.88586,2.83254,2.93717,120,dimensionless,simulated over observed burned area
+area_ratio,observed burned 48.5 h after the ignition (6699 ha),"mean over runs, bootstrap interval",2.17146,2.13141,2.20984,120,dimensionless,simulated over observed burned area
+burned_area,runs inside the grid,"mean, Student-t interval",14546.4,14276.6,14816.1,120,ha,
+burned_area,all runs,mean (lower bound),16259.4,nan,nan,200,ha,includes 80 runs cut short at the grid edge: a lower bound
+runs_for_precision,"burned area, half-width <= 0.05 of the mean",count,19,nan,nan,120,runs,enough
+lb_capped_cell_hours,lattice cap (WP 2.1d),not applicable,nan,nan,nan,120,cell-h,the spread rule does not cap the length-to-breadth ratio
+breaches,breaks (WP 2.9),"mean over runs, bootstrap interval",0,0,0,120,breaks,

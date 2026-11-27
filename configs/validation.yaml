@@ -39,10 +39,10 @@ dt_s:
 # Comparison window after the recorded ignition, per region (configs/regions.yaml).
 window_hours:
   lake_2024:
-    value: 48.0
+    value: 48.5
     units: h
-    source: "the calibration window of configs/calibration.yaml (window_hours, PLACEHOLDER - team choice): fire A is tested over the growth it was fitted to"
-    note: "a daily perimeter must have been posted by the window end; check once the region is built"
+    source: "the calibration window of configs/calibration.yaml (window_hours): fire A is tested over the growth it was fitted to"
+    note: "ends just after the daily perimeter posted 48.1 h after the ignition (6,699 ha), the one the calibration was scored against"
   silverado_2020:
     value: 48.0
     units: h

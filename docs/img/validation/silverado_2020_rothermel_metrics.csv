@@ -1,0 +1,15 @@
+metric,comparison,statistic,value,lower,upper,n_runs,units,note
+runs_reaching_edge,grid edge,count,24,nan,nan,200,runs,"lower bounds on their fires, left out of every other row; milestone M2 requires 0"
+jaccard,final MTBS perimeter (includes suppression),consensus mask (burned in >= 0.5 of the runs),0.452972,nan,nan,176,dimensionless,"includes suppression, which the runs do not have"
+jaccard,final MTBS perimeter (includes suppression),"mean over runs, bootstrap interval",0.416495,0.411195,0.421672,176,dimensionless,"includes suppression, which the runs do not have"
+sorensen,final MTBS perimeter (includes suppression),consensus mask (burned in >= 0.5 of the runs),0.623511,nan,nan,176,dimensionless,"includes suppression, which the runs do not have"
+sorensen,final MTBS perimeter (includes suppression),"mean over runs, bootstrap interval",0.587117,0.58158,0.592475,176,dimensionless,"includes suppression, which the runs do not have"
+arrival_inside_fraction,192 VIIRS first detections in the window,"mean over runs, bootstrap interval",0.142105,0.133286,0.151278,176,fraction,
+arrival_error_median,192 VIIRS first detections in the window,"mean over runs, bootstrap interval",13.5025,12.4871,14.5463,176,h,
+arrival_error_mean,192 VIIRS first detections in the window,"mean over runs, bootstrap interval",19.9402,19.5576,20.3386,176,h,
+burned_area,runs inside the grid,"mean, Student-t interval",4771.47,4656.47,4886.46,176,ha,
+burned_area,all runs,mean (lower bound),5041.92,nan,nan,200,ha,includes 24 runs cut short at the grid edge: a lower bound
+runs_for_precision,"burned area, half-width <= 0.05 of the mean",count,43,nan,nan,176,runs,enough
+lb_capped_cell_hours,lattice cap (WP 2.1d),"mean over runs, bootstrap interval",4732.91,4529.89,4935.59,176,cell-h,
+runs_capped_fraction,lattice cap (WP 2.1d),"mean over runs, bootstrap interval",1,1,1,176,fraction,
+breaches,breaks (WP 2.9),"mean over runs, bootstrap interval",754.188,719.327,790.154,176,breaks,

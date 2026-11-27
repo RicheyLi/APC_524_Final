@@ -7,13 +7,13 @@ and the exact commands that produce every table and figure. The design is in `do
 section 7; the code is `wildfire_sim.evaluation` and `scripts/validate.py`; the settings are
 `configs/validation.yaml`; `notebooks/validation.ipynb` displays the outputs.
 
-**Status: no real-fire results yet.** No validation of a real fire has been run, and this page
-contains no real-fire result. Two things are missing: the built regions of both fires with their
-observations (building them needs a LANDFIRE e-mail and a NASA Earthdata token, `docs/data.md`)
-and the calibration of fire A (`configs/calibrated.yaml` is a placeholder, `docs/calibration.md`).
-This work package delivers the pipeline, tested end to end on synthetic observed fires, and the
-protocol below. Section 11 lists the commands that will produce the results and the files they
-will write. Until they are run, `docs/img/validation/` does not exist.
+**Status: both fires validated with both rules; milestone M2 is not met** (section 11). With the
+Rothermel rule calibrated on fire A, the ensemble overlaps fire A's 48.5 h perimeter with a
+Jaccard index of 0.40 and fire B's final perimeter with 0.42; 19 and 24 of 200 runs reach the
+grid edge, and 9 % and 14 % of the VIIRS detections fall inside their observed interval. Both
+fires burn about the right extent in partly the wrong place, which points to the wind more than
+the spread rate. The Alexandridis results are confounded: that rule's fires cannot cross a road
+or other break (section 11.2). No published simulation of either fire was found (section 9).
 
 Units: times in s (windows and arrival errors in h where stated), areas in ha, lengths in m;
 overlaps, ratios and the calibration factors are dimensionless.
@@ -227,11 +227,13 @@ and prints that command.
 - **Fire A.** The plan's earlier fire A, the 2016 Chimney Fire, had a published simulation to
   compare with (arXiv 2507.00761); that comparison went with the fire when it was replaced by the
   Lake Fire (`docs/plan.md` sections 7 and 13).
-- **Fire B and the Lake Fire.** We have not found, and do not cite, a published simulation of the
-  2024 Lake Fire or the 2020 Silverado Fire. No search of the literature has been recorded in this
-  repository; before the report is written, the team should search for one (for either fire,
-  with the simulator, inputs and metrics it used) and add it here with a full reference, or state
-  that none was found. Nothing on this page compares with a published simulation.
+- **The Lake Fire and the Silverado Fire: none found.** A web search on 2026-11-27 (the fire
+  names with "fire spread", "simulation", FARSITE, WRF-SFIRE, Cell2Fire and arXiv) found no
+  published simulation of either fire. It found simulations of other Santa Barbara fires, which
+  are not comparisons with these: FARSITE on two downslope-wind fires (Zigner et al. 2020, Fire
+  3, 29, doi:10.3390/fire3030029), and Cell2Fire on Santa Barbara landscapes (Scientific
+  Reports, 2025, doi:10.1038/s41598-025-05706-6). Nothing on this page compares with a
+  published simulation; the search should be repeated before the report is written.
 
 ## 10. Running a validation
 
@@ -270,8 +272,113 @@ uv run --extra fast --extra geo python scripts/validate.py lake_2024 --workers 8
 
 ## 11. Results
 
-**Status: pending.** No real-fire table or figure exists. They are produced, in this order, by
-(each command prints its metrics table and the edge count):
+Run on 2026-11-27 on an Apple M4 Pro (macOS 26.6, Python 3.12.15, NumPy 2.5.4, Numba 0.68.1)
+from the calibration of fire A (`docs/calibration.md`, *Fire A*): 200 runs per fire and rule,
+seeds from `base_seed` 20261117, windows 48.5 h (fire A) and 48 h (fire B). Every number below
+is in `docs/img/validation/<region>_<rule>_metrics.csv` or `_summary.json`; intervals are 95 %
+bootstrap intervals of the mean over the runs that stayed on the grid.
+
+**Milestone M2 is not met.** Runs reached the grid edge on both fires with the Rothermel rule
+(M2 requires none), and the overlap is poor on both. The pipeline works end to end; the model,
+as calibrated, does not reproduce where these fires burned.
+
+### 11.1 Rothermel, fire A (calibrated on it) and fire B (not retuned)
+
+| Metric | Fire A, Lake 2024 | Fire B, Silverado 2020 |
+| --- | --- | --- |
+| Runs reaching the grid edge (M2 requires 0) | **19 of 200** | **24 of 200** |
+| Jaccard, consensus mask, against the window-end perimeter | 0.427 (6,699 ha observed at 48.5 h) | (no daily perimeters) |
+| Jaccard, mean over runs, window-end perimeter | 0.397 [0.389, 0.405] | |
+| Jaccard, consensus mask, against the final MTBS perimeter | 0.349 | **0.453** |
+| Jaccard, mean over runs, final perimeter | 0.335 [0.328, 0.342] | 0.416 [0.411, 0.422] |
+| Burned area, runs on the grid (ha) | 12,020 [11,440, 12,590] | 4,771 [4,656, 4,886] |
+| Area ratio to the window-end perimeter | 1.79 [1.71, 1.88] | (final perimeter 5,183 ha) |
+| VIIRS detections inside their observed interval | 8.7 % [8.2, 9.3] | 14.2 % [13.3, 15.1] |
+| Median arrival error (h) | 10.1 [9.6, 10.6] | 13.5 [12.5, 14.5] |
+| Burned-area precision: runs needed for a 5 % half-width | 166 (of 181) | 43 (of 176) |
+| Lattice cap: capped cell-hours per run | 1,010 [770, 1,290] | 4,733 [4,530, 4,936] |
+| Breaks crossed per run | 1,623 | 754 |
+
+![Burn probability, fire A](img/validation/lake_2024_rothermel_burn_probability.png)
+![Burn probability, fire B](img/validation/silverado_2020_rothermel_burn_probability.png)
+![Arrival at VIIRS detections, fire A](img/validation/lake_2024_rothermel_arrival.png)
+
+**Fire A: about the right extent, the wrong shape.** The simulated fire spreads north and west
+of the ignition, well outside the observed perimeter, and almost never reaches the large
+southeastern lobe the real fire burned by 48.5 h (burn probability about 0 there). Most VIIRS
+detections were first seen at the first overpass, about 10 h after the ignition; the model
+reaches those places 10 to 45 h later, and the southeastern ones not at all. The hourly HRRR wind
+at the grid centroid blows from the east-northeast (50-80 deg) at 6-8 m/s for the first 16 h,
+then is light and variable; westerlies of about 3 m/s appear only at 42-48 h. These winds push
+the simulated fire west and cannot drive the observed southeastward run. Our working hypothesis,
+not tested here, is that terrain-channelled local winds or spotting, neither represented by one
+3 km analysis point, drove it. This is consistent with the calibration's shallow optimum,
+`lb_scale` 0.64 (a rounder fire) and its 42 % overlap (`docs/calibration.md`).
+
+**Fire B: the right size, partly in the wrong place.** Run with fire A's parameters unchanged,
+the ensemble's mean burned area (4,771 ha) is within 8 % of the final perimeter (5,183 ha), and
+its overlap with the final perimeter (Jaccard 0.45) is higher than fire A's. The simulated fire
+covers the centre of the real burn but also spreads north and east of the ignition, and misses
+the real fire's western and southern lobes. Its western boundary is straight and sharp, the shape
+a mapped break leaves when the model does not cross it; the real fire did burn beyond it, which
+spotting (not modelled in Phase 3; WP 6.1) could explain. Fire B's score is against a perimeter
+that includes suppression (section 3), so its closer area match is not evidence that the
+calibrated rate is right for it.
+
+**The edge.** 19 and 24 runs reached the grid edge: the ensemble's perturbations (wind speed and
+direction, moisture, a 10 % spread in the rate) send its fast draws off the grid within the
+window. They are left out of every metric, which biases the burned areas low; the all-run means
+are lower bounds of 12,960 ha (A) and 5,042 ha (B). The rate uncertainty sampled
+(`ros_multiplier_sigma_frac` 0.1) is smaller than the calibration's (about 20 % from the surface,
+a factor of 2 from the weights, `docs/calibration.md`), so the ensemble is if anything too narrow.
+
+**The lattice cap (section 7).** Every run of both fires had capped cells. Fire B, the smaller
+Santa Ana fire, had 4.7 times fire A's capped cell-hours, as the plan expected: its wind-driven
+run is drawn rounder than its wind implies.
+
+### 11.2 Rothermel against Alexandridis
+
+| Metric | Fire A, Rothermel | Fire A, Alexandridis | Fire B, Rothermel | Fire B, Alexandridis |
+| --- | --- | --- | --- | --- |
+| Runs reaching the edge | 19 | 80 | 24 | 0 |
+| Jaccard, mean, window-end perimeter (A) / final perimeter (B) | 0.397 | 0.345 | 0.416 | 0.003 |
+| Detections inside their interval | 8.7 % | 5.8 % | 14.2 % | 0 % |
+| Median arrival error (h) | 10.1 | 12.6 | 13.5 | 40.6 |
+| Burned area, runs on the grid (ha) | 12,020 | 14,550 | 4,771 | 221 (every run) |
+| Breaks crossed per run | 1,623 | **0** | 754 | **0** |
+
+Rothermel is better on overlap with fire A's window-end perimeter, on the VIIRS arrivals of
+both fires and on fire B's overlap. Alexandridis overlaps fire A's final perimeter more (Jaccard
+0.367 against 0.335 for Rothermel; its fire is larger) and has no edge runs on fire B (its fire
+never leaves a 221 ha block). **The comparison is not like for like:** the
+Alexandridis rule reports zero fireline intensity (`spread/alexandridis.py`), and the breach
+model of WP 2.9 crosses a road, stream or built line only above an intensity floor, so an
+Alexandridis fire never crosses a break. On fire B the ignition lies in a 221 ha block enclosed
+by breaks, and every one of the 200 runs burns that block and stops; on fire A the fire crossed
+none of the 1,600 breaks a Rothermel fire crosses. The Alexandridis calibration on fire A and
+both of its validations are therefore confounded with this, and the Alexandridis results above
+should not be read as a test of that rule's spread law. The same holds for its edge-limited
+calibration. Giving the rule an intensity, or a break rule of its own, is a design decision for
+the team (outside WP 3.3).
+
+### 11.3 What else limits these results
+
+- **Suppression (section 3).** Both fires were fought from the start; the model has none. Fire
+  A's calibrated rate absorbs it (`docs/calibration.md`), and fire B's only perimeter is the
+  final, suppressed one.
+- **Wind.** One HRRR point per region, at the grid centroid. Fire A's misplaced spread is the
+  strongest evidence against it (11.1).
+- **Fire B's live fuel moisture is the seasonal placeholder** (30 % herbaceous, 60 % woody,
+  `configs/weather.yaml`): the measured samples of `configs/live_fuel_moisture.yaml` are all in
+  Santa Barbara County. For a late-October Santa Ana fire 60 % woody may be close, but it is not
+  measured.
+- **The calibration's weights** are placeholders, and the calibrated multiplier could lie
+  anywhere from about 0.25 to 0.5 depending on them (`docs/calibration.md`).
+
+### 11.4 How they were produced
+
+The commands, in this order (each prints its metrics table and the edge count). Fewer workers
+give the same results; `--workers 3` and `6` were used here:
 
 ```sh
 # 1. build both regions with their observations (LANDFIRE e-mail, NASA Earthdata token; docs/data.md)
@@ -284,12 +391,13 @@ uv run --extra fast --extra opt --extra geo python scripts/calibrate.py lake_202
     --out configs/calibrated_alexandridis.yaml
 
 # 3. validate: fire A (calibrated on it) and fire B (not retuned), each with both rules
-uv run --extra fast --extra geo python scripts/validate.py lake_2024 --workers 8
-uv run --extra fast --extra geo python scripts/validate.py silverado_2020 --workers 8
+#    (about 1.3 GB of memory per worker on fire A's grid; 21 min with 6 workers for fire A, Rothermel)
+uv run --extra fast --extra geo python scripts/validate.py lake_2024 --workers 6
+uv run --extra fast --extra geo python scripts/validate.py silverado_2020 --workers 3
 uv run --extra fast --extra geo python scripts/validate.py lake_2024 --rule alexandridis \
-    --calibrated configs/calibrated_alexandridis.yaml --workers 8
+    --calibrated configs/calibrated_alexandridis.yaml --workers 3
 uv run --extra fast --extra geo python scripts/validate.py silverado_2020 --rule alexandridis \
-    --calibrated configs/calibrated_alexandridis.yaml --workers 8
+    --calibrated configs/calibrated_alexandridis.yaml --workers 3
 
 # 4. the two rules side by side
 uv run python scripts/validate.py --compare docs/img/validation/lake_2024_rothermel_summary.json \
@@ -308,9 +416,7 @@ uv run python scripts/validate.py --compare docs/img/validation/silverado_2020_r
 | Convergence of the ensemble | step 3 | `<region>_rothermel_convergence.png`, `_convergence.csv` |
 | Rothermel against Alexandridis | steps 3-4 | `<region>_alexandridis_*`, `<region>_rule_comparison.csv`, `.json` |
 
-Once they exist, this section is to be replaced by the tables and figures, with the suppression
-confound discussed against them (section 3), the edge count (M2 requires 0), fire B's cell-hours
-under the cap (section 7) and the published comparison, if any (section 9).
+The regions and observations are not committed (`data/` is git-ignored); step 1 rebuilds them.
 `notebooks/validation.ipynb` displays whatever the output directory holds.
 
 ## 12. What the tests check (offline)
