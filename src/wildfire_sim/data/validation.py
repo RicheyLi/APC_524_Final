@@ -397,10 +397,37 @@ def _cmr(params: dict[str, Any], http: Any) -> list[dict[str, Any]]:
         page += 1
 
 
+EARTHDATA_LOGIN_HOST = "urs.earthdata.nasa.gov"
+"""Host of NASA's Earthdata Login, which a data host redirects to when it refuses a token."""
+
+EARTHDATA_CLOUD_DOMAIN = ".earthdatacloud.nasa.gov"
+"""Domain of the Earthdata cloud data hosts (``data.lpdaac...``, ``data.laadsdaac...``)."""
+
+
+def _host(url: str) -> str:
+    """Lower-case host name of ``url`` ("" if it has none)."""
+    return (urllib.parse.urlsplit(url).hostname or "").lower()
+
+
+def is_earthdata_data_url(url: str) -> bool:
+    """True for an ``https`` URL on an Earthdata cloud data host (``data.<daac>.earthdatacloud.nasa.gov``).
+
+    The host is compared as a host name, not as a substring of the URL, so
+    ``https://data.example.org/?x=.earthdatacloud.nasa.gov`` is not one. Only such URLs are
+    downloaded, and only they are sent the Earthdata token.
+    """
+    host = _host(url)
+    return (
+        urllib.parse.urlsplit(url).scheme == "https"
+        and host.startswith("data.")
+        and host.endswith(EARTHDATA_CLOUD_DOMAIN)
+    )
+
+
 def _https_nc(entry: dict[str, Any]) -> str | None:
     for link in entry.get("links", []):
         href = link.get("href", "")
-        if href.startswith("https://data.") and href.endswith(".nc"):
+        if is_earthdata_data_url(href) and urllib.parse.urlsplit(href).path.endswith(".nc"):
             return href
     return None
 
@@ -524,11 +551,13 @@ class EarthdataHttp:
         raise AssertionError("unreachable")
 
     def signed_url(self, url: str) -> str:
+        if not is_earthdata_data_url(url):
+            raise PermissionError(f"not an Earthdata cloud data URL, so the token is not sent to it: {url}")
         r = self._get(
             url, headers={**self._ua, "Authorization": f"Bearer {self._token}"}, allow_redirects=False, timeout=60
         )
         if r.status_code in (301, 302, 303, 307, 308) and "location" in r.headers:
-            if "urs.earthdata.nasa.gov" in r.headers["location"]:
+            if _host(r.headers["location"]) == EARTHDATA_LOGIN_HOST:
                 raise PermissionError("NASA Earthdata refused the token (expired? tokens last 60 days)")
             return r.headers["location"]
         if r.status_code == 200:

@@ -38,6 +38,8 @@ References:
     Albini, F. A. (1976). Estimating wildfire behavior and effects. USDA For. Serv. Gen. Tech.
     Rep. INT-30.
     Anderson, H. E. (1969). Heat transfer and fire spread. USDA For. Serv. Res. Pap. INT-69.
+    Anderson, H. E. (1982). Aids to determining fuel models for estimating fire behavior. USDA
+    For. Serv. Gen. Tech. Rep. INT-122.
     Andrews, P. L. (2018). The Rothermel surface fire spread model and associated developments:
     a comprehensive explanation. USDA For. Serv. Gen. Tech. Rep. RMRS-GTR-371.
     Andrews, P. L., Cruz, M. G. & Rothermel, R. C. (2013). Examination of the wind speed limit
@@ -193,15 +195,43 @@ _FLOAT_COLUMNS = (
 
 
 def load_fuel_models(path: str | Path | None = None) -> FuelModelTable:
-    """Read the fuel model table; default ``configs_dir() / "fuel_models.csv"``.
+    """Read and validate the table of surface fuel model parameters.
 
-    Lines starting with ``#`` are comments. ``mx_dead`` is given in percent in the file and
-    returned as a fraction.
+    The file is a CSV with one row per fuel model (Anderson 1982's 13 models and the 40 of
+    Scott & Burgan 2005 in the shipped table). Lines whose first non-blank character is ``#``
+    are comments and may appear anywhere. Values keep the source's US customary units (loads
+    in tons/acre, SAV ratios in 1/ft, depth in ft, heat content in Btu/lb, particle density in
+    lb/ft^3), except ``mx_dead``, which the file gives in percent and this function returns as a
+    fraction. Unit conversion to SI happens later, in :func:`fuel_bed`.
+
+    Args:
+        path: CSV file to read. None (the default) reads ``configs_dir() / "fuel_models.csv"``.
+            Required columns: ``number``, ``code``, ``name``, ``dynamic`` (``1`` for a dynamic
+            model whose live herbaceous load cures, anything else for static), and the
+            ``load_*``, ``sav_*``, ``depth``, ``mx_dead``, ``heat_dead``, ``heat_live``,
+            ``particle_density``, ``mineral_total`` and ``mineral_effective`` columns of
+            :class:`FuelModelTable`. Extra columns are ignored.
+
+    Returns:
+        A :class:`FuelModelTable` whose arrays have shape ``(n,)``, one entry per row of the
+        file, in file order.
 
     Raises:
-        ValueError: A column is missing, a number repeats, or a value is out of range
-            (negative load, non-positive depth, SAV, heat content or particle density where the
-            class has load, moisture of extinction outside (0, 100] %).
+        FileNotFoundError: ``path`` does not exist.
+        ValueError: The file has no data rows; a required column is missing; a fuel model
+            number repeats; a ``number`` or numeric field cannot be parsed; ``mx_dead`` lies
+            outside (0, 100] %; a load is negative; a class with load > 0 has SAV <= 0;
+            ``depth``, ``heat_dead``, ``heat_live`` or ``particle_density`` is <= 0; or a model
+            has no 1-h load.
+        TypeError: A row has fewer fields than the header, so a value is missing.
+
+    Examples:
+        >>> table = load_fuel_models()
+        >>> len(table)
+        53
+        >>> i = table.row(102)
+        >>> table.codes[i], float(table.depth[i]), float(table.mx_dead[i])
+        ('GR2', 1.0, 0.15)
     """
     p = configs_dir() / "fuel_models.csv" if path is None else Path(path)
     with p.open(newline="", encoding="utf-8") as fh:
@@ -393,13 +423,55 @@ def _weights(area: FloatArray, sav: FloatArray) -> tuple[FloatArray, FloatArray,
 def fuel_bed(table: FuelModelTable, moisture: FuelMoisture, rows: IntArray | None = None) -> FuelBed:
     """Evaluate the wind- and slope-independent part of Rothermel's model for each fuel model.
 
+    For each selected fuel model this computes, in Rothermel's units and then converted to SI,
+    the no-wind, no-slope rate of spread
+
+    .. math::
+
+        R_0 = \\frac{I_R\\, \\xi}{\\rho_b\\, \\varepsilon\\, Q_{ig}}
+
+    together with the reaction intensity :math:`I_R`, the residence time and heat per unit
+    area, and the coefficients of the wind and slope factors. It follows Rothermel (1972) with
+    the Albini (1976) revisions as documented by Andrews (2018): surface-area weighting of the
+    particle classes (eqs. 53-57), size-class weighted net load, the live fuel moisture of
+    extinction (Andrews 2018, eqs. 88-91), optimum reaction velocity with
+    ``A = 133 sigma^-0.7913``, the propagating flux ratio (eq. 42) and the heat sink (eqs. 12,
+    14, 77). For dynamic models the cured part of the live herbaceous load
+    (:func:`herbaceous_cured_fraction`) is moved to a dead class at the 1-h moisture first.
+
+    The rate is then ``R = R_0 (1 + phi_w + phi_s)``: see :func:`head_fire` and
+    :func:`surface_fire`.
+
     Args:
-        table: Fuel models (:func:`load_fuel_models`).
-        moisture: Fuel moisture; each field broadcasts against ``rows``.
-        rows: ``(n,)`` rows of ``table`` to evaluate (each ``>= 0``); None evaluates every row.
+        table: Fuel model parameters, as returned by :func:`load_fuel_models`.
+        moisture: Fuel moisture contents, fractions of oven-dry weight (0.06 = 6 %). Each field
+            is a scalar (the same moisture for every model) or an ``(n,)`` array, one value per
+            entry of ``rows``.
+        rows: ``(n,)`` integer row indices into ``table`` (not fuel model numbers; convert
+            those with :meth:`FuelModelTable.index`). None (the default) evaluates every row,
+            so ``n = len(table)``.
 
     Returns:
-        A :class:`FuelBed` with ``(n,)`` arrays.
+        A :class:`FuelBed` whose arrays have shape ``(n,)``, in the order of ``rows``.
+        ``ros_no_wind`` is in m/s, ``reaction_intensity`` in kW/m^2, ``heat_per_area`` in
+        kJ/m^2, ``residence_time`` in s and ``sigma`` in 1/ft. A model whose moisture is at or
+        above its moisture of extinction has ``ros_no_wind = 0``.
+
+    Raises:
+        ValueError: A row index is negative or ``>= len(table)``; a moisture value is
+            negative, NaN or infinite; or a moisture array does not broadcast to ``(n,)``.
+
+    Examples:
+        Short grass (fuel model 1) and GR2 at Scott & Burgan's D2L2 moisture scenario:
+
+        >>> import numpy as np
+        >>> table = load_fuel_models()
+        >>> moisture = FuelMoisture(0.06, 0.07, 0.08, live_herb=0.60, live_woody=0.90)
+        >>> bed = fuel_bed(table, moisture, rows=table.index(np.array([1, 102])))
+        >>> print(bed.ros_no_wind.round(4))  # m/s
+        [0.0234 0.0078]
+        >>> print(bed.reaction_intensity.round(1))  # kW/m^2
+        [156.4 217.5]
     """
     idx = np.arange(len(table)) if rows is None else np.asarray(rows, dtype=np.int64)
     if np.any(idx < 0) or np.any(idx >= len(table)):
@@ -572,22 +644,62 @@ def surface_fire(
     """Head-fire behaviour of every cell, with the wind blowing upslope.
 
     The fuel-bed part of the model (:func:`fuel_bed`) is evaluated once per distinct fuel model
-    present and mapped back to the cells; the wind and slope factors are then computed per cell.
-    With the wind blowing straight upslope (or either one zero) the two factors add:
-    ``R = R_0 (1 + phi_w + phi_s)``. WP 2.1b combines them as vectors when they point different
-    ways and calls :func:`head_fire` with the resulting factor.
+    present and mapped back to the cells; the wind factor ``phi_w`` (Rothermel 1972, eqs.
+    47-50) and slope factor ``phi_s`` (eq. 51) are then computed per cell. With the wind
+    blowing straight upslope (or either one zero) the two factors add:
+    ``R = R_0 (1 + phi_w + phi_s)`` (eq. 52). The fireline intensity is ``I = H_A R`` and the
+    flame length ``L = 0.0775 I^0.46`` (Byram 1959). :class:`RothermelRule` instead combines
+    the factors as vectors when wind and slope point different ways and calls
+    :func:`head_fire` with the result.
+
+    Cells whose fuel model is not in ``table`` (0, or the non-burnable models 91-99) do not
+    burn: every output field is 0 there (``False`` for ``wind_limited``).
 
     Args:
         fuel_model: Integer fuel model numbers, any shape (``(H, W)`` for a grid).
-        moisture: Fuel moisture, scalars (the usual case: one weather for the grid).
-        midflame_wind: Midflame wind speed, m/s, >= 0; scalar or broadcasting to ``fuel_model``.
-        slope: Rise over run, >= 0; scalar or broadcasting to ``fuel_model``.
-        table: Fuel models; None loads ``configs/fuel_models.csv``.
-        flame: Byram's flame length constants; None loads ``configs/flame_length.yaml``.
-        wind_limit_on: Cap the effective wind at Rothermel's limit (:func:`wind_limit`).
+        moisture: Fuel moisture contents, fractions of oven-dry weight, as scalars: one
+            moisture for every cell. Per-cell moisture is not supported; an array field would
+            be matched to the distinct fuel models present, not to cells.
+        midflame_wind: Midflame wind speed, m/s, >= 0; a scalar or an array broadcasting to
+            ``fuel_model``'s shape.
+        slope: Slope as rise over run (``tan`` of the slope angle, dimensionless), >= 0; a
+            scalar or an array broadcasting to ``fuel_model``'s shape.
+        table: Fuel model parameters. None (the default) loads ``configs/fuel_models.csv``.
+        flame: Byram's flame length constants. None (the default) loads
+            ``configs/flame_length.yaml``.
+        wind_limit_on: If True, cap the effective wind at Rothermel's limit
+            (:func:`wind_limit`), as BehavePlus does by default. Off by default, following
+            Andrews et al. (2013).
 
     Returns:
-        A :class:`SurfaceFire` with arrays of ``fuel_model``'s shape.
+        A :class:`SurfaceFire` whose arrays all have ``fuel_model``'s shape: ``ros`` (m/s),
+        ``intensity`` (kW/m), ``flame_length`` (m), ``heat_per_area`` (kJ/m^2),
+        ``reaction_intensity`` (kW/m^2), ``residence_time`` (s), ``ros_no_wind`` (m/s), the
+        dimensionless ``phi_wind`` and ``phi_slope``, ``effective_wind`` (m/s) and the bool
+        ``wind_limited``.
+
+    Raises:
+        ValueError: ``midflame_wind`` or ``slope`` is negative, NaN or infinite, or does not
+            broadcast to ``fuel_model``'s shape; a moisture value is invalid (see
+            :func:`fuel_bed`); or, when ``table`` or ``flame`` is None, the default config
+            file fails validation.
+        FileNotFoundError: ``table`` or ``flame`` is None and the default config file is
+            missing.
+
+    Examples:
+        A 2 x 2 grid with short grass (1), GR2 (102), a non-burnable cell (0) and timber
+        understory TU5 (165), under a 2 m/s midflame wind on flat ground:
+
+        >>> import numpy as np
+        >>> fuel = np.array([[1, 102], [0, 165]])
+        >>> moisture = FuelMoisture(0.06, 0.07, 0.08, live_herb=0.60, live_woody=0.90)
+        >>> fire = surface_fire(fuel, moisture, midflame_wind=2.0, slope=0.0)
+        >>> print(fire.ros.round(3))  # head rate of spread, m/s
+        [[0.422 0.167]
+         [0.    0.046]]
+        >>> print(fire.flame_length.round(2))  # m
+        [[1.27 1.3 ]
+         [0.   2.13]]
     """
     table = load_fuel_models() if table is None else table
     fm = np.asarray(fuel_model)
