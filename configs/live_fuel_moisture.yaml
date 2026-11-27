@@ -1,0 +1,62 @@
+# Measured live fuel moisture samples (docs/plan.md section 13, "Live fuel moisture"; WP 2.4).
+# Read by wildfire_sim.data.weather.load_live_moisture_samples; every region build passes them to
+# live_fuel_moisture, which averages, per fuel class, the samples taken within nfmd_window_days of
+# the run's date at sites within nfmd_radius_km of the grid centroid (configs/weather.yaml). A
+# fuel class with no such sample keeps the seasonal default, so a region far from every site, or
+# in another season, is unaffected.
+#
+# Fields:
+#   sources   id -> full citation of the report the values were read from
+#   sites     name -> estimated location (WGS84 degrees) and how it was estimated
+#   samples   one record per site, date and fuel class: moisture as a fraction of dry weight
+#             (0.83 = 83 %); fuel "woody" (shrub foliage and twigs) or "herb" (herbaceous)
+#
+# Fire A (lake_2024, ignited 5 July 2024). Santa Barbara County Fire Department samples chamise
+# (Adenostoma fasciculatum) at five sites and reports each sampling as a site table. Two samplings
+# are dated in the reports: 6 June and 2 July 2024. A third (site values 99, 82, 96, 80, 94 %,
+# mean 90 %) is listed between them without a date and is left out. Chamise is a shrub, so the
+# samples are live woody moisture. No herbaceous samples are reported: live herbaceous moisture
+# stays at the seasonal default.
+#
+# The sites' coordinates are ESTIMATES from their place names, not surveyed sampling points; each
+# is thought to be within about 5 km. They decide only whether a site is within nfmd_radius_km,
+# and every site is at least 10 km inside it, so the estimate cannot change which samples are
+# used (tests/test_weather.py checks a margin of 5 km).
+
+sources:
+  sbcfd_2024_06: "Santa Barbara County Fire Department (2024), 2024 Live Fuel Moisture, All Fuel Beds - Chamise, fuels sampled 6-6-24, https://sbcfire.com/wp-content/uploads/2024/06/SBC-Fuel-Moisture-2024-June.pdf (site table, row JUN)"
+  sbcfd_2024_07: "Santa Barbara County Fire Department (2024), 2024 Live Fuel Moisture, All Fuel Beds - Chamise, fuels sampled 7-2-24, https://sbcfire.com/wp-content/uploads/2024/07/SBC-Fuel-Moisture-2024-July.pdf (site table, row JUL)"
+
+sites:
+  Tepusquet:
+    lat: 34.90
+    lon: -120.22
+    location_source: "ESTIMATE from the place name: Tepusquet Canyon, east of Santa Maria (about 23 km from the lake_2024 grid centroid)"
+  Cachuma:
+    lat: 34.58
+    lon: -119.98
+    location_source: "ESTIMATE from the place name: Lake Cachuma, Santa Ynez Valley; the site may instead be at Cachuma Saddle, about 15 km north, which is nearer the fire (about 21 km from the centroid as placed)"
+  Harris Grade:
+    lat: 34.72
+    lon: -120.45
+    location_source: "ESTIMATE from the place name: Harris Grade Road, north of Lompoc (about 38 km from the centroid)"
+  Refugio:
+    lat: 34.52
+    lon: -120.07
+    location_source: "ESTIMATE from the place name: Refugio Road near Refugio Pass, Santa Ynez Mountains (about 27 km from the centroid)"
+  W. Gaviota:
+    lat: 34.48
+    lon: -120.25
+    location_source: "ESTIMATE from the place name: west of Gaviota Pass, Santa Ynez Mountains (about 37 km from the centroid)"
+
+samples:
+  - {site: Tepusquet, date: 2024-06-06, fuel: woody, moisture: 1.00, source: sbcfd_2024_06}
+  - {site: Cachuma, date: 2024-06-06, fuel: woody, moisture: 0.88, source: sbcfd_2024_06}
+  - {site: Harris Grade, date: 2024-06-06, fuel: woody, moisture: 0.99, source: sbcfd_2024_06}
+  - {site: Refugio, date: 2024-06-06, fuel: woody, moisture: 0.83, source: sbcfd_2024_06}
+  - {site: W. Gaviota, date: 2024-06-06, fuel: woody, moisture: 0.94, source: sbcfd_2024_06}
+  - {site: Tepusquet, date: 2024-07-02, fuel: woody, moisture: 0.83, source: sbcfd_2024_07}
+  - {site: Cachuma, date: 2024-07-02, fuel: woody, moisture: 0.81, source: sbcfd_2024_07}
+  - {site: Harris Grade, date: 2024-07-02, fuel: woody, moisture: 0.95, source: sbcfd_2024_07}
+  - {site: Refugio, date: 2024-07-02, fuel: woody, moisture: 0.74, source: sbcfd_2024_07}
+  - {site: W. Gaviota, date: 2024-07-02, fuel: woody, moisture: 0.86, source: sbcfd_2024_07}

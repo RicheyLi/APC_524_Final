@@ -1056,11 +1056,17 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
       sensitivity analysis (WP 3.2).
 - [ ] **Live fuel moisture and the diurnal wind** (WP 2.4). (1) The National Fuel Moisture
       Database is now served through FEMS, whose API is not published, so `data/weather.py`
-      takes samples as records (`NfmdSample`) and no sample has been fetched yet. Until a team
-      member downloads the sites near each fire, live moisture is a Scott & Burgan scenario
-      chosen by month (placeholder mapping for California in `configs/weather.yaml`: L1, cured,
-      July-October, so fire A runs at 30 % herbaceous and 60 % woody). The sample window (30
-      days) and radius (50 km) are placeholders too. (2) The wind's daily cycle uses the
+      takes samples as records (`NfmdSample`), read from `configs/live_fuel_moisture.yaml`.
+      **Fire A has measured live woody moisture:** Santa Barbara County Fire Department's chamise
+      samplings of 6 June and 2 July 2024 at five sites within 50 km give 88 % (mean of 10),
+      against the 60 % of the placeholder. The reports do not give the sites' coordinates; they
+      are estimated from the place names and lie at least 10 km inside the radius, so they do
+      not change which samples are used. Fire A's live herbaceous moisture and fire B's live
+      moisture still come from a Scott & Burgan scenario chosen by month (placeholder mapping
+      for California in `configs/weather.yaml`: L1, cured, July-October: 30 % herbaceous, 60 %
+      woody). The sample window (30 days) and radius (50 km) are placeholders too. The
+      committed 5 km crop weather (`tests/fixtures/lake_2024_weather.yaml`) keeps the
+      placeholder value, so that the WP 3.2 results on it stay reproducible. (2) The wind's daily cycle uses the
       midpoint of Dai & Deser's (1999) global land range, 0.85 m/s, peaking at 14:00 local
       solar time; local winds (a sea breeze, a Santa Ana) can differ widely. Both enter the
       sensitivity analysis (WP 3.2).

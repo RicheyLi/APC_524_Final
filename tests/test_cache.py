@@ -287,6 +287,8 @@ def test_build_region_end_to_end(tmp_path: Path) -> None:
     t = [float(v) for v in grid.metadata["transform"].split()]
     target = TargetGrid(grid.metadata["crs"], affine(*t), grid.shape)
     assert m["grid"]["max_rotation_from_true_north_deg"] < 0.1
+    live = m["weather"]["live_moisture_samples"]  # which measured live moisture samples the build used
+    assert live["file"] == "configs/live_fuel_moisture.yaml" and len(live["sha256"]) == 64
     mask = perimeter_mask(built_perimeter(tmp_path), target)
     assert mask.sum() > 1000 and edge_distance_cells(mask) * grid.dx >= 3000
     # fuels, canopy, terrain, roads, assets

@@ -58,7 +58,9 @@ Database samples taken near the site around the date, per fuel class, when sampl
 otherwise the Scott & Burgan (2005) live moisture scenario the month maps to in
 ``configs/weather.yaml`` (a flagged team assumption). The NFMD is now served through the Fire
 Environment Mapping System (FEMS), whose API is not published, so samples are passed in as
-:class:`NfmdSample` records (section 13).
+:class:`NfmdSample` records (section 13); the measured samples, with their sources, are in
+``configs/live_fuel_moisture.yaml`` (:func:`load_live_moisture_samples`), and the region build
+passes them in.
 
 All parameters, with sources, are in ``configs/weather.yaml``.
 
@@ -267,7 +269,7 @@ class HourlyWeather:
 
 @dataclass(frozen=True)
 class NfmdSample:
-    """One National Fuel Moisture Database sample.
+    """One live fuel moisture sample (National Fuel Moisture Database, or a local agency's).
 
     Attributes:
         date: Sampling date.
@@ -281,6 +283,59 @@ class NfmdSample:
     lon: float
     fuel: Literal["herb", "woody"]
     moisture: float
+
+
+class LiveMoistureSite(BaseModel):
+    """A sampling site of ``configs/live_fuel_moisture.yaml``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    lat: Annotated[float, Field(ge=-90, le=90)]
+    lon: Annotated[float, Field(ge=-180, le=180)]
+    location_source: Annotated[str, Field(min_length=1, description="how the location was obtained")]
+
+
+class LiveMoistureRecord(BaseModel):
+    """One sample of ``configs/live_fuel_moisture.yaml``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    site: str
+    date: dt.date
+    fuel: Literal["herb", "woody"]
+    moisture: Annotated[float, Field(gt=0, description="fraction of dry weight")]
+    source: str
+
+
+class LiveMoistureSamples(BaseModel):
+    """Schema of ``configs/live_fuel_moisture.yaml`` (see that file for the sources)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    sources: dict[str, Annotated[str, Field(min_length=1)]]
+    sites: dict[str, LiveMoistureSite]
+    samples: list[LiveMoistureRecord]
+
+    @model_validator(mode="after")
+    def _check(self) -> LiveMoistureSamples:
+        for r in self.samples:
+            if r.site not in self.sites:
+                raise ValueError(f"sample names unknown site {r.site!r}")
+            if r.source not in self.sources:
+                raise ValueError(f"sample names unknown source {r.source!r}")
+        return self
+
+
+def load_live_moisture_samples(path: str | Path | None = None) -> tuple[NfmdSample, ...]:
+    """The measured live moisture samples; default ``configs_dir() / "live_fuel_moisture.yaml"``.
+
+    Raises:
+        ValueError: A sample names a site or source the file does not define, or a value is invalid.
+    """
+    table = load_yaml(configs_dir() / "live_fuel_moisture.yaml" if path is None else path, LiveMoistureSamples)
+    return tuple(
+        NfmdSample(r.date, table.sites[r.site].lat, table.sites[r.site].lon, r.fuel, r.moisture) for r in table.samples
+    )
 
 
 @dataclass(frozen=True)
