@@ -581,6 +581,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--workers", type=int, default=1, help="processes; results do not depend on it")
     ap.add_argument("--dt", type=float, help="time step, s (default from configs/validation.yaml)")
     ap.add_argument("--cache-root", type=Path, default=Path("data") / "cache")
+    ap.add_argument(
+        "--no-wind-field", action="store_true", help="region: single-point wind even if the HRRR wind field is built"
+    )
     ap.add_argument("--settings", type=Path, help="validation settings (default configs/validation.yaml)")
     ap.add_argument("--out", type=Path, default=OUT, help="output directory")
     args = ap.parse_args(argv)
@@ -660,7 +663,9 @@ def main(argv: list[str] | None = None) -> int:
         hours = settings.window_hours[name].value if args.window_hours is None else args.window_hours
         dt_s = float(settings.dt_s.value) if args.dt is None else args.dt
         try:
-            fire = real_fire(name, hours, cache_root=args.cache_root, dt_s=dt_s, rule=rule)
+            fire = real_fire(
+                name, hours, cache_root=args.cache_root, dt_s=dt_s, rule=rule, wind_field=not args.no_wind_field
+            )
         except FileNotFoundError as exc:
             print(exc)
             return 1

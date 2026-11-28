@@ -71,6 +71,7 @@ from wildfire_sim.ensemble import (
     mean_ci,
     perturb_config,
     perturbation_rng,
+    perturbed_wind_field,
 )
 from wildfire_sim.ensemble import runs_for_precision as _runs_for_precision
 from wildfire_sim.metrics import (
@@ -426,7 +427,8 @@ def run_member(config: ScenarioConfig, seed: int) -> Member:
     rule: SpreadRule = make_spread_rule(config.spread.rule, **config.spread.params)
     if factors["ros_multiplier"] != 1.0:
         rule = ScaledRateRule(rule, factors["ros_multiplier"])
-    result = sim.run(perturb_config(config, factors), seed=seed, rule=rule, record_events=False)
+    wind = perturbed_wind_field(config, factors)
+    result = sim.run(perturb_config(config, factors), seed=seed, rule=rule, record_events=False, wind_field=wind)
     edge = result.provenance["reached_edge_s"]
     return Member(
         seed=seed,

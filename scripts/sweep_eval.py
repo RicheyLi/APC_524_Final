@@ -9,6 +9,10 @@ compass sectors around the ignition, and the centroid offset of the simulated fi
 observed one. A run that reaches the grid edge is scored anyway and flagged (unlike the
 calibration, which rejects it), so a sweep can still rank configurations that are too fast.
 
+When the region has a per-cell HRRR wind field (``wind_field.npz``, WP 3.4) it is used, with
+``--wind-scale`` and ``--wind-dir-offset`` applied to every cell as well; ``--no-wind-field``
+falls back to the single-point (centroid) wind of ``weather.yaml``.
+
 Examples (fire A must be built: ``scripts/download_data.py lake_2024 --observations``):
 
     uv run --extra fast --extra geo python scripts/sweep_eval.py lake_2024 \\
@@ -19,6 +23,9 @@ Examples (fire A must be built: ``scripts/download_data.py lake_2024 --observati
 
     uv run --extra fast --extra geo python scripts/sweep_eval.py lake_2024 \\
         --edit rothermel.yaml:crown_ratio.value=0.6 --edit breach.yaml:min_intensity_mw_m.value=0.09
+
+    uv run --extra fast --extra geo python scripts/sweep_eval.py lake_2024 --no-wind-field \\
+        --param lb_scale=1.0 --multipliers 0.383,1.0 --out runs/sweep/point.json
 """
 
 from __future__ import annotations
@@ -41,6 +48,7 @@ from wildfire_sim.metrics import burned_area_ha, sorensen
 from wildfire_sim.sensitivity import parameter_files
 from wildfire_sim.sim import run
 from wildfire_sim.spread import make_spread_rule
+from wildfire_sim.wind_field import WindFieldSeries, wind_field_for
 
 SECTORS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
 
@@ -152,6 +160,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--wind-scale", type=float, default=1.0)
     ap.add_argument("--wind-dir-offset", type=float, default=0.0, help="degrees added to the 'from' direction")
     ap.add_argument("--wind-dir-fixed", type=float, default=None, help="replace every hour's 'from' direction")
+    ap.add_argument(
+        "--no-wind-field", action="store_true", help="use the single-point (centroid) wind even if a field is built"
+    )
     ap.add_argument("--dead-moisture-scale", type=float, default=1.0)
     ap.add_argument("--live-herb", type=float, default=None, help="fraction, replaces every hour")
     ap.add_argument("--live-woody", type=float, default=None, help="fraction, replaces every hour")
@@ -178,9 +189,21 @@ def main(argv: list[str] | None = None) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
 
     with parameter_files(edits):
-        fire = real_fire(args.region, hours, cache_root=args.cache_root, dt_s=args.dt, rule=args.rule)
+        fire = real_fire(
+            args.region,
+            hours,
+            cache_root=args.cache_root,
+            dt_s=args.dt,
+            rule=args.rule,
+            wind_field=not args.no_wind_field,
+        )
         target = observed_target(fire, settings.footprint_m.value)
         config = transform_weather(fire.config, args)
+        wind: WindFieldSeries | None = wind_field_for(config)
+        if wind is not None:
+            if args.wind_dir_fixed is not None:
+                raise SystemExit("--wind-dir-fixed applies to the single-point wind: add --no-wind-field")
+            wind = wind.perturbed(args.wind_scale, args.wind_dir_offset)
         data = config.model_dump()
         if args.stencil is not None:
             data["stencil"] = args.stencil
@@ -193,7 +216,8 @@ def main(argv: list[str] | None = None) -> int:
 
         print(
             f"{args.region}: {grid.shape[0]} x {grid.shape[1]} cells, window {hours:g} h, observed {obs_ha:.0f} ha, "
-            f"{len(target.detections)} detections, seeds {list(seeds)}, multipliers {multipliers}",
+            f"{len(target.detections)} detections, seeds {list(seeds)}, multipliers {multipliers}, "
+            f"wind {'single point' if wind is None else 'field ' + str(wind.path)}",
             flush=True,
         )
         records: list[dict[str, Any]] = []
@@ -205,7 +229,7 @@ def main(argv: list[str] | None = None) -> int:
                 t0 = time.perf_counter()
                 spread = {**data["spread"], "params": p}
                 scenario = ScenarioConfig.model_validate({**config.model_dump(), "spread": spread})
-                result = run(scenario, seed=seed, rule=rule, grid=grid, record_events=False)
+                result = run(scenario, seed=seed, rule=rule, grid=grid, record_events=False, wind_field=wind)
                 o, a = target.terms(result)
                 sim = result.burned_mask
                 rec = {
@@ -256,6 +280,7 @@ def main(argv: list[str] | None = None) -> int:
         "seeds": list(seeds),
         "params": params,
         "edits": edits,
+        "wind_field": None if wind is None else wind.provenance(),
         "observed_ha": obs_ha,
         "n_detections": len(target.detections),
         "observed_sectors": {k: v["observed_cells"] for k, v in records[0]["runs"][0]["sectors"].items()},

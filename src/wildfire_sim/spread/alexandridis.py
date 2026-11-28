@@ -214,7 +214,8 @@ class AlexandridisRule:
         Args:
             grid: Reads ``fuel_model``, ``canopy_cover``, ``elevation`` (m), ``retardant``
                 (fraction), ``dx`` (m) and the burnable mask. Not modified.
-            weather: Uses ``wind_speed`` (m/s) and ``wind_to_bearing`` (deg).
+            weather: Uses ``wind_speed`` (m/s) and ``wind_to_bearing`` (deg), or the per-cell
+                speed and "to" bearing of its ``wind_field`` when present (WP 3.4).
             stencil: ``K`` neighbour directions.
 
         Returns:
@@ -235,9 +236,17 @@ class AlexandridisRule:
             * (1.0 - retardant)
         )
 
-        v = float(weather.wind_speed)
-        cos_theta = np.cos(np.radians(stencil.bearings_deg.astype(np.float64) - weather.wind_to_bearing))
-        log_wind = self._c1 * v + self._c2 * v * (cos_theta - 1.0)  # (K,)
+        bearings = stencil.bearings_deg.astype(np.float64)
+        if weather.wind_field is None:
+            v = float(weather.wind_speed)
+            cos_theta = np.cos(np.radians(bearings - weather.wind_to_bearing))
+            log_wind = self._c1 * v + self._c2 * v * (cos_theta - 1.0)  # (K,)
+        else:
+            if weather.wind_field.shape != (h, w):
+                raise ValueError(f"wind field shape {weather.wind_field.shape} differs from the grid's {(h, w)}")
+            v_cell = weather.wind_field.speed
+            cos_cell = np.cos(np.radians(bearings[:, None, None] - weather.wind_field.to_bearing[None]))
+            log_wind = self._c1 * v_cell + self._c2 * v_cell * (cos_cell - 1.0)  # (K, H, W)
 
         elev = grid.elevation.astype(np.float64)
         ros = np.zeros((stencil.size, h, w), dtype=np.float64)
