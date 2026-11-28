@@ -955,10 +955,12 @@ be rerun with the field**; their numbers stand only as the single-point referenc
 
 **Open: scope of the rest of Phase 3.** The field turns fire A's head in the observed direction
 but leaves it too slow: the remaining error is terrain-channelled wind below the HRRR's 3 km
-resolution, which is out of scope. The decisions this leaves (comparison window, the meaning of
-M2, which parts of fires A and B are acceptance targets, one calibrated parameter instead of
-two, dropping the Alexandridis comparison, one rerun with the field) are set out with
-recommended defaults in [scope_decision.md](scope_decision.md).
+resolution, which is out of scope. The goals for the rest of Phase 3 are to state that
+limitation and to get the highest Jaccard on both fires the current model allows, with small
+additions that keep its core (a fitted wind-direction correction per fire, a calibration target
+for fires without daily perimeters, optionally a fitted break-strength factor), then to explain
+the remaining deficit. The plan, the decisions it needs (with recommended defaults) and the
+deficit are in [scope_decision.md](scope_decision.md).
 
 3.1 built (branch `wp-3.1-calibration`): `wildfire_sim.calibration` and `scripts/calibrate.py`,
 settings in `configs/calibration.yaml`. The `"rothermel"` rule takes the two calibrated
