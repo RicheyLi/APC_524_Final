@@ -82,6 +82,7 @@ from wildfire_sim.metrics import arrival_interval_error, footprint_arrival, jacc
 from wildfire_sim.sim import RunResult, model_provenance, run
 from wildfire_sim.spread import make_spread_rule
 from wildfire_sim.types import BoolArray, FloatArray
+from wildfire_sim.wind_field import WIND_FIELD_FILE
 
 # ----------------------------------------------------------------------------- settings
 
@@ -357,6 +358,7 @@ def real_fire(
     rule: str = "rothermel",
     engine: Literal["numpy", "numba"] | None = None,
     viirs: bool = True,
+    wind_field: bool = True,
 ) -> RealFire:
     """Set up a built region's fire for ``hours`` after its recorded ignition.
 
@@ -372,6 +374,8 @@ def real_fire(
         engine: None uses ``"numba"`` when numba is installed, else ``"numpy"``.
         viirs: Also load the VIIRS overpasses (False: ignition and perimeters only, offline
             once cached).
+        wind_field: Use the region's per-cell HRRR wind (``wind_field.npz``, WP 3.4) when it
+            has been built; False keeps the single-point wind of ``weather.yaml`` everywhere.
 
     Raises:
         FileNotFoundError: The region is not built; the message says how to build it.
@@ -386,6 +390,9 @@ def real_fire(
         )
     grid = Grid.load(grid_path)
     weather = load_yaml(root / name / "weather.yaml", WeatherConfig)
+    field_path = root / name / WIND_FIELD_FILE
+    if wind_field and field_path.exists():
+        weather = weather.model_copy(update={"wind_field": str(field_path)})
     obs = fetch_observations(name, region, cache_root=root, viirs=viirs)
     ignition_s = obs.seconds(grid, obs.ignition.time_utc)
     if engine is None:

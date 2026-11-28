@@ -400,3 +400,87 @@ def test_live_region_build(name: str, tmp_path: Path) -> None:
     assert built.manifest["grid"]["perimeter_edge_cells"] * built.grid.dx >= region.buffer_m
     assert built.crop is not None and built.crop.stat().st_size < 2_000_000
     assert verify_region(name, region, cache_root=tmp_path) == []
+
+
+# ----------------------------------------------------------------------------- wind field (WP 3.4)
+
+
+def _fake_wind_source(calls: dict[str, int]) -> Any:
+    """A wind-field source: a 3 km raster in EPSG:5070 around the fake fire, wind from the north-west."""
+    from_origin = pytest.importorskip("rasterio.transform").from_origin
+    transform = pytest.importorskip("rasterio.warp").transform
+    from wildfire_sim.data.hrrr import Field, HrrrWindField, wind_geometry
+
+    def wind_field(lat: float, lon: float, start: dt.datetime, n_hours: int, target: Any, root: Path) -> Any:
+        calls["wind_field"] = calls.get("wind_field", 0) + 1
+        x0, y0 = transform("EPSG:4326", "EPSG:5070", [lon], [lat])
+        f = Field(np.zeros((20, 20)), from_origin(round(x0[0]) - 30000, round(y0[0]) + 30000, 3000, 3000), "EPSG:5070")
+        geometry = wind_geometry(f, target)
+        ny, nx = geometry.window_shape
+        times = [start + dt.timedelta(hours=k) for k in range(n_hours)]
+        u = np.full((n_hours, ny, nx), 3.0, dtype=np.float32)  # blowing south-east: from the north-west
+        return HrrrWindField(times, u, -u, geometry, root / "fake.npz", {"dataset": "fake HRRR wind"})
+
+    return wind_field
+
+
+def test_build_region_writes_the_wind_field(tmp_path: Path) -> None:
+    sources, calls = _fake_sources(tmp_path)
+    sources.wind_field = _fake_wind_source(calls)
+    from wildfire_sim.data.cache import build_region, build_wind_field, verify_region
+    from wildfire_sim.wind_field import load_wind_field
+
+    region = _region(weather_source="hrrr", weather_start_utc="2024-07-05T07:00:00Z")
+    built = build_region("t", region, cache_root=tmp_path / "cache", sources=sources)
+    path = built.directory / "wind_field.npz"
+    series = load_wind_field(path)
+    assert series.shape == built.grid.shape and series.n_times == 24
+    assert np.array_equal(series.times_s, np.arange(24) * 3600.0)  # hourly from the weather start, like weather.yaml
+    field = series.at(5000.0)
+    assert np.allclose(field.speed, 3.0 * np.sqrt(2.0), atol=1e-5) and np.allclose(field.direction_from, 315.0)
+    m = built.manifest
+    assert m["wind_field"]["_format_version"] == 1 and m["wind_field"]["source"]["dataset"] == "fake HRRR wind"
+    assert "wind_field.npz" in m["sha256"]
+    assert verify_region("t", region, cache_root=tmp_path / "cache", sources=sources) == []
+    # adding the field to a region built without one rewrites only it and the manifest
+    path.unlink()
+    grid_bytes = (built.directory / "grid.npz").read_bytes()
+    assert build_wind_field("t", region, cache_root=tmp_path / "cache", sources=sources) == path
+    assert load_wind_field(path).n_times == 24 and (built.directory / "grid.npz").read_bytes() == grid_bytes
+    manifest = json.loads((built.directory / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["sha256"]["wind_field.npz"] == load_wind_field(path).sha256
+    with pytest.raises(ValueError, match="weather_source: hrrr"):
+        build_wind_field("t", _region(), cache_root=tmp_path / "cache", sources=sources)
+    with pytest.raises(FileNotFoundError, match="not built"):
+        build_wind_field("nope", region, cache_root=tmp_path / "cache", sources=sources)
+
+
+def test_real_fire_uses_the_wind_field_when_built(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """``calibration.real_fire`` names the region's wind field in the scenario, unless told not to."""
+    from wildfire_sim import calibration
+
+    grid = Grid.empty((10, 10), 30.0)
+    grid.fuel_model[:] = 1
+    grid.metadata["weather_start_utc"] = "2024-07-05T07:00:00+00:00"
+    d = tmp_path / "lake_2024"
+    d.mkdir()
+    grid.save(d / "grid.npz")
+    (d / "weather.yaml").write_text("series:\n- time_s: 0\n", encoding="utf-8")
+
+    class Obs:
+        ignition = type("I", (), {"time_utc": dt.datetime(2024, 7, 5, 22, tzinfo=UTC)})()
+
+        def seconds(self, g: Grid, t: dt.datetime) -> float:
+            return 3600.0
+
+        def ignition_cell(self, g: Grid) -> tuple[int, int]:
+            return (5, 5)
+
+    monkeypatch.setattr(calibration, "fetch_observations", lambda *a, **k: Obs())
+    without = calibration.real_fire("lake_2024", 1.0, cache_root=tmp_path, viirs=False, engine="numpy")
+    assert without.config.weather.wind_field is None
+    (d / "wind_field.npz").write_bytes(b"")
+    fire = calibration.real_fire("lake_2024", 1.0, cache_root=tmp_path, viirs=False, engine="numpy")
+    assert fire.config.weather.wind_field == str(d / "wind_field.npz")
+    point = calibration.real_fire("lake_2024", 1.0, cache_root=tmp_path, viirs=False, engine="numpy", wind_field=False)
+    assert point.config.weather.wind_field is None

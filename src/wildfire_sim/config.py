@@ -88,6 +88,14 @@ class WeatherPoint(_Strict):
 
 class WeatherConfig(_Strict):
     series: Annotated[list[WeatherPoint], Field(min_length=1)] = Field(default_factory=lambda: [WeatherPoint()])
+    wind_field: str | None = Field(
+        default=None,
+        description=(
+            "path of a per-cell wind field file (wind_field.npz written by the region build, WP 3.4); "
+            "relative paths resolve against the current working directory, like grid.path. None (default): "
+            "the series' wind applies to every cell"
+        ),
+    )
 
     @model_validator(mode="after")
     def _check_series(self) -> WeatherConfig:

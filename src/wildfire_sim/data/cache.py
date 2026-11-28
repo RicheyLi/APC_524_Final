@@ -27,11 +27,16 @@ A region (``configs/regions.yaml``) is one validation fire. :func:`build_region`
 6. **Weather** (WP 2.4). Hourly gridMET at the grid centroid from ``weather_start_utc`` for
    ``weather_days``, with live moisture from the measured samples near the centroid
    (``configs/live_fuel_moisture.yaml``) where there are any.
+7. **Wind field** (WP 3.4, regions with ``weather_source: hrrr``). The hourly HRRR 10 m wind on
+   the native 3 km nodes around the grid and each cell's position among them
+   (:func:`wildfire_sim.data.hrrr.fetch_hrrr_wind_field`), written as ``wind_field.npz``
+   (:mod:`wildfire_sim.wind_field`) with the same hours as ``weather.yaml``. For a region built
+   before WP 3.4, :func:`build_wind_field` adds it without rebuilding anything else.
 
 The region directory ``data/cache/<region>/`` then holds ``grid.npz``, ``canopy.npz``,
-``weather.yaml``, ``perimeter.geojson`` and ``manifest.json`` (sources, versions, dates, the
-manifests of every download, the SHA-256 of each file). Every download is cached by its own
-module, so building again reads the caches and reproduces the same files byte for byte
+``weather.yaml``, ``perimeter.geojson``, ``wind_field.npz`` (HRRR regions) and ``manifest.json``
+(sources, versions, dates, the manifests of every download, the SHA-256 of each file). Every
+download is cached by its own module, so building again reads the caches and reproduces the same files byte for byte
 (:func:`verify_region`). A 5 km x 5 km crop centred on the MTBS point of origin is written to
 ``tests/fixtures/`` for offline tests.
 
@@ -58,7 +63,7 @@ import yaml
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from wildfire_sim.config import WeatherConfig, configs_dir, load_costs, load_yaml
-from wildfire_sim.data.hrrr import hrrr_cache_key
+from wildfire_sim.data.hrrr import HrrrWindField, fetch_hrrr_wind_field, hrrr_cache_key
 from wildfire_sim.data.landfire import (
     DEFAULT_CACHE,
     BBox,
@@ -80,6 +85,7 @@ from wildfire_sim.data.weather import (
 from wildfire_sim.grid import LAYER_SPECS, Grid
 from wildfire_sim.types import FloatArray, IntArray
 from wildfire_sim.urban import load_urban_model
+from wildfire_sim.wind_field import WIND_FIELD_FILE, WIND_FIELD_FORMAT_VERSION, save_wind_field
 
 MTBS_SERVICE = "https://apps.fs.usda.gov/arcx/rest/services/EDW/EDW_MTBS_01/MapServer"
 """USFS Enterprise Data Warehouse map service of MTBS fire occurrences and burned area boundaries."""
@@ -447,6 +453,12 @@ def _weather_source(
     )
 
 
+def _wind_field_source(
+    lat: float, lon: float, start: dt.datetime, n_hours: int, target: TargetGrid, root: Path
+) -> HrrrWindField:
+    return fetch_hrrr_wind_field(lat, lon, start, n_hours, target, cache_root=root)
+
+
 @dataclass
 class RegionSources:
     """Where each input comes from; the defaults download (and cache) the real data. Tests pass fakes."""
@@ -456,6 +468,7 @@ class RegionSources:
     dem: Callable[[BBox, Path], DemFile] = _dem_source
     osm: Callable[[BBox, Path], OsmFeatures] = _osm_source
     weather: Callable[[float, float, dt.datetime, float, Path, str], WeatherConfig] = _weather_source
+    wind_field: Callable[[float, float, dt.datetime, int, TargetGrid, Path], HrrrWindField] = _wind_field_source
 
 
 # ----------------------------------------------------------------------------- build
@@ -562,6 +575,9 @@ def build_region(
 
     lat, lon = float(terrain.metadata["centroid_lat"]), float(terrain.metadata["centroid_lon"])
     duration_s = region.weather_days * 86400.0
+    wind = None
+    if region.weather_source == "hrrr":  # first: on a fresh build one download serves the point and the field
+        wind = src.wind_field(lat, lon, _first_hour(region), _weather_hours(region), target, root)
     weather = src.weather(lat, lon, region.weather_start_utc, duration_s, root, region.weather_source)
 
     directory.mkdir(parents=True, exist_ok=True)
@@ -574,6 +590,8 @@ def build_region(
     )
     write_yaml_lf(weather, directory / "weather.yaml")
     shutil.copyfile(perimeter.path, directory / "perimeter.geojson")
+    if wind is not None:
+        write_wind_field(wind, region, directory / WIND_FIELD_FILE)
 
     n_hours = math.ceil(duration_s / 3600)
     first_day, last_day = solar_dates_needed(lon, region.weather_start_utc, n_hours)
@@ -621,12 +639,97 @@ def build_region(
         },
         "sha256": {f: _sha256(directory / f) for f in OUTPUT_FILES},
     }
+    if wind is not None:
+        manifest["wind_field"] = wind_field_manifest(wind)
+        manifest["sha256"][WIND_FIELD_FILE] = _sha256(directory / WIND_FIELD_FILE)
     crop_path = None
     if fixtures_dir is not None:
         crop_path = write_crop(name, grid, target, perimeter.origin, weather, Path(fixtures_dir))
         manifest["crop"] = {"file": crop_path.name, "sha256": _sha256(crop_path)}
     (directory / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str) + "\n", encoding="utf-8")
     return RegionBuild(directory, grid, manifest, crop_path)
+
+
+def _first_hour(region: Region) -> dt.datetime:
+    return region.weather_start_utc.replace(minute=0, second=0, microsecond=0)
+
+
+def _weather_hours(region: Region) -> int:
+    """Hours of HRRR analyses behind the region's weather (as :func:`~wildfire_sim.data.weather.hourly_weather`)."""
+    start = region.weather_start_utc
+    return math.ceil((start - _first_hour(region)).total_seconds() / 3600 + region.weather_days * 86400.0 / 3600)
+
+
+def write_wind_field(wind: HrrrWindField, region: Region, path: Path) -> None:
+    """Write a region's ``wind_field.npz`` from the cached HRRR window.
+
+    The times follow :func:`~wildfire_sim.data.weather.to_weather_config`: the first hour applies
+    from ``t = 0`` (it contains ``weather_start_utc``), hour ``k`` from ``hour_k - weather_start_utc``.
+
+    Raises:
+        ValueError: The first hour does not contain the region's weather start.
+    """
+    start = region.weather_start_utc
+    first = wind.times_utc[0]
+    if not first <= start < first + dt.timedelta(hours=1):
+        raise ValueError("the wind field's first hour must contain the region's weather_start_utc")
+    times_s = np.array([0.0] + [(t - start).total_seconds() for t in wind.times_utc[1:]], dtype=np.float64)
+    save_wind_field(path, times_s, wind.u, wind.v, wind.geometry.cell_i, wind.geometry.cell_j)
+
+
+def wind_field_manifest(wind: HrrrWindField) -> dict[str, Any]:
+    """The region manifest's ``wind_field`` entry: format, window and the HRRR cache's manifest."""
+    ny, nx = wind.geometry.window_shape
+    return {
+        "file": WIND_FIELD_FILE,
+        "_format_version": WIND_FIELD_FORMAT_VERSION,
+        "n_hours": len(wind.times_utc),
+        "window_nodes": {"ny": ny, "nx": nx, "row0": wind.geometry.row0, "col0": wind.geometry.col0},
+        "source": wind.manifest,
+    }
+
+
+def build_wind_field(
+    name: str,
+    region: Region,
+    *,
+    cache_root: str | Path = DEFAULT_CACHE,
+    sources: RegionSources | None = None,
+) -> Path:
+    """Add the HRRR wind field to a region that is already built, rebuilding nothing else.
+
+    Reads the grid's CRS, transform and centroid from ``grid.npz``, fetches (or reads) the wind
+    window, writes ``wind_field.npz`` and records it in ``manifest.json``.
+
+    Returns:
+        The path of ``wind_field.npz``.
+
+    Raises:
+        FileNotFoundError: The region is not built.
+        ValueError: The region's weather does not come from the HRRR.
+    """
+    if region.weather_source != "hrrr":
+        raise ValueError(f"{name}: the wind field needs weather_source: hrrr (it has {region.weather_source})")
+    src = RegionSources() if sources is None else sources
+    root = Path(cache_root)
+    directory = root / name
+    grid_path, manifest_path = directory / "grid.npz", directory / "manifest.json"
+    if not grid_path.exists() or not manifest_path.exists():
+        raise FileNotFoundError(f"{name} is not built in {root}; build it first with scripts/download_data.py {name}")
+    grid = Grid.load(grid_path)
+    affine = optional_import("affine").Affine
+    target = TargetGrid(
+        grid.metadata["crs"], affine(*(float(x) for x in grid.metadata["transform"].split())), grid.shape
+    )
+    lat, lon = float(grid.metadata["centroid_lat"]), float(grid.metadata["centroid_lon"])
+    wind = src.wind_field(lat, lon, _first_hour(region), _weather_hours(region), target, root)
+    path = directory / WIND_FIELD_FILE
+    write_wind_field(wind, region, path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["wind_field"] = wind_field_manifest(wind)
+    manifest["sha256"][WIND_FIELD_FILE] = _sha256(path)
+    manifest_path.write_text(json.dumps(manifest, indent=2, default=str) + "\n", encoding="utf-8")
+    return path
 
 
 def verify_region(name: str, region: Region, *, cache_root: str | Path = DEFAULT_CACHE, **kwargs: Any) -> list[str]:

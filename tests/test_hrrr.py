@@ -259,3 +259,131 @@ def test_live_hrrr_lake_fire(tmp_path: Path) -> None:
     for h in series.hours:
         assert 35 < h.temperature_c < 45 and h.relative_humidity < 0.2
         assert 0 <= h.wind_from_deg < 360 and 0 < h.wind_speed < 15
+
+
+# ----------------------------------------------------------------------------- wind on the native grid (WP 3.4)
+
+
+class WindArchive:
+    """A fake archive whose u/v vary with the hour, on a 3 km raster in EPSG:5070 around the Lake Fire.
+
+    Grid-relative winds (the header's flag): every node blows toward grid north at ``hour + 1``
+    m/s, so the earth-relative bearing at a node is ``n (lon - LoV)`` and depends on its longitude.
+    """
+
+    SIZE = 40  # nodes: 120 km, so the longitudes of the window's nodes differ measurably
+
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+        self.header = grib2_header()
+
+    def get(self, url: str, byte_range: str | None) -> bytes:
+        self.calls.append(byte_range or "idx")
+        if url.endswith(".idx"):
+            return IDX.encode()
+        first = int(byte_range.split("=")[1].split("-")[0]) if byte_range else 0
+        name = {100: "temperature_c", 250: "relative_humidity_pct", 400: "u_grid", 600: "v_grid", 900: "cloud_pct"}[
+            first
+        ]
+        hour = int(url.split("hrrr.t")[1][:2])
+        return self.header + f"{name}|{hour}".encode()
+
+    def decode(self, message: bytes) -> Field:
+        from_origin = pytest.importorskip("rasterio.transform").from_origin
+        transform = pytest.importorskip("rasterio.warp").transform
+        name, hour = message[len(self.header) :].decode().split("|")
+        value = {"u_grid": 0.0, "v_grid": float(hour) + 1.0}.get(name, FakeArchive.VALUES.get(name, 0.0))
+        x0, y0 = transform("EPSG:4326", "EPSG:5070", [LAKE[1]], [LAKE[0]])
+        half = 3000.0 * self.SIZE / 2
+        t = from_origin(round(x0[0] - half), round(y0[0] + half), 3000, 3000)
+        return Field(np.full((self.SIZE, self.SIZE), value), t, "EPSG:5070")
+
+
+def _fire_target() -> Any:
+    """A 300 x 400 grid of 30 m cells (9 x 12 km) in a local Albers centred on the Lake Fire."""
+    from_origin = pytest.importorskip("rasterio.transform").from_origin
+    from wildfire_sim.data.terrain import TargetGrid
+
+    crs = "+proj=aea +lat_0=34.7586 +lon_0=-120.035 +lat_1=34.6 +lat_2=34.9 +datum=NAD83 +units=m +no_defs"
+    return TargetGrid(crs, from_origin(-6000.0, 4500.0, 30.0, 30.0), (300, 400))
+
+
+def test_wind_window_geometry_and_rotation(tmp_path: Path) -> None:
+    pytest.importorskip("rasterio")
+    transform = pytest.importorskip("rasterio.warp").transform
+    from wildfire_sim.data.hrrr import fetch_hrrr_wind_field
+
+    archive, target = WindArchive(), _fire_target()
+    start = dt.datetime(2024, 7, 6, 0, tzinfo=UTC)
+    wind = fetch_hrrr_wind_field(*LAKE, start, 3, target, cache_root=tmp_path, get=archive.get, decode=archive.decode)
+    g = wind.geometry
+    # the window covers the cells plus one node: 12 km / 3 km wide grid -> about 4-5 nodes + 2 + rotation slack
+    ny, nx = g.window_shape
+    assert 5 <= ny <= 8 and 6 <= nx <= 9 and wind.u.shape == (3, ny, nx)
+    assert g.cell_i.min() >= 1.0 and g.cell_i.max() <= ny - 2 and g.cell_j.min() >= 1.0 and g.cell_j.max() <= nx - 2
+    # a cell centre's fractional position agrees with projecting it by hand
+    hx, hy = transform(target.crs, "EPSG:5070", [-6000.0 + 30.0 * 150.5], [4500.0 - 30.0 * 100.5])
+    f = archive.decode(archive.header + b"u_grid|0")
+    inv = ~f.transform
+    col = inv.a * hx[0] + inv.b * hy[0] + inv.c - 0.5
+    row = inv.d * hx[0] + inv.e * hy[0] + inv.f - 0.5
+    assert g.cell_i[100, 150] == pytest.approx(row - g.row0, abs=1e-6)
+    assert g.cell_j[100, 150] == pytest.approx(col - g.col0, abs=1e-6)
+    # every node rotated at its own longitude: toward grid north is n (lon - LoV) east of true north
+    n = math.sin(math.radians(38.5))
+    for k in range(3):
+        speed = np.hypot(wind.u[k], wind.v[k])
+        assert np.allclose(speed, k + 1.0, atol=1e-5)
+        bearing = np.degrees(np.arctan2(wind.u[k].astype(np.float64), wind.v[k].astype(np.float64))) % 360
+        assert np.allclose(bearing, (n * (g.node_lon + 97.5)) % 360, atol=1e-4)
+    assert np.ptp(np.arctan2(wind.u[0], wind.v[0])) > 0  # the rotation changes across the window
+    # one download made both the point values and the field: 1 index + 5 messages per hour
+    assert len(archive.calls) == 3 * 6 and (wind.path.parent / "hourly.csv").exists()
+    assert wind.manifest["window"]["ny"] == ny and wind.manifest["n_hours"] == 3
+    again = fetch_hrrr_wind_field(*LAKE, start, 3, target, cache_root=tmp_path, get=archive.get, decode=archive.decode)
+    assert len(archive.calls) == 18 and np.array_equal(again.u, wind.u)
+    wind.path.write_bytes(b"tampered")
+    with pytest.raises(ValueError, match="hash"):
+        fetch_hrrr_wind_field(*LAKE, start, 3, target, cache_root=tmp_path, get=archive.get, decode=archive.decode)
+
+
+def test_wind_field_only_downloads_u_and_v_when_the_point_is_cached(tmp_path: Path) -> None:
+    pytest.importorskip("rasterio")
+    from wildfire_sim.data.hrrr import fetch_hrrr_wind_field
+
+    archive = WindArchive()
+    start = dt.datetime(2024, 7, 6, 0, tzinfo=UTC)
+    fetch_hrrr_point(*LAKE, start, 2, cache_root=tmp_path, get=archive.get, decode=archive.decode)
+    assert len(archive.calls) == 2 * 6
+    wind = fetch_hrrr_wind_field(
+        *LAKE, start, 2, _fire_target(), cache_root=tmp_path, get=archive.get, decode=archive.decode
+    )
+    assert len(archive.calls) == 2 * 6 + 2 * 3  # an index and the two wind messages per hour
+    assert set(wind.manifest["files"][start.isoformat()]["byte_ranges"]) == {"u_grid", "v_grid"}
+    assert np.allclose(np.hypot(wind.u[1], wind.v[1]), 2.0, atol=1e-5)
+
+
+def test_wind_window_must_fit_in_the_hrrr_grid(tmp_path: Path) -> None:
+    pytest.importorskip("rasterio")
+    from_origin = pytest.importorskip("rasterio.transform").from_origin
+    from wildfire_sim.data.hrrr import wind_geometry
+    from wildfire_sim.data.terrain import TargetGrid
+
+    archive = WindArchive()
+    field = archive.decode(archive.header + b"u_grid|0")
+    far = TargetGrid(_fire_target().crs, from_origin(-200_000.0, 4500.0, 30.0, 30.0), (10, 10))
+    with pytest.raises(ValueError, match="not inside the HRRR grid"):
+        wind_geometry(field, far)
+
+
+def test_rotation_array_matches_the_scalar_formula() -> None:
+    from wildfire_sim.data.hrrr import to_earth_relative_array
+
+    hrrr = LambertGrid(-97.5, 38.5, 38.5, True)
+    lon = np.array([[-125.0, -120.0], [-97.5, -80.0]])
+    u, v = np.array([[1.0, -2.0], [3.0, 0.5]]), np.array([[0.0, 4.0], [-1.0, 2.0]])
+    ue, ve = to_earth_relative_array(u, v, lon, hrrr)
+    for idx in np.ndindex(lon.shape):
+        assert (ue[idx], ve[idx]) == pytest.approx(to_earth_relative(u[idx], v[idx], lon[idx], hrrr))
+    same = to_earth_relative_array(u, v, lon, LambertGrid(-97.5, 38.5, 38.5, False))
+    assert np.array_equal(same[0], u) and np.array_equal(same[1], v)
