@@ -2,7 +2,8 @@
 
 Downloads (or reads from the caches) every input of a region in ``configs/regions.yaml`` and writes
 ``data/cache/<region>/`` (``grid.npz``, ``canopy.npz``, ``weather.yaml``, ``perimeter.geojson``,
-``manifest.json``) and the 5 km test crop in ``tests/fixtures/``. See ``docs/data.md``.
+``wind_field.npz`` for HRRR regions, ``manifest.json``) and the 5 km test crop in ``tests/fixtures/``.
+See ``docs/data.md``.
 
 Usage (from the repository root, with the geo extra installed: ``uv sync --extra geo``)::
 
@@ -10,6 +11,7 @@ Usage (from the repository root, with the geo extra installed: ``uv sync --extra
     uv run python scripts/download_data.py lake_2024
     uv run python scripts/download_data.py --all
     uv run python scripts/download_data.py lake_2024 --verify   # rebuild from cache, compare hashes
+    uv run python scripts/download_data.py lake_2024 --wind-field   # add only the HRRR wind field (WP 3.4)
 
 The email is only sent to the LANDFIRE Product Service and is never written to disk. A first
 build downloads several hundred megabytes and can take tens of minutes (the LANDFIRE job is
@@ -22,10 +24,13 @@ import argparse
 import sys
 from pathlib import Path
 
+import numpy as np
+
 from wildfire_sim.data.cache import (
     FIXTURES_DIR,
     Region,
     build_region,
+    build_wind_field,
     email_configured,
     fuel_summary,
     load_regions,
@@ -34,6 +39,7 @@ from wildfire_sim.data.cache import (
 from wildfire_sim.data.landfire import DEFAULT_CACHE, EMAIL_ENV
 from wildfire_sim.data.validation import fetch_observations
 from wildfire_sim.grid import Grid
+from wildfire_sim.wind_field import load_wind_field
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -50,6 +56,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="also fetch the fire's observations (ignition, perimeters, VIIRS; needs a NASA Earthdata token)",
     )
+    parser.add_argument(
+        "--wind-field",
+        action="store_true",
+        help="only add the per-cell HRRR wind field (wind_field.npz) to a region already built; public data",
+    )
     args = parser.parse_args(argv)
 
     names = list(regions) if args.all else args.names
@@ -59,6 +70,11 @@ def main(argv: list[str] | None = None) -> int:
 
     for name in names:
         region = regions[name]
+        if args.wind_field:
+            print(f"{name}: HRRR wind field (about two 1-2 MB downloads per hour; cached)", flush=True)
+            path = build_wind_field(name, region, cache_root=args.cache_root)
+            report_wind_field(path)
+            continue
         if args.verify:
             differ = verify_region(name, region, cache_root=args.cache_root)
             print(f"{name}: {'reproduced' if not differ else 'DIFFERENT: ' + ', '.join(differ)}")
@@ -83,11 +99,22 @@ def main(argv: list[str] | None = None) -> int:
         print("  fuel models (model: cells): " + ", ".join(f"{k}: {v}" for k, v in top))
         print(f"  break cells {int((g.break_width_m > 0).sum())}, assets {g.asset_value.sum():,.0f} USD")
         print(f"  wrote {built.directory}")
+        if (built.directory / "wind_field.npz").exists():
+            report_wind_field(built.directory / "wind_field.npz")
         if built.crop is not None:
             print(f"  crop {built.crop} ({built.crop.stat().st_size / 1e6:.2f} MB)")
         if args.observations:
             report_observations(name, region, args.cache_root, built.grid)
     return 0
+
+
+def report_wind_field(path: Path) -> None:
+    """Print the size and range of a region's wind field."""
+    series = load_wind_field(path)
+    speed = np.hypot(series.u, series.v)
+    ny, nx = series.window_shape
+    print(f"  wind field {path}: {series.n_times} hours on {ny} x {nx} HRRR nodes, {path.stat().st_size / 1e6:.1f} MB")
+    print(f"  node wind speed {speed.min():.1f}-{speed.max():.1f} m/s (median {np.median(speed):.1f})")
 
 
 def report_observations(name: str, region: Region, cache_root: Path, grid: Grid) -> None:
