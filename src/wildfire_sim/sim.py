@@ -63,7 +63,8 @@ the earliest arrival time at such a cell is recorded as ``provenance["reached_ed
 The run itself is not changed or stopped.
 
 What does depend on ``dt``: weather is piecewise constant and looked up at the start of each
-step (a breakpoint that is not a multiple of ``dt`` takes effect at the next step start);
+step (a breakpoint that is not a multiple of ``dt`` takes effect at the next step start; a
+per-cell wind field, WP 3.4, is looked up the same way and attached to the step's weather);
 hooks act at step starts; the spread rule is evaluated once per step, so a rule that reads
 ``grid.state`` sees the state at the step start.
 """
@@ -100,6 +101,7 @@ from wildfire_sim.spread.base import (
 )
 from wildfire_sim.types import BoolArray, CellState, FloatArray, IntArray, LandUse, Stencil, StencilSize, get_stencil
 from wildfire_sim.urban import UrbanModel, load_urban_model, residence_scale, ros_scale, urban_mask
+from wildfire_sim.wind_field import WindFieldSeries, wind_field_for
 
 StepHook = Callable[[Grid, float, float, np.random.Generator], bool]
 """Called once per step, before spread, as ``hook(grid, t_s, dt_s, suppression_rng)``.
@@ -996,8 +998,9 @@ def model_provenance(config: ScenarioConfig, rule_name: str | None = None) -> di
     when the numba engine is selected), ``engine`` (``config.engine``), ``rule`` (class name of
     the spread rule; the configured registry name when ``rule_name`` is None), ``stencil``,
     ``arrival_shape``, ``kernel_correction`` and its ``kernel_correction_source`` for that
-    stencil and shape, ``residence_time_s`` and ``holdover_s`` (the whole tables, seconds) and
-    ``urban`` (the urban-cell parameters).
+    stencil and shape, ``residence_time_s`` and ``holdover_s`` (the whole tables, seconds),
+    ``urban`` (the urban-cell parameters) and ``wind_field`` (None, or the file, SHA-256 and
+    sizes of the scenario's per-cell wind, WP 3.4).
     :func:`run` adds the per-run entries. Used by ensembles, which have no single run to ask.
     """
     return _model_provenance(
@@ -1007,6 +1010,7 @@ def model_provenance(config: ScenarioConfig, rule_name: str | None = None) -> di
         load_residence_times(),
         load_holdover_times(),
         load_urban_model(),
+        wind_field_for(config),
     )
 
 
@@ -1017,6 +1021,7 @@ def _model_provenance(
     residence: ResidenceTimeTable,
     holdover: HoldoverTable,
     urban: UrbanModel,
+    wind: WindFieldSeries | None = None,
 ) -> dict[str, Any]:
     """:func:`model_provenance` from tables already loaded (a run loads each YAML file once)."""
     entry = corrections.entry_for(config.stencil, config.spread.arrival_shape)
@@ -1040,6 +1045,7 @@ def _model_provenance(
         "residence_time_s": residence.model_dump(mode="json"),
         "holdover_s": holdover.model_dump(mode="json"),
         "urban": urban.model_dump(mode="json"),
+        "wind_field": None if wind is None else wind.provenance(),
     }
 
 
@@ -1075,6 +1081,7 @@ def run(
     hooks: Sequence[StepHook] = (),
     record_events: bool = True,
     max_source_age_s: float | None = None,
+    wind_field: WindFieldSeries | None = None,
 ) -> RunResult:
     """Run one simulation of ``config``.
 
@@ -1111,13 +1118,20 @@ def run(
         hooks: Callables run once per step before spread (see :data:`StepHook`).
         record_events: Whether to fill :attr:`RunResult.events`.
         max_source_age_s: Optional limit, s, on how long after ignition a cell may spread fire.
+        wind_field: Per-cell wind (WP 3.4) to use in place of the file named by
+            ``config.weather.wind_field``, for example one perturbed by an ensemble. None loads
+            that file when the scenario names one; with neither, the series' scalar wind
+            applies everywhere. At each step the field in force is attached to the weather as
+            ``Weather.wind_field``; the scalar wind stays the series' (centroid) value.
 
     Returns:
         A :class:`RunResult` with ``(H, W)`` arrays.
 
     Raises:
         ValueError: An ignition cell is outside the grid or not FUEL; the grid already burns;
-            ``seed`` is negative; ``max_source_age_s`` is not positive.
+            ``seed`` is negative; ``max_source_age_s`` is not positive; the wind field is for a
+            grid of another shape.
+        FileNotFoundError: The scenario's wind field file does not exist.
         ImportError: ``config.engine`` is ``"numba"`` and numba is not installed.
     """
     wall_start = time.perf_counter()
@@ -1133,6 +1147,12 @@ def run(
     urban = load_urban_model()
     g = build_grid(config.grid) if grid is None else grid.copy()
     g.validate()
+    wind = wind_field_for(config) if wind_field is None else wind_field
+    if wind is not None and wind.shape != g.shape:
+        raise ValueError(
+            f"the wind field {'' if wind.path is None else str(wind.path) + ' '}is for a {wind.shape} grid, "
+            f"but the grid is {g.shape}"
+        )
     g.apply_unburnable()
     if not urban.burnable:  # ros_factor 0: the town holds, as before urban cells could burn
         g.state[urban_mask(g) & (g.state == _FUEL)] = _UNBURNABLE
@@ -1164,6 +1184,8 @@ def run(
     for i in range(config.n_steps):
         t, t_end = i * dt, (i + 1) * dt
         weather = series.at(t)
+        if wind is not None:
+            weather = dataclasses.replace(weather, wind_field=wind.at(t))
         changed = False
         for hook in hooks:
             changed = bool(hook(g, t, dt, suppression_rng)) or changed
@@ -1200,7 +1222,7 @@ def run(
         "config": config.model_dump(mode="json"),
         "seed": seed,
         "start_time_utc": None if config.start_time_utc is None else config.start_time_utc.isoformat(),
-        **_model_provenance(config, type(rule).__name__, corrections, residence, holdover, urban),
+        **_model_provenance(config, type(rule).__name__, corrections, residence, holdover, urban, wind),
         "grid_from": "config" if grid is None else "argument",
         "max_source_age_s": max_source_age_s,
         "n_hooks": len(hooks),

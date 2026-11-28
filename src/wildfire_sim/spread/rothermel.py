@@ -948,7 +948,8 @@ class RothermelRule:
 
     For every burnable cell:
 
-    1. Midflame wind: the 10 m wind divided by ``ten_m_to_twenty_ft`` (20-ft wind), times the
+    1. Midflame wind: the 10 m wind (the cell's own when the weather carries a ``wind_field``,
+       WP 3.4) divided by ``ten_m_to_twenty_ft`` (20-ft wind), times the
        wind adjustment factor of the cell's fuel bed depth and canopy cover
        (:func:`~wildfire_sim.spread.ellipse.wind_adjustment_factor`).
     2. Fuel bed values for the weather's moisture (:func:`fuel_bed`, once per fuel model), the
@@ -1051,7 +1052,8 @@ class RothermelRule:
             grid: Reads ``fuel_model``, ``canopy_cover`` (fraction), ``slope`` (rise/run),
                 ``aspect`` (downhill bearing, degrees) and the burnable mask. Not modified.
             weather: ``wind_speed`` (10 m, m/s), ``wind_to_bearing`` (degrees) and the fuel
-                moistures.
+                moistures; with a ``wind_field`` its per-cell 10 m speed and "to" bearing
+                replace the two scalars (WP 3.4).
             stencil: When given, the ratio is also capped at the stencil's lattice cap.
         """
         h, w = grid.shape
@@ -1070,11 +1072,18 @@ class RothermelRule:
             self.crown_ratio,
             p.sheltered_crown_fill.value,
         )
-        midflame = twenty_foot_wind(float(weather.wind_speed), p.ten_m_to_twenty_ft.value) * waf
+        wind_10m: float | FloatArray = float(weather.wind_speed)
+        wind_to: float | FloatArray = weather.wind_to_bearing
+        if weather.wind_field is not None:
+            if weather.wind_field.shape != (h, w):
+                raise ValueError(f"wind field shape {weather.wind_field.shape} differs from the grid's {(h, w)}")
+            wind_10m = weather.wind_field.speed.reshape(-1)[burnable]
+            wind_to = weather.wind_field.to_bearing.reshape(-1)[burnable]
+        midflame = twenty_foot_wind(wind_10m, p.ten_m_to_twenty_ft.value) * waf
         phi_w = bed.wind_factor(midflame)
         phi_s = bed.slope_factor(grid.slope.reshape(-1)[burnable].astype(np.float64))
         upslope = (grid.aspect.reshape(-1)[burnable].astype(np.float64) + 180.0) % 360.0
-        phi_e, head = combine_wind_and_slope(phi_w, weather.wind_to_bearing, phi_s, upslope)
+        phi_e, head = combine_wind_and_slope(phi_w, wind_to, phi_s, upslope)
         hf = head_fire(bed, phi_e, flame=self.flame, wind_limit_on=self.apply_wind_limit)
         phi_used = np.where(hf.wind_limited, bed.wind_factor(hf.effective_wind), phi_e)
         lb_free = length_to_breadth(hf.effective_wind, p.lb_max.value, self.lb_scale)

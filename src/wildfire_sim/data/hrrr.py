@@ -23,6 +23,15 @@ parallels; the projection parameters and the flag are read from each file's own 
 Each region's hourly values are cached as ``hrrr-<key>/hourly.csv`` with a manifest (URLs, byte
 ranges, SHA-256). The archive is public; no account is needed.
 
+**Wind on the native grid (WP 3.4).** The same UGRD and VGRD messages also give the wind on every
+HRRR node of a small window around a fire grid (:func:`fetch_hrrr_wind_field`): the nodes
+covering the grid's cell centres plus one node of margin on every side, each node's components
+rotated to earth-relative at that node's own longitude (the rotation angle ``n (lon - LoV)``
+changes by about 0.02 deg per km east-west), and each cell centre's fractional position in the
+window, so that the run can interpolate with numpy alone (:mod:`wildfire_sim.wind_field`). It is
+cached beside the point values as ``hrrr-<key>/wind-<grid key>.npz`` with its own manifest
+``wind-<grid key>.json``. When neither is cached yet, both are made from one download.
+
 References:
     Dowell, D. C. et al. (2022). The High-Resolution Rapid Refresh (HRRR): an hourly updating
     convection-allowing forecast model. Part I. Weather and Forecasting 37, 1371-1395.
@@ -32,6 +41,7 @@ References:
 
 from __future__ import annotations
 
+import contextlib
 import csv
 import datetime as dt
 import hashlib
@@ -40,7 +50,7 @@ import math
 import time
 import urllib.error
 import urllib.request
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Generator, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -49,6 +59,7 @@ from typing import Any
 import numpy as np
 
 from wildfire_sim.data.landfire import DEFAULT_CACHE, optional_import
+from wildfire_sim.data.terrain import TargetGrid
 
 HRRR_BUCKET = "https://noaa-hrrr-bdp-pds.s3.amazonaws.com"
 """NOAA Open Data Dissemination archive of the HRRR on AWS (public)."""
@@ -175,6 +186,23 @@ def to_earth_relative(u: float, v: float, lon_deg: float, grid: LambertGrid) -> 
     return c * u + s * v, -s * u + c * v
 
 
+def to_earth_relative_array(
+    u: np.ndarray, v: np.ndarray, lon_deg: np.ndarray, grid: LambertGrid
+) -> tuple[np.ndarray, np.ndarray]:
+    """:func:`to_earth_relative` element-wise: each node rotated at its own longitude (degrees east).
+
+    Returns float64 east and north components, m/s, of the shape of the inputs.
+    """
+    u = np.asarray(u, dtype=np.float64)
+    v = np.asarray(v, dtype=np.float64)
+    if not grid.grid_relative_winds:
+        return u.copy(), v.copy()
+    dlon = (np.asarray(lon_deg, dtype=np.float64) - grid.lov_deg + 180.0) % 360.0 - 180.0
+    alpha = np.radians(grid.cone * dlon)
+    c, s = np.cos(alpha), np.sin(alpha)
+    return c * u + s * v, -s * u + c * v
+
+
 def wind_from(u: float, v: float) -> tuple[float, float]:
     """Speed (m/s) and the bearing the wind blows from (degrees in [0, 360)) of east/north components."""
     speed = math.hypot(u, v)
@@ -287,16 +315,38 @@ def urllib_get(url: str, byte_range: str | None, attempts: int = 4, first_wait_s
     raise AssertionError("unreachable")
 
 
+def download_messages(
+    t: dt.datetime, get: Get, fields: dict[str, str] = FIELDS
+) -> tuple[dict[str, bytes], dict[str, Any]]:
+    """Download the GRIB2 messages of ``fields`` for the analysis hour ``t``, and their provenance."""
+    url = analysis_url(t)
+    ranges = byte_ranges(get(url + ".idx", None).decode("utf-8"), fields)
+    messages = {}
+    for name, (first, last) in ranges.items():
+        messages[name] = get(url, f"bytes={first}-{'' if last is None else last}")
+    return messages, {"url": url, "byte_ranges": ranges}
+
+
+def _decode_once(decode: Callable[[bytes], Field]) -> Callable[[bytes], Field]:
+    """``decode`` that remembers its results, so the point and the window share one decoding."""
+    done: dict[int, tuple[bytes, Field]] = {}
+
+    def wrapped(message: bytes) -> Field:
+        hit = done.get(id(message))
+        if hit is None or hit[0] is not message:
+            hit = (message, decode(message))
+            done[id(message)] = hit
+        return hit[1]
+
+    return wrapped
+
+
 def fetch_hour(
     t: dt.datetime, lat: float, lon: float, get: Get, decode: Callable[[bytes], Field]
 ) -> tuple[HrrrHour, dict[str, Any]]:
     """Download and sample one analysis hour; also returns its provenance (URL, byte ranges)."""
-    url = analysis_url(t)
-    ranges = byte_ranges(get(url + ".idx", None).decode("utf-8"))
-    messages = {}
-    for name, (first, last) in ranges.items():
-        messages[name] = get(url, f"bytes={first}-{'' if last is None else last}")
-    return hour_values(messages, t, lat, lon, decode), {"url": url, "byte_ranges": ranges}
+    messages, provenance = download_messages(t, get)
+    return hour_values(messages, t, lat, lon, decode), provenance
 
 
 _COLUMNS = ("time_utc", "temperature_c", "relative_humidity", "wind_speed", "wind_from_deg", "cloud_fraction")
@@ -359,20 +409,18 @@ def fetch_hrrr_point(
     get: Get | None = None,
     decode: Callable[[bytes], Field] = decode_message,
     workers: int = 8,
+    wind_target: TargetGrid | None = None,
 ) -> HrrrSeries:
     """HRRR analysis values at a point for ``n_hours`` hours from ``start_utc`` (on the hour).
+
+    With ``wind_target`` (a fire grid) and nothing cached yet, the same download also gives that
+    grid's wind field on the native HRRR nodes, cached for :func:`fetch_hrrr_wind_field`.
 
     Raises:
         ValueError: ``start_utc`` is not on the hour or not timezone-aware, an hour's file is
             missing from the archive, or a cached file does not match its hash.
     """
-    if start_utc.tzinfo is None:
-        raise ValueError("start_utc must be timezone-aware")
-    start = start_utc.astimezone(dt.UTC)
-    if (start.minute, start.second, start.microsecond) != (0, 0, 0):
-        raise ValueError("start_utc must be on the hour (HRRR analyses are hourly)")
-    if n_hours < 1:
-        raise ValueError("n_hours must be >= 1")
+    start = _check_start(start_utc, n_hours)
     directory = Path(cache_root) / hrrr_cache_key(lat, lon, start, n_hours)
     data, manifest_path = directory / "hourly.csv", directory / "manifest.json"
     if data.exists() and manifest_path.exists():
@@ -383,19 +431,36 @@ def fetch_hrrr_point(
 
     fetch = urllib_get if get is None else get
     times = [start + i * HOUR for i in range(n_hours)]
+    geometry: list[WindGeometry] = []  # set from the first hour when a wind field is wanted
 
-    def one(t: dt.datetime) -> tuple[HrrrHour, dict[str, Any]]:
-        try:
-            return fetch_hour(t, lat, lon, fetch, decode)
-        except urllib.error.HTTPError as exc:
-            if exc.code in (403, 404):
-                raise ValueError(f"no HRRR analysis for {t:%Y-%m-%d %H}:00 UTC in the archive") from None
-            raise
+    def one(t: dt.datetime) -> tuple[HrrrHour, dict[str, Any], tuple[np.ndarray, np.ndarray] | None]:
+        with _archive_errors(t):
+            messages, provenance = download_messages(t, fetch)
+        dec = _decode_once(decode)
+        hour = hour_values(messages, t, lat, lon, dec)
+        if wind_target is None:
+            return hour, provenance, None
+        if not geometry:
+            geometry.append(wind_geometry(dec(messages["u_grid"]), wind_target))
+        return hour, provenance, window_wind(messages, geometry[0], dec)
 
+    first = [one(times[0])]  # alone, so the wind window is known before the others run
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
-        results = list(pool.map(one, times))
-    hours = [h for h, _ in results]
+        results = first + list(pool.map(one, times[1:]))
+    hours = [h for h, _, _ in results]
     directory.mkdir(parents=True, exist_ok=True)
+    if wind_target is not None:
+        _write_wind(
+            directory,
+            wind_target,
+            times,
+            geometry[0],
+            [w for _, _, w in results if w is not None],
+            {
+                t.isoformat(): {**p, "byte_ranges": {k: p["byte_ranges"][k] for k in WIND_FIELDS}}
+                for t, (_, p, _) in zip(times, results, strict=True)
+            },
+        )
     _write(data, hours)
     manifest = {
         "dataset": "HRRR analysis (wrfsfcf00), NOAA, AWS Open Data",
@@ -405,9 +470,346 @@ def fetch_hrrr_point(
         "fields": FIELDS,
         "sampling": "bilinear at the point; 10 m wind rotated from grid-relative to true north",
         "accessed_utc": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
-        "files": {t.isoformat(): p for t, (_, p) in zip(times, results, strict=True)},
+        "files": {t.isoformat(): p for t, (_, p, _) in zip(times, results, strict=True)},
         "sha256": {"hourly.csv": hashlib.sha256(data.read_bytes()).hexdigest()},
         "attribution": "NOAA High-Resolution Rapid Refresh (HRRR), NOAA Open Data Dissemination program",
     }
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return HrrrSeries(hours, directory, manifest)
+
+
+def _check_start(start_utc: dt.datetime, n_hours: int) -> dt.datetime:
+    """``start_utc`` in UTC, after checking it is aware and on the hour and ``n_hours >= 1``."""
+    if start_utc.tzinfo is None:
+        raise ValueError("start_utc must be timezone-aware")
+    start = start_utc.astimezone(dt.UTC)
+    if (start.minute, start.second, start.microsecond) != (0, 0, 0):
+        raise ValueError("start_utc must be on the hour (HRRR analyses are hourly)")
+    if n_hours < 1:
+        raise ValueError("n_hours must be >= 1")
+    return start
+
+
+@contextlib.contextmanager
+def _archive_errors(t: dt.datetime) -> Generator[None]:
+    """Turn the archive's 403/404 for a missing hour into a ``ValueError`` naming the hour."""
+    try:
+        yield
+    except urllib.error.HTTPError as exc:
+        if exc.code in (403, 404):
+            raise ValueError(f"no HRRR analysis for {t:%Y-%m-%d %H}:00 UTC in the archive") from None
+        raise
+
+
+# ----------------------------------------------------------------------------- wind on the native grid (WP 3.4)
+
+
+WIND_FIELDS: dict[str, str] = {"u_grid": FIELDS["u_grid"], "v_grid": FIELDS["v_grid"]}
+"""The two fields of the wind window."""
+
+WINDOW_MARGIN_NODES = 1
+"""HRRR nodes added on every side of the nodes that surround the grid's cell centres."""
+
+
+@dataclass(frozen=True)
+class WindGeometry:
+    """Where a fire grid's cells lie on the HRRR grid.
+
+    Attributes:
+        row0, col0: First node row and column of the window in the HRRR raster (as GDAL reads it).
+        cell_i, cell_j: ``(H, W)`` float64, fractional window row and column of each cell centre
+            (node centres at integers).
+        node_lon, node_lat: ``(ny, nx)`` float64, WGS84 longitude and latitude of the window's
+            nodes, degrees.
+        hrrr_shape: ``(rows, cols)`` of the HRRR raster.
+        hrrr_transform: Its affine transform ``(a, b, c, d, e, f)``, m.
+        hrrr_crs: Its CRS, WKT.
+    """
+
+    row0: int
+    col0: int
+    cell_i: np.ndarray
+    cell_j: np.ndarray
+    node_lon: np.ndarray
+    node_lat: np.ndarray
+    hrrr_shape: tuple[int, int]
+    hrrr_transform: tuple[float, ...]
+    hrrr_crs: str
+
+    @property
+    def window_shape(self) -> tuple[int, int]:
+        """``(ny, nx)`` of the node window."""
+        return (int(self.node_lon.shape[0]), int(self.node_lon.shape[1]))
+
+    @property
+    def slices(self) -> tuple[slice, slice]:
+        """Row and column slices of the window in the HRRR raster."""
+        ny, nx = self.window_shape
+        return slice(self.row0, self.row0 + ny), slice(self.col0, self.col0 + nx)
+
+
+def _transform_tuple(transform: Any) -> tuple[float, ...]:
+    return tuple(float(transform[i]) for i in range(6))
+
+
+def cell_positions(field: Field, target: TargetGrid) -> tuple[np.ndarray, np.ndarray]:
+    """Fractional ``(row, col)`` of every target cell centre on the field's raster.
+
+    Cell centres are projected from the target's CRS to the field's (PROJ, through rasterio);
+    node centres of the field are at integers, as in :func:`sample_bilinear`.
+
+    Returns:
+        Two ``(H, W)`` float64 arrays.
+    """
+    transform = optional_import("rasterio.warp").transform
+    h, w = target.shape
+    a, b, c, d, e, f = _transform_tuple(target.transform)
+    jj, ii = np.meshgrid(np.arange(w, dtype=np.float64) + 0.5, np.arange(h, dtype=np.float64) + 0.5)
+    xs = c + a * jj + b * ii
+    ys = f + d * jj + e * ii
+    hx, hy = transform(target.crs, field.crs, xs.ravel(), ys.ravel())
+    hx, hy = np.asarray(hx, dtype=np.float64), np.asarray(hy, dtype=np.float64)
+    inv = ~field.transform
+    col = inv.a * hx + inv.b * hy + inv.c - 0.5
+    row = inv.d * hx + inv.e * hy + inv.f - 0.5
+    return row.reshape(h, w), col.reshape(h, w)
+
+
+def wind_geometry(field: Field, target: TargetGrid, margin: int = WINDOW_MARGIN_NODES) -> WindGeometry:
+    """The node window around a fire grid and the cells' positions in it.
+
+    The window spans the nodes around every cell centre (``floor`` of the smallest to ``ceil``
+    of the largest fractional row and column) plus ``margin`` nodes on every side.
+
+    Raises:
+        ValueError: The window does not fit inside the HRRR raster.
+    """
+    transform = optional_import("rasterio.warp").transform
+    rows, cols = cell_positions(field, target)
+    r0 = math.floor(float(rows.min())) - margin
+    c0 = math.floor(float(cols.min())) - margin
+    r1 = math.ceil(float(rows.max())) + margin
+    c1 = math.ceil(float(cols.max())) + margin
+    hh, ww = field.values.shape
+    if r0 < 0 or c0 < 0 or r1 > hh - 1 or c1 > ww - 1:
+        raise ValueError("the fire grid (plus the margin) is not inside the HRRR grid")
+    nr, nc = np.meshgrid(np.arange(r0, r1 + 1, dtype=np.float64) + 0.5, np.arange(c0, c1 + 1, dtype=np.float64) + 0.5)
+    nr, nc = nr.T, nc.T  # (ny, nx)
+    t = field.transform
+    xs = t.c + t.a * nc + t.b * nr
+    ys = t.f + t.d * nc + t.e * nr
+    lon, lat = transform(field.crs, "EPSG:4326", xs.ravel(), ys.ravel())
+    crs = optional_import("rasterio.crs").CRS.from_user_input(field.crs)
+    return WindGeometry(
+        row0=r0,
+        col0=c0,
+        cell_i=rows - r0,
+        cell_j=cols - c0,
+        node_lon=np.asarray(lon, dtype=np.float64).reshape(nr.shape),
+        node_lat=np.asarray(lat, dtype=np.float64).reshape(nr.shape),
+        hrrr_shape=(int(hh), int(ww)),
+        hrrr_transform=_transform_tuple(t),
+        hrrr_crs=crs.to_wkt(),
+    )
+
+
+def window_wind(
+    messages: dict[str, bytes], geometry: WindGeometry, decode: Callable[[bytes], Field] = decode_message
+) -> tuple[np.ndarray, np.ndarray]:
+    """Earth-relative 10 m wind on the window's nodes from one hour's UGRD and VGRD messages.
+
+    Each node's grid-relative components are rotated at its own longitude
+    (:func:`to_earth_relative_array`), with the projection read from the message's header.
+
+    Returns:
+        ``(u, v)``, east and north components, ``(ny, nx)`` float64, m/s.
+
+    Raises:
+        ValueError: The hour's raster is not the one the window was cut from, or has missing values.
+    """
+    fu, fv = decode(messages["u_grid"]), decode(messages["v_grid"])
+    for f in (fu, fv):
+        if f.values.shape != geometry.hrrr_shape or _transform_tuple(f.transform) != geometry.hrrr_transform:
+            raise ValueError("the HRRR raster changed between hours; the wind window no longer applies")
+    rows, cols = geometry.slices
+    u_grid, v_grid = fu.values[rows, cols], fv.values[rows, cols]
+    if not (np.all(np.isfinite(u_grid)) and np.all(np.isfinite(v_grid))):
+        raise ValueError("the HRRR wind has missing values in the window")
+    return to_earth_relative_array(u_grid, v_grid, geometry.node_lon, lambert_from_grib(messages["u_grid"]))
+
+
+@dataclass(frozen=True)
+class HrrrWindField:
+    """Cached hourly HRRR wind on the node window of a fire grid.
+
+    Attributes:
+        times_utc: Valid time of each hour.
+        u, v: ``(T, ny, nx)`` float32, earth-relative east and north 10 m wind, m/s.
+        geometry: The window and the cells' positions in it.
+        path: The cached ``wind-<grid key>.npz``.
+        manifest: The contents of its manifest.
+    """
+
+    times_utc: list[dt.datetime]
+    u: np.ndarray
+    v: np.ndarray
+    geometry: WindGeometry
+    path: Path
+    manifest: dict[str, Any]
+
+
+def wind_grid_key(target: TargetGrid) -> str:
+    """16 hex digits identifying a fire grid (CRS, transform, shape) for the wind cache."""
+    crs = optional_import("rasterio.crs").CRS.from_user_input(target.crs).to_wkt()
+    canon = json.dumps(
+        {"crs": crs, "transform": [repr(x) for x in _transform_tuple(target.transform)], "shape": list(target.shape)},
+        sort_keys=True,
+    )
+    return hashlib.sha256(canon.encode()).hexdigest()[:16]
+
+
+def _write_wind(
+    directory: Path,
+    target: TargetGrid,
+    times: Sequence[dt.datetime],
+    geometry: WindGeometry,
+    winds: Sequence[tuple[np.ndarray, np.ndarray]],
+    files: dict[str, Any],
+) -> None:
+    key = wind_grid_key(target)
+    data = directory / f"wind-{key}.npz"
+    np.savez_compressed(
+        data,
+        times_utc_s=np.array([int(t.timestamp()) for t in times], dtype=np.int64),
+        u=np.stack([u for u, _ in winds]).astype(np.float32),
+        v=np.stack([v for _, v in winds]).astype(np.float32),
+        cell_i=geometry.cell_i.astype(np.float32),
+        cell_j=geometry.cell_j.astype(np.float32),
+        node_lon=geometry.node_lon,
+        node_lat=geometry.node_lat,
+    )
+    ny, nx = geometry.window_shape
+    manifest = {
+        "dataset": "HRRR analysis (wrfsfcf00), NOAA, AWS Open Data: 10 m wind on the native 3 km grid",
+        "grid_key": key,
+        "fire_grid": {
+            "crs": optional_import("rasterio.crs").CRS.from_user_input(target.crs).to_wkt(),
+            "transform": list(_transform_tuple(target.transform)),
+            "shape": list(target.shape),
+        },
+        "window": {
+            "row0": geometry.row0,
+            "col0": geometry.col0,
+            "ny": ny,
+            "nx": nx,
+            "margin_nodes": WINDOW_MARGIN_NODES,
+            "lon_range": [float(geometry.node_lon.min()), float(geometry.node_lon.max())],
+            "lat_range": [float(geometry.node_lat.min()), float(geometry.node_lat.max())],
+        },
+        "hrrr_grid": {
+            "crs": geometry.hrrr_crs,
+            "transform": list(geometry.hrrr_transform),
+            "shape": list(geometry.hrrr_shape),
+        },
+        "start_utc": times[0].isoformat(),
+        "n_hours": len(times),
+        "fields": WIND_FIELDS,
+        "processing": "grid-relative u, v rotated to earth-relative at each node's longitude; float32",
+        "accessed_utc": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
+        "files": files,
+        "sha256": {data.name: hashlib.sha256(data.read_bytes()).hexdigest()},
+        "attribution": "NOAA High-Resolution Rapid Refresh (HRRR), NOAA Open Data Dissemination program",
+    }
+    (directory / f"wind-{key}.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+
+def _read_wind(data: Path, manifest_path: Path) -> HrrrWindField:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if hashlib.sha256(data.read_bytes()).hexdigest() != manifest["sha256"][data.name]:
+        raise ValueError(f"{data}: does not match its manifest hash; delete it and {manifest_path.name}")
+    window, hrrr_grid = manifest["window"], manifest["hrrr_grid"]
+    with np.load(data, allow_pickle=False) as z:
+        times = [dt.datetime.fromtimestamp(int(s), dt.UTC) for s in z["times_utc_s"]]
+        geometry = WindGeometry(
+            row0=int(window["row0"]),
+            col0=int(window["col0"]),
+            cell_i=np.asarray(z["cell_i"], dtype=np.float64),
+            cell_j=np.asarray(z["cell_j"], dtype=np.float64),
+            node_lon=np.asarray(z["node_lon"]),
+            node_lat=np.asarray(z["node_lat"]),
+            hrrr_shape=(int(hrrr_grid["shape"][0]), int(hrrr_grid["shape"][1])),
+            hrrr_transform=tuple(float(x) for x in hrrr_grid["transform"]),
+            hrrr_crs=str(hrrr_grid["crs"]),
+        )
+        return HrrrWindField(times, np.asarray(z["u"]), np.asarray(z["v"]), geometry, data, manifest)
+
+
+def fetch_hrrr_wind_field(
+    lat: float,
+    lon: float,
+    start_utc: dt.datetime,
+    n_hours: int,
+    target: TargetGrid,
+    *,
+    cache_root: str | Path = DEFAULT_CACHE,
+    get: Get | None = None,
+    decode: Callable[[bytes], Field] = decode_message,
+    workers: int = 8,
+) -> HrrrWindField:
+    """Hourly HRRR 10 m wind on the native nodes around a fire grid (no downscaling).
+
+    Cached in the point request's directory (``lat``, ``lon``, ``start_utc``, ``n_hours`` as in
+    :func:`fetch_hrrr_point`, so a region's point values and its field sit together). When the
+    point values are not cached either, one download makes both; otherwise only the UGRD and
+    VGRD messages are downloaded.
+
+    Args:
+        lat, lon: The region's weather point (grid centroid), degrees.
+        start_utc: First hour, timezone-aware, on the hour.
+        n_hours: Number of hours.
+        target: The fire grid: CRS, affine transform of its top-left corner and ``(H, W)``.
+        cache_root: Directory holding ``hrrr-<key>/``.
+        get: Download function; None uses urllib.
+        decode: GRIB2 decoder.
+        workers: Parallel downloads.
+
+    Raises:
+        ValueError: As :func:`fetch_hrrr_point`; the grid is not inside the HRRR domain; a
+            cached file does not match its hash.
+    """
+    start = _check_start(start_utc, n_hours)
+    directory = Path(cache_root) / hrrr_cache_key(lat, lon, start, n_hours)
+    key = wind_grid_key(target)
+    data, manifest_path = directory / f"wind-{key}.npz", directory / f"wind-{key}.json"
+    if data.exists() and manifest_path.exists():
+        return _read_wind(data, manifest_path)
+    if not (directory / "hourly.csv").exists():
+        fetch_hrrr_point(
+            lat, lon, start, n_hours, cache_root=cache_root, get=get, decode=decode, workers=workers, wind_target=target
+        )
+        return _read_wind(data, manifest_path)
+
+    fetch = urllib_get if get is None else get
+    times = [start + i * HOUR for i in range(n_hours)]
+    geometry: list[WindGeometry] = []
+
+    def one(t: dt.datetime) -> tuple[tuple[np.ndarray, np.ndarray], dict[str, Any]]:
+        with _archive_errors(t):
+            messages, provenance = download_messages(t, fetch, WIND_FIELDS)
+        dec = _decode_once(decode)
+        if not geometry:
+            geometry.append(wind_geometry(dec(messages["u_grid"]), target))
+        return window_wind(messages, geometry[0], dec), provenance
+
+    first = [one(times[0])]
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+        results = first + list(pool.map(one, times[1:]))
+    _write_wind(
+        directory,
+        target,
+        times,
+        geometry[0],
+        [w for w, _ in results],
+        {t.isoformat(): p for t, (_, p) in zip(times, results, strict=True)},
+    )
+    return _read_wind(data, manifest_path)

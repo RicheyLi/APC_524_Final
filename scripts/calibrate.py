@@ -85,6 +85,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--trials", type=int, help="Optuna trials")
     ap.add_argument("--seeds", type=int, help="fixed run seeds per trial")
     ap.add_argument("--dt", type=float, default=60.0, help="time step for a region, s")
+    ap.add_argument(
+        "--no-wind-field", action="store_true", help="region: single-point wind even if the HRRR wind field is built"
+    )
     ap.add_argument("--cache-root", type=Path, default=Path("data") / "cache")
     ap.add_argument("--settings", type=Path, help="calibration settings (default configs/calibration.yaml)")
     ap.add_argument("--storage", help="Optuna storage URL, e.g. sqlite:///runs/calibration.db")
@@ -143,7 +146,14 @@ def main(argv: list[str] | None = None) -> int:
         status, out = "synthetic", args.out or Path("runs") / "calibration_synthetic.yaml"
     else:
         try:
-            fire = real_fire(args.region, hours, cache_root=args.cache_root, dt_s=args.dt, rule=args.rule)
+            fire = real_fire(
+                args.region,
+                hours,
+                cache_root=args.cache_root,
+                dt_s=args.dt,
+                rule=args.rule,
+                wind_field=not args.no_wind_field,
+            )
         except FileNotFoundError as exc:
             print(exc)
             return 1

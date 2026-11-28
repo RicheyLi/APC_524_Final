@@ -946,6 +946,13 @@ and 0.42 (fire B, final perimeter), and both fires burn partly in the wrong plac
 to the single-point wind. The Alexandridis rule reports no intensity, so its fires never cross a
 break; its results are confounded (open decision for the team).
 
+**WP 3.4 (spatially varying wind, branch `wp-3.4-spatial-wind`)** replaces the single HRRR point
+with the HRRR wind on every node around the region, interpolated to the cells
+([root_cause_fire_a.md](root_cause_fire_a.md), [data.md](data.md) *Wind field*). Region
+scenarios built by `calibration.real_fire` use it whenever `wind_field.npz` exists, so **the
+WP 3.1 calibration and the WP 3.3 validation above were made with the single-point wind and must
+be rerun with the field**; their numbers stand only as the single-point reference.
+
 3.1 built (branch `wp-3.1-calibration`): `wildfire_sim.calibration` and `scripts/calibrate.py`,
 settings in `configs/calibration.yaml`. The `"rothermel"` rule takes the two calibrated
 parameters through `spread.params`: `ros_multiplier` (head rate, and with it Byram's intensity
@@ -1050,6 +1057,15 @@ consumes (pasted, not linked), the rules from `CONTRIBUTING.md`, and the command
 
 **Open decisions.**
 
+- [x] **Single-point wind** (WP 3.4, resolved). The regions were driven by one HRRR point at
+      the grid centroid, while HRRR's own analysis differs by 20-80 deg in direction and 2-5x in
+      speed across fire A's 25 x 29 km, which put the simulated fire in the wrong place
+      ([root_cause_fire_a.md](root_cause_fire_a.md)). Resolved by per-cell wind from HRRR's
+      native 3 km nodes, bilinear in the wind components, no downscaling
+      ([data.md](data.md), *Wind field*), through two backward-compatible additions to the
+      frozen contracts signed off by the owner: `grid.Weather.wind_field` (a `grid.WindField`)
+      and `config.WeatherConfig.wind_field` (the file). Terrain-resolving downscaling (WindNinja)
+      stays out of scope.
 - [ ] Refresh `scripts/bench_baseline.json` from a CI run now that WPs 1.10-1.13 are in the
       engines (their measured cost is in `docs/performance.md`); the CI benchmark check stays
       non-blocking until then.

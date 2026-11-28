@@ -32,7 +32,10 @@ perturbation settings are. With every sigma 0 and no jitter, run ``i`` is bit-fo
 
 **Applying them.** Wind speed is multiplied by the factor, the direction offset is added and
 wrapped into [0, 360), and the five fuel moistures (1 h, 10 h, 100 h, live herbaceous, live
-woody) are multiplied by the moisture factor, at every point of the weather series. The rate
+woody) are multiplied by the moisture factor, at every point of the weather series. With a
+per-cell wind field (``weather.wind_field``, WP 3.4) the same speed factor multiplies every
+cell's speed and the same offset is added to every cell's direction
+(:func:`perturbed_wind_field`), so the whole field moves together. The rate
 multiplier wraps the spread rule (:class:`ScaledRateRule`) and scales ``SpreadOutput.ros`` only;
 fireline intensity and flame length are left as the rule computed them (the multiplier stands
 for uncertainty in the rate, not in the fire's energy release).
@@ -57,6 +60,7 @@ from wildfire_sim.grid import Grid, Weather
 from wildfire_sim.spread import make_spread_rule
 from wildfire_sim.spread.base import SpreadOutput, SpreadRule
 from wildfire_sim.types import CellState, FloatArray, IntArray, Stencil
+from wildfire_sim.wind_field import WindFieldSeries, wind_field_for
 
 PERTURBATION_KEYS: tuple[str, ...] = (
     "wind_speed_factor",
@@ -239,7 +243,8 @@ def perturb_config(
     wind_direction_offset_deg) mod 360`` and all five fuel moistures times ``moisture_factor``.
     ``ros_multiplier`` is not applied here (see :class:`ScaledRateRule`). When
     ``ignition_cells`` is given it replaces ``ignition.cells`` and ``ignition.center`` is
-    cleared. The result is re-validated.
+    cleared. The result is re-validated. ``weather.wind_field`` is kept as it is: the file is
+    not perturbed; apply the factors to it with :func:`perturbed_wind_field`.
     """
     points = []
     for p in config.weather.series:
@@ -254,10 +259,27 @@ def perturb_config(
             update[name] = getattr(p, name) * factors["moisture_factor"]
         points.append({**p.model_dump(), **update})
     data = config.model_dump()
-    data["weather"] = {"series": points}
+    data["weather"] = {**data["weather"], "series": points}
     if ignition_cells is not None:
         data["ignition"] = {**data["ignition"], "cells": [list(c) for c in ignition_cells], "center": False}
     return ScenarioConfig.model_validate(data)
+
+
+def perturbed_wind_field(config: ScenarioConfig, factors: dict[str, float]) -> WindFieldSeries | None:
+    """The scenario's wind field with the wind factors of ``factors`` applied, or None.
+
+    Every cell's speed is multiplied by ``wind_speed_factor`` and ``wind_direction_offset_deg``
+    (degrees) is added to every cell's "from" bearing, as :func:`perturb_config` does to the
+    weather series. None when the scenario has no ``weather.wind_field``.
+
+    Raises:
+        FileNotFoundError: The scenario's wind field file does not exist.
+    """
+    wind = wind_field_for(config)
+    if wind is None:
+        return None
+    speed, offset = factors.get("wind_speed_factor", 1.0), factors.get("wind_direction_offset_deg", 0.0)
+    return wind if speed == 1.0 and offset == 0.0 else wind.perturbed(speed, offset)
 
 
 def _resolved_ignition_cells(config: ScenarioConfig, shape: tuple[int, int]) -> list[tuple[int, int]]:
@@ -315,7 +337,8 @@ def _run_member(config_data: dict[str, Any], seed: int) -> _RunOutput:
     if factors["ros_multiplier"] != 1.0:
         rule = ScaledRateRule(rule, factors["ros_multiplier"])
 
-    result = sim.run(run_config, seed=seed, rule=rule, grid=grid, record_events=False)
+    wind = perturbed_wind_field(config, factors)
+    result = sim.run(run_config, seed=seed, rule=rule, grid=grid, record_events=False, wind_field=wind)
     arrival = result.arrival_time.astype(np.float32)
     area = float(np.count_nonzero(result.burned_mask)) * result.grid.dx * result.grid.dx
     edge = result.provenance["reached_edge_s"]

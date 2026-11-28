@@ -251,12 +251,77 @@ class Grid:
         )
 
 
+@dataclass(frozen=True, eq=False)
+class WindField:
+    """Per-cell 10 m wind for one instant (WP 3.4).
+
+    Two fields are equal when their arrays are equal element by element.
+
+    Attributes:
+        speed: ``(H, W)`` float64, open 10 m wind speed, m/s, >= 0.
+        direction_from: ``(H, W)`` float64, bearing the wind blows **from**, degrees clockwise
+            from north in [0, 360).
+    """
+
+    speed: FloatArray
+    direction_from: FloatArray
+
+    def __post_init__(self) -> None:
+        speed = np.asarray(self.speed, dtype=np.float64)
+        direction = np.asarray(self.direction_from, dtype=np.float64)
+        if speed.ndim != 2 or speed.shape != direction.shape:
+            raise ValueError(f"speed {speed.shape} and direction_from {direction.shape} must be equal (H, W) shapes")
+        if not (np.all(np.isfinite(speed)) and np.all(np.isfinite(direction))):
+            raise ValueError("wind field speed and direction_from must be finite")
+        if np.any(speed < 0):
+            raise ValueError("wind field speed must be >= 0")
+        if np.any(direction < 0) or np.any(direction >= 360):
+            raise ValueError("wind field direction_from must lie in [0, 360)")
+        object.__setattr__(self, "speed", speed)
+        object.__setattr__(self, "direction_from", direction)
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        """``(H, W)`` of the field."""
+        return (int(self.speed.shape[0]), int(self.speed.shape[1]))
+
+    @property
+    def to_bearing(self) -> FloatArray:
+        """``(H, W)`` bearing the wind blows **toward** (head-fire direction), degrees in [0, 360)."""
+        return wind_to_bearing_field(self.direction_from)
+
+    @classmethod
+    def uniform(cls, shape: tuple[int, int], speed: float, direction_from: float) -> WindField:
+        """A field of ``shape`` with the same speed (m/s) and direction (degrees from) everywhere."""
+        return cls(np.full(shape, float(speed)), np.full(shape, float(direction_from)))
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, WindField):
+            return NotImplemented
+        return self is other or (
+            np.array_equal(self.speed, other.speed) and np.array_equal(self.direction_from, other.direction_from)
+        )
+
+    def __hash__(self) -> int:
+        return hash(self.shape)
+
+
+def wind_to_bearing_field(direction_from: FloatArray) -> FloatArray:
+    """Per-cell bearing the wind blows **toward**, degrees in [0, 360), from the "from" bearings.
+
+    The array form of :attr:`Weather.wind_to_bearing`: ``(direction_from + 180) mod 360``.
+    """
+    return (np.asarray(direction_from, dtype=np.float64) + 180.0) % 360.0
+
+
 @dataclass(frozen=True)
 class Weather:
-    """Spatially uniform weather for one instant.
+    """Weather for one instant, uniform over the grid except for an optional wind field.
 
-    Weather sources (gridMET ~4 km) are coarser than the 10 km study areas, so a single
-    value per time applies to the whole grid.
+    Weather sources (gridMET ~4 km, a point of the HRRR) give a single value per time for the
+    whole grid. ``wind_field`` (WP 3.4) optionally carries per-cell wind; spread rules that
+    support it use it in place of ``wind_speed`` and ``wind_direction``, which then stay the
+    value at the grid centroid (the fallback for rules that do not).
 
     Attributes:
         wind_speed: Open 10 m wind speed, m/s. Spread rules apply their own midflame adjustment.
@@ -268,6 +333,8 @@ class Weather:
         moisture_live_woody: Live woody fuel moisture, fraction.
         temperature_c: Air temperature, deg C (informational; enters via moisture).
         relative_humidity: Fraction in [0, 1] (informational; enters via moisture).
+        wind_field: Optional per-cell 10 m wind (:class:`WindField`) on the grid; None (default)
+            means the scalar wind applies everywhere.
     """
 
     wind_speed: float = 0.0
@@ -279,8 +346,11 @@ class Weather:
     moisture_live_woody: float = 0.90
     temperature_c: float = 25.0
     relative_humidity: float = 0.30
+    wind_field: WindField | None = None
 
     def __post_init__(self) -> None:
+        if self.wind_field is not None and not isinstance(self.wind_field, WindField):
+            raise ValueError("wind_field must be a WindField or None")
         if self.wind_speed < 0:
             raise ValueError("wind_speed must be >= 0")
         if not 0 <= self.wind_direction < 360:

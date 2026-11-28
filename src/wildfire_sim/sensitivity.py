@@ -90,7 +90,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from wildfire_sim.config import ScenarioConfig, WeatherConfig, configs_dir, load_yaml
 from wildfire_sim.data import build_grid
-from wildfire_sim.ensemble import ScaledRateRule, perturb_config
+from wildfire_sim.ensemble import ScaledRateRule, perturb_config, perturbed_wind_field
 from wildfire_sim.grid import Grid
 from wildfire_sim.sim import RunResult, edge_band_mask, run
 from wildfire_sim.spread import make_spread_rule
@@ -268,8 +268,10 @@ class SensitivityInput(BaseModel):
 
     Targets (each applied to the whole run):
 
-    * ``wind_speed_factor``: factor on the 10 m wind speed of every weather point.
-    * ``wind_direction_offset_deg``: degrees added to every wind direction (wrapped).
+    * ``wind_speed_factor``: factor on the 10 m wind speed of every weather point (and of every
+      cell of the scenario's wind field, if it has one).
+    * ``wind_direction_offset_deg``: degrees added to every wind direction (wrapped), the wind
+      field's included.
     * ``weather_scale`` / ``weather_shift`` / ``weather_set``: factor on, offset added to, or
       value given to the weather ``fields`` of every point (not wind; moistures as fractions,
       temperature in deg C).
@@ -408,7 +410,7 @@ def load_study(path: str | Path) -> SensitivityStudy:
     """Load a :class:`SensitivityStudy`, resolving ``weather_file`` and cached grid paths.
 
     Relative paths are taken relative to the directory of ``path``. A ``weather_file`` replaces
-    the scenario's weather series, and a scenario's grid path is made absolute.
+    the scenario's weather series, and a scenario's grid path and wind field path are made absolute.
     """
     path = Path(path)
     study = load_yaml(path, SensitivityStudy)
@@ -419,6 +421,8 @@ def load_study(path: str | Path) -> SensitivityStudy:
         if scen.weather_file is not None:
             scen.weather_file = (path.parent / scen.weather_file).resolve()
             data["weather"] = load_yaml(scen.weather_file, WeatherConfig).model_dump()
+        if data["weather"].get("wind_field"):
+            data["weather"]["wind_field"] = str((path.parent / data["weather"]["wind_field"]).resolve())
         scen.scenario = ScenarioConfig.model_validate(data)
     return study
 
@@ -620,7 +624,8 @@ def run_point(
         rule: SpreadRule = make_spread_rule(config.spread.rule, **config.spread.params)
         if multiplier is not None:
             rule = ScaledRateRule(rule, multiplier)
-        result = run(config, seed=seed, rule=rule, grid=grid, record_events=False)
+        wind = perturbed_wind_field(config, factors)
+        result = run(config, seed=seed, rule=rule, grid=grid, record_events=False, wind_field=wind)
     return run_outputs(result, ignition_cell(config, grid.shape), window_s, head_distance_m)
 
 
