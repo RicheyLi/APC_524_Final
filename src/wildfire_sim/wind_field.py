@@ -63,8 +63,10 @@ def save_wind_field(
     Args:
         path: Output ``.npz`` file.
         times_s: ``(T,)`` simulated times, s.
-        u, v: ``(T, ny, nx)`` earth-relative 10 m wind components, m/s.
-        cell_i, cell_j: ``(H, W)`` fractional window row and column of each cell.
+        u: ``(T, ny, nx)`` earth-relative eastward 10 m wind component, m/s.
+        v: ``(T, ny, nx)`` earth-relative northward 10 m wind component, m/s.
+        cell_i: ``(H, W)`` fractional window row of each cell.
+        cell_j: ``(H, W)`` fractional window column of each cell.
 
     Raises:
         ValueError: The arrays are inconsistent (checked by :class:`WindFieldSeries`).

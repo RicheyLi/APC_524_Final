@@ -892,7 +892,8 @@ def hourly_from_hrrr(
     Args:
         hrrr: :class:`~wildfire_sim.data.hrrr.HrrrHour` records, one per hour.
         days: gridMET days covering the hours' local solar dates.
-        lat_deg, lon_deg: The site, degrees.
+        lat_deg: Latitude of the site, degrees.
+        lon_deg: Longitude of the site, degrees.
 
     Raises:
         ValueError: A needed gridMET day is missing.

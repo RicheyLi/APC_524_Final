@@ -4,6 +4,7 @@ These are the changes that will go out in the next release.
 
 ## Added
 
+- `docs/scope_decision.md`: why the remaining error on fire A (terrain-channelled wind below the HRRR's 3 km resolution) is out of scope, and the decisions it leaves for the team, each with a recommended default (first-burning-period window, M2 as measurements, fire A's day 2 and fire B's Santa Ana run as stated limitations, `ros_multiplier` as the only calibrated parameter, the Alexandridis comparison dropped, one rerun with the wind field). Linked from `docs/plan.md` (Phase 3) and the docs navigation.
 - Phase 0 foundations (see `docs/plan.md`):
   - `wildfire_sim.types`: `CellState`, `LandUse`, `Stencil` with 8- and 16-direction stencils.
   - `wildfire_sim.grid`: `Grid` layer container with validation, masks and `.npz` save/load; `Weather` and piecewise-constant `WeatherSeries`.
