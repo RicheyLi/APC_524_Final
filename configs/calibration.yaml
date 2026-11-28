@@ -18,10 +18,10 @@ footprint_m:
   source: "Schroeder, W., Oliva, P., Giglio, L. & Csiszar, I. A. (2014), The New VIIRS 375 m active fire detection data product, Remote Sens. Environ. 143, 85-96 (I-band pixel at nadir)"
   note: "the simulated arrival of a detection is the earliest among the cells within half a footprint (docs/plan.md section 7)"
 window_hours:
-  value: 48.0
+  value: 48.5
   units: h
-  source: "PLACEHOLDER - team choice: the first two burning periods after the ignition (docs/plan.md section 7, 'growth over the first burning periods, before containment lines held')"
-  note: "check against the posting times of fire A's daily perimeters once the region is built: a daily perimeter must have been posted by the window end"
+  source: "team choice: the first two burning periods after the ignition (docs/plan.md section 7, 'growth over the first burning periods, before containment lines held'), ending just after a daily perimeter of fire A was posted: the NIFC daily perimeter versions of the Lake Fire were posted 19.9, 27.1 and 48.1 h after the ignition (6,699 ha at 48.1 h), so a 48 h window would score the fire against the 27.1 h perimeter"
+  note: "the window end must fall shortly after a posting (docs/real_data.md, step 5); the calibration of fire A (docs/calibration.md) used 48.5 h"
 n_trials:
   value: 100
   units: count
