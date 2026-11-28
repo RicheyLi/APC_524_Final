@@ -48,8 +48,9 @@ The build:
    the buffer and one cell on every side, so the grid size follows the fire;
 4. assembles `grid.npz` (fuel model, land use, canopy cover, elevation, slope, aspect, asset
    value, break widths), `canopy.npz` (canopy height and base height in m, bulk density in
-   kg/m^3, which have no `Grid` layer yet), `weather.yaml` (one point per hour) and a copy of the
-   perimeter;
+   kg/m^3, which have no `Grid` layer yet), `weather.yaml` (one point per hour), for HRRR
+   regions `wind_field.npz` (the hourly wind on HRRR's own 3 km nodes, see
+   [Wind field](#wind-field-wp-34)) and a copy of the perimeter;
 5. checks that the grid validates and that no cell the perimeter touches lies within the buffer
    of the edge;
 6. writes `data/cache/<region>/manifest.json` and the crop `tests/fixtures/<region>_5km.npz`
@@ -123,6 +124,52 @@ of that hour (`wildfire_sim.data.hrrr`):
 With `weather_source: gridmet` the hours are gridMET's daily values spread over the day by the
 diurnal profiles documented in `data/weather.py`. Daily means cannot show a Santa Ana's gusts:
 for Silverado gridMET gave at most 4.8 m/s, HRRR 20.3 m/s.
+
+### Wind field (WP 3.4)
+
+One point is not enough for the wind of a 25 x 29 km mountain region: HRRR's own analysis
+differs by 20-80 deg in direction and 2-5x in speed across fire A
+([root-cause analysis](root_cause_fire_a.md)). HRRR regions therefore also get the wind on
+every HRRR node around the grid, with no downscaling (`fetch_hrrr_wind_field` in
+`wildfire_sim.data.hrrr`, `wildfire_sim.wind_field` at run time):
+
+* **Window.** The cell centres are projected (PROJ, through `rasterio`) into the HRRR's Lambert
+  grid; the window is the nodes around them plus one node on every side (about 11 x 13 nodes
+  for fire A).
+* **Rotation per node.** Each node's grid-relative `UGRD`/`VGRD` is rotated to east/north at
+  that node's own longitude (`n (lon - LoV)`, as for the point), so the rotation varies across
+  the window.
+* **One download.** The window comes from the same `UGRD`/`VGRD` messages as the point; on a
+  fresh build one download serves both. It is cached as
+  `data/cache/hrrr-<key>/wind-<grid key>.npz` with the manifest `wind-<grid key>.json` (every
+  URL and byte range, the window, the HRRR grid's CRS and transform, SHA-256).
+* **At run time** the cells take the bilinear interpolation of the `u` and `v` components (not of
+  speed and direction: two opposite winds average to calm) between their four surrounding nodes,
+  piecewise constant in time with the same hours as `weather.yaml`; speed is `hypot(u, v)` and
+  the direction the bearing the wind blows from. Only numpy is needed. The Rothermel and
+  Alexandridis rules then use each cell's 10 m speed and direction in place of the centroid
+  value; the scalar wind in `weather.yaml` stays the centroid value. The ensemble's and the
+  sensitivity screening's wind perturbations scale every cell's speed and turn every cell's
+  direction by the same amount.
+
+`wind_field.npz` (`_format_version` 1, all float arrays C-ordered):
+
+| Array | Shape, type | Meaning |
+| --- | --- | --- |
+| `times_s` | `(T,)` float64 | simulated s from `weather_start_utc` at which each hour applies (0 for the first, as `weather.yaml`) |
+| `u`, `v` | `(T, ny, nx)` float32 | earth-relative east and north 10 m wind on the window's nodes, m/s |
+| `cell_i`, `cell_j` | `(H, W)` float32 | each grid cell centre's fractional row and column in the window (node centres at integers) |
+
+The region manifest records it under `wind_field` (format version, window, the HRRR cache's
+manifest) and its SHA-256. A scenario uses it with `weather: {wind_field: data/cache/<region>/wind_field.npz}`
+(relative paths resolve like `grid.path`); `calibration.real_fire` sets this whenever the file
+exists, so calibration, validation and `scripts/sweep_eval.py` use it automatically
+(`--no-wind-field` returns to the single point). A region built before WP 3.4 gets the field
+without rebuilding anything else:
+
+```sh
+uv run --extra geo python scripts/download_data.py lake_2024 --wind-field
+```
 
 ## Observations of the fire
 

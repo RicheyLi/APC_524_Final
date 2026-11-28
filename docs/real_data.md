@@ -82,6 +82,20 @@ Check what was built:
 
 After this step nothing needs the network: the list of overpasses is cached with them.
 
+**Regions built before WP 3.4** lack the per-cell HRRR wind field (`wind_field.npz`). Add it
+without redoing the LANDFIRE, DEM, OSM or VIIRS steps (public HRRR data, no account; about two
+1-2 MB downloads per hour, 10-30 minutes for 14 days):
+
+```sh
+uv run --extra fast --extra opt --extra geo python scripts/download_data.py lake_2024 --wind-field
+uv run --extra fast --extra opt --extra geo python scripts/download_data.py silverado_2020 --wind-field
+```
+
+From then on calibration, validation and `scripts/sweep_eval.py` use the field; each takes
+`--no-wind-field` to go back to the single centroid point. If the command rewrites
+`tests/fixtures/<region>_5km.npz` or `<region>_weather.yaml` (it should not), restore them with
+`git checkout`.
+
 ## 4. Benchmark on fire A's grid
 
 ```sh
