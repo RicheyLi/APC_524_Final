@@ -1,5 +1,7 @@
 # Why the calibrated model misses fire A: root-cause analysis (2026-11-27)
 
+What is out of scope and the decisions it leaves for the team: [scope_decision.md](scope_decision.md).
+
 Fire A (2024 Lake Fire) built on this machine from the committed configs; baseline reproduces
 WP 3.1 exactly (m 0.383, lb_scale 0.641: J 0.421, objective 0.403, 11,843 ha). All numbers below
 are from `scripts/sweep_eval.py` records in this directory (`*.json`, `*/SUMMARY.md`).

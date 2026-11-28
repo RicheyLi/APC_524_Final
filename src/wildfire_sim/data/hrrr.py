@@ -764,7 +764,8 @@ def fetch_hrrr_wind_field(
     VGRD messages are downloaded.
 
     Args:
-        lat, lon: The region's weather point (grid centroid), degrees.
+        lat: Latitude of the region's weather point (grid centroid), degrees.
+        lon: Longitude of the region's weather point (grid centroid), degrees.
         start_utc: First hour, timezone-aware, on the hour.
         n_hours: Number of hours.
         target: The fire grid: CRS, affine transform of its top-left corner and ``(H, W)``.
